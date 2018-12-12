@@ -1,0 +1,1 @@
+/home/noulletk/prog/bmw/./resources/data/walks/walk_sentences.txt

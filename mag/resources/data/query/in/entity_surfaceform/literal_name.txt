@@ -1,0 +1,1 @@
+SELECT ?entity ?lit WHERE {?entity <http://xmlns.com/foaf/0.1/name> ?lit}
