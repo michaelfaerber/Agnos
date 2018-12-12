@@ -1,0 +1,65 @@
+package alu.linking.preprocessing.surfaceform.query;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.List;
+
+import alu.linking.config.constants.FilePaths;
+import alu.linking.config.constants.Strings;
+import alu.linking.config.kg.EnumModelType;
+import alu.linking.preprocessing.surfaceform.query.structure.LiteralEntityQuery;
+
+public class SFQuery extends LiteralEntityQuery {
+	private static final String newline = Strings.NEWLINE.val;
+	/*
+	 * @param entityVarName entity's query variable name
+	 * 
+	 * @param surfaceFormVarName surface form's query variable name
+	 * 
+	 * @param delimLinking delimiter for value of each entry (for outputting
+	 * Entity/SF linking data)
+	 * 
+	 * @param delimQueryResults delimiter for value of each query result entry
+	 */
+	private static final String delimLinking = Strings.ENTITY_SURFACE_FORM_LINKING_DELIM.val;
+	private static final String delimQueryResults = Strings.QUERY_RESULT_DELIMITER.val;
+	private static final String entityVarName = "entity";
+	private static final String surfaceFormVarName = "lit";
+
+	public SFQuery(EnumModelType KG) {
+		super(KG);
+	}
+
+	@Override
+	protected BufferedWriter initAlternateChannelWriter() throws IOException {
+		return new BufferedWriter(new FileWriter(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
+	}
+
+	@Override
+	protected String getQueryInputDir() {
+		return FilePaths.DIR_QUERY_IN_SURFACEFORM.getPath(KG);
+	}
+
+	@Override
+	protected String getQueryOutDir() {
+		return FilePaths.DIR_QUERY_OUT_SURFACEFORM.getPath(KG);
+	}
+
+	@Override
+	protected void outputMainChannel(String varName, String value, boolean hasNext, BufferedWriter writer)
+			throws IOException {
+		final String dynamicDelimQueryResults = (hasNext ? delimQueryResults : newline);
+		writer.write(value + dynamicDelimQueryResults);
+	}
+
+	@Override
+	protected void outputAlternateChannels(String varName, String value, boolean hasNext, List<BufferedWriter> writers)
+			throws IOException {
+		if ((varName.equals(entityVarName)) || (varName.equals(surfaceFormVarName))) {
+			final String dynamicDelimLinking = ((hasNext && varName.equals(entityVarName)) ? delimLinking : newline);
+			writers.get(0).write(value + dynamicDelimLinking);
+		}
+
+	}
+}
