@@ -7,7 +7,7 @@ import java.util.Set;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
-import alu.linking.mentiondetection.MentionDetectorLSH;
+import alu.linking.mentiondetection.fuzzy.MentionDetectorLSH;
 import alu.linking.structure.Executable;
 
 public class MentionDetectionSetup implements Executable {

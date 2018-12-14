@@ -1,4 +1,4 @@
-package alu.linking.mentiondetection;
+package alu.linking.mentiondetection.fuzzy;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -28,6 +28,9 @@ import com.google.common.collect.Lists;
 
 import alu.linking.candidategeneration.lsh.LSHSparseVector;
 import alu.linking.config.constants.Numbers;
+import alu.linking.mentiondetection.EnumDetectionType;
+import alu.linking.mentiondetection.Mention;
+import alu.linking.mentiondetection.MentionDetector;
 import alu.linking.structure.Loggable;
 import alu.linking.utils.FuzzyUtils;
 import alu.linking.utils.Stopwatch;
@@ -74,7 +77,7 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	// #################################
 	// ########## CONSTRUCTOR ##########
 	// #################################
-	public MentionDetectorLSH(Map<String, Set<String>> map) {
+	public MentionDetectorLSH(final Map<String, Set<String>> map) {
 		this(map, 0.7);
 	}
 
@@ -83,7 +86,7 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	 * threshold and the bands and buckets default values
 	 * 
 	 */
-	public MentionDetectorLSH(Map<String, Set<String>> map, final double threshold) {
+	public MentionDetectorLSH(final Map<String, Set<String>> map, final double threshold) {
 		this(map, threshold, bandsDefaultValue, bucketsDefaultValue);
 	}
 
