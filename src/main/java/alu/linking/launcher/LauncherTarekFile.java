@@ -37,7 +37,7 @@ public class LauncherTarekFile {
 			}
 
 			File outputFile = null;
-
+			final LauncherInputLinking linking = new LauncherInputLinking();
 			if (args.length > 0) {
 				final File inputFile = new File(args[0]);
 				if (args.length > 1) {
@@ -67,7 +67,7 @@ public class LauncherTarekFile {
 						}
 					}
 					// One-time linking
-					final List<Mention<Node>> mentions = LauncherInputLinking.run(sb.toString());
+					final List<Mention<Node>> mentions = linking.run(sb.toString());
 					final String formattedOutput = MentionUtils.formatMentionsTabbedLines(mentions, sb.toString());
 					final File f_out = inputFile.isDirectory()
 							? new File(outputFile.getAbsolutePath() + "/" + f.getName())

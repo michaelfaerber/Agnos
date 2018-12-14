@@ -18,7 +18,7 @@ public class Mention<N> implements Loggable {
 	private Collection<PossibleAssignment<N>> possibleAssignments = null;
 	private final String originalMention;
 
-	Mention(final String word, final String source, final PossibleAssignment<N> assignment, final int offset,
+	public Mention(final String word, final String source, final PossibleAssignment<N> assignment, final int offset,
 			final double detectionConfidence, final String originalMention) {
 		this.mention = word;
 		this.source = source;

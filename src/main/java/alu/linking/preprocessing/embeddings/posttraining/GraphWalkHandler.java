@@ -50,7 +50,10 @@ public class GraphWalkHandler {
 			final Map<String, List<Number>> word_embeddings = EmbeddingsUtils
 					.readEmbeddings(new File(FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG)));
 			// Now rebuild all of the word embeddings into entity embeddings
-			final String ssp_embedding_rep = FilePaths.FILE_EMBEDDINGS_GAPH_WALK_TRAINED_EMBEDDINGS REALLY?.getPath(KG);
+			//REALLY? THAT FILE?
+			//final String ssp_embedding_rep = FilePaths.FILE_EMBEDDINGS_GAPH_WALK_TRAINED_EMBEDDINGS.getPath(KG);
+			//Take the sentences and combine them for each entity (one line = one entity)
+			final String ssp_embedding_rep = FilePaths.FILE_GRAPH_WALK_OUTPUT_SENTENCES.getPath(KG);
 			final SSPEmbeddingSentenceFormatter ssp_formatter = new SSPEmbeddingSentenceFormatter();
 			final int ssp_key_index = 0;
 			final String ssp_textdata_sorted_delim = Strings.QUERY_RESULT_DELIMITER.val;

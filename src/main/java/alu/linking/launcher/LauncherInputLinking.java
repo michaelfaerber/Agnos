@@ -22,7 +22,8 @@ import alu.linking.disambiguation.hops.graph.NodeBlacklisting;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
-import alu.linking.mentiondetection.MentionDetectorLSH;
+import alu.linking.mentiondetection.exact.HashMapCaseInsensitive;
+import alu.linking.mentiondetection.exact.MentionDetectorMap;
 import alu.linking.utils.Stopwatch;
 
 public class LauncherInputLinking {
@@ -33,6 +34,8 @@ public class LauncherInputLinking {
 	private static CandidateGenerator<Node> candidateGenerator;
 	private static Map<String, Set<String>> map;
 	private static EnumModelType KG;
+	private static Long timeCounter = 0l;
+	private static Long mentionCounter = 0l;
 
 	private static void init() throws Exception {
 		KG = EnumModelType.DEFAULT;
@@ -40,10 +43,17 @@ public class LauncherInputLinking {
 			return;
 
 		final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG);
-		map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
+		final Map<String, Set<String>> tmpMap = mpl
+				.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
+		map = new HashMapCaseInsensitive<Set<String>>();
+		// Case-insensitive map implementation
+		for (Map.Entry<String, Set<String>> e : tmpMap.entrySet()) {
+			map.put(e.getKey(), e.getValue());
+		}
+		LauncherInputLinking.md = new MentionDetectorMap(map);
+		// LauncherInputLinking.md = new MentionDetectorLSH(map, 0.8);
 		candidateGenerator = new CandidateGeneratorMap(map);
 
-		md = new MentionDetectorLSH(map, 0.85);
 		// ########################################################
 		// Mention Detection
 		// ########################################################
@@ -68,6 +78,7 @@ public class LauncherInputLinking {
 	public static List<Mention<Node>> run(final String inputLine) {
 		try {
 			init();
+			long startTime = System.currentTimeMillis();
 			final List<Mention<Node>> mentions = md.detect(inputLine);
 			// ########################################################
 			// Candidate Generation (update for mentions)
@@ -90,6 +101,9 @@ public class LauncherInputLinking {
 			// Disambiguation
 			// ########################################################
 			chooser.choose(mentions);
+//			timeCounter += (System.currentTimeMillis() - startTime);
+//			mentionCounter += mentions.size();
+//			System.out.println("Time: " + timeCounter + " ms / Mentions: " + mentionCounter);
 			return mentions;
 		} catch (Exception e) {
 			e.printStackTrace();

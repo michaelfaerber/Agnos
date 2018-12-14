@@ -15,7 +15,7 @@ import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
 import alu.linking.mentiondetection.Mention;
-import alu.linking.mentiondetection.MentionDetectorLSH;
+import alu.linking.mentiondetection.fuzzy.MentionDetectorLSH;
 import alu.linking.utils.Stopwatch;
 
 public class LauncherMentionDetectionTuning {
