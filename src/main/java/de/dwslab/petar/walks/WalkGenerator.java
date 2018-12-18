@@ -8,7 +8,6 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -48,6 +47,8 @@ public class WalkGenerator {
 	public int processedEntities = 0;
 	public static int processedWalks = 0;
 	public static int fileProcessedLines = 0;
+
+	public static final String newline = System.getProperty("line.separator");
 
 	public static long startTime = System.currentTimeMillis();
 
@@ -102,9 +103,6 @@ public class WalkGenerator {
 		// set the parameters
 		this.numberWalks = nmWalks;
 		this.depthWalk = dpWalks;
-		// No need to when we iterate through all possibilities from 1 to whatever we
-		// want
-		final boolean computeDirectConnections = false;
 
 		// generate the query
 		this.walkQuery = generateQuery(depthWalk, numberWalks);
@@ -113,7 +111,7 @@ public class WalkGenerator {
 			System.out.println("SELECTING all entities from repo");
 			entities = selectAllEntities(dataset, model, offset, limit);
 		} else {
-			System.out.println("Using passed entities ("+this.entities.size()+")");
+			System.out.println("Using passed entities (" + this.entities.size() + ")");
 			entities = this.entities;
 		}
 
@@ -123,7 +121,7 @@ public class WalkGenerator {
 
 		for (String entity : entities) {
 			// Thread which will compute the hops for this particular entity
-			EntityThread th = new EntityThread(entity, walkQuery, wrt, computeDirectConnections);
+			EntityThread th = new EntityThread(entity, walkQuery, wrt);
 			pool.execute(th);
 		}
 
@@ -160,6 +158,36 @@ public class WalkGenerator {
 		}
 		qe.close();
 		return allEntities;
+	}
+
+	/**
+	 * Adds new walks to the list; If the list is filled it is written to the file
+	 * 
+	 * @param tmpList
+	 */
+	public synchronized void writeToFile(String str, final BufferedWriter wrt) {
+		processedWalks += 1;
+		fileProcessedLines += 1;
+		try {
+			wrt.write(str + newline);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if (processedWalks % 1_000_000 == 0) {
+			System.out.println("TOTAL NUMBER OF PATHS : " + processedWalks);
+			System.out.println("TOTAL TIME:" + ((System.currentTimeMillis() - startTime) / 1000));
+			// flush the file
+			if (fileProcessedLines > 3_000_000) {
+				fileProcessedLines = 0;
+				try {
+					wrt.flush();
+					// writer.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 
 	/**
@@ -236,101 +264,63 @@ public class WalkGenerator {
 
 	private class EntityThread implements Runnable {
 		private final String entity;
-		private final List<String> finalList = new ArrayList<String>();
-		private final boolean computeDirectConnections;
 		private final String walkQuery;
 		private final BufferedWriter writer;
 
-		public EntityThread(final String entity, final String walkQuery, final BufferedWriter writer,
-				final boolean computeDirectConnections) {
+		public EntityThread(final String entity, final String walkQuery, final BufferedWriter writer) {
 			this.entity = entity;
-			this.computeDirectConnections = computeDirectConnections;
 			this.walkQuery = walkQuery;
 			this.writer = writer;
 		}
 
 		@Override
 		public void run() {
-			processEntity(this.computeDirectConnections);
-			writeToFile(finalList, writer);
+			processEntity();
+			// writeToFile(finalList, writer);
 
 		}
 
-		private void processEntity(final boolean directConnections) {
-			// get all the walks
-			List<String> tmpList = new ArrayList<String>();
+		private void processEntity() {
 			String queryStr = walkQuery.replace("$ENTITY$", "<" + entity + ">");
-			// TMPLIST - START
-			// This part does the long path query computation
-			executeQuery(queryStr, tmpList);
-			final Random rand = new Random();
-			if (numberWalks > 0) {
-				for (int i = 0; i < numberWalks; i++) {
-					if (tmpList.size() < 1)
-						break;
-					int randomNum = rand.nextInt(tmpList.size());
-					if (randomNum > tmpList.size() - 1)
-						randomNum = tmpList.size() - 1;
-					finalList.add(tmpList.get(randomNum));
-					tmpList.remove(randomNum);
-				}
-			} else {
-				finalList.addAll(tmpList);
-			}
-			// TMPLIST - END
-
-			// Whether to add direct connections as well
-			if (directConnections) {
-				// This adds all the direct connections additionally to the longer ones
-				queryStr = directPropsQuery.replace("$ENTITY$", "<" + entity + ">");
-				executeQuery(queryStr, finalList);
-			}
+			// This part does the 'long' path query computation
+			executeQuery(queryStr);
+			// Note: Removed 'direct query' computation, as it can also be done with this at
+			// length 1...
 		}
 
-		public void executeQuery(String queryStr, List<String> walkList) {
+		/**
+		 * Executes specified query on the wanted model
+		 * 
+		 * @param queryStr
+		 */
+		public void executeQuery(String queryStr) {
 			Query query = QueryFactory.create(queryStr);
 			dataset.begin(ReadWrite.READ);
 			QueryExecution qe = QueryExecutionFactory.create(query, model);
 			ResultSet resultsTmp = qe.execSelect();
-			String entityShort = entity.replace("http://dbpedia.org/resource/", "dbr:");
 			ResultSet results = ResultSetFactory.copyResults(resultsTmp);
 			qe.close();
 			dataset.end();
 			while (results.hasNext()) {
-				QuerySolution result = results.next();
-				String singleWalk = entityShort;
+				final QuerySolution result = results.next();
+				String singleWalk = entity;
 				// construct the walk from each node or property on the path
-				// List<String> vars = results.getResultVars();
-				final int varSize = results.getResultVars().size();
 				// Need to make sure that the iteration order is preserved...
+				// (QuerySolutionIterator sorts variables alphabetically)
 				final QuerySolutionIterator it = new QuerySolutionIterator(result);
-				// for (int i = 0; i < vars.size(); ++i) {
-				int i = 0;
 				while (it.hasNext()) {
 					// final String var = vars.get(i);
 					final String var = it.next();
 					try {
 						// clean it if it is a literal
 						singleWalk += StringDelims.WALK_DELIM + result.get(var).toString();
-
-//						if (result.get(var) != null && result.get(var).isLiteral()) {
-//							String val = result.getLiteral(var).toString();
-//							val = val.replace("\n", " ").replace("\t", " ").replace(StringDelims.WALK_DELIM, "");
-//							singleWalk += val + " " + StringDelims.WALK_DELIM;
-//						} else if (result.get(var) != null) {
-//							singleWalk += result.get(var).toString().replace("http://dbpedia.org/resource/", "dbr:")
-//									.replace("http://dbpedia.org/ontology/", "dbo:")
-//									.replace("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rdf:")
-//									.replace("http://www.w3.org/2000/01/rdf-schema#", "rdfs:")
-//									.replace(StringDelims.WALK_DELIM, "") + " " + StringDelims.WALK_DELIM;
-//						}
-
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
-					i++;
 				}
-				walkList.add(singleWalk);
+				// writeToFile is synchronized, but watch out not to use this.writer anywhere
+				// else
+				writeToFile(singleWalk, this.writer);
 			}
 
 		}

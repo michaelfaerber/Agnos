@@ -51,7 +51,7 @@ public class RDF2VecWalkGenerator implements Executable {
 
 		try (final BufferedWriter wrtWalkOutput = new BufferedWriter(new FileWriter(walkOutput))) {
 			// Generate walks into wanted output file
-			int threadCount = 60;
+			int threadCount = 40;
 			for (int depth = 1; depth < 8; ++depth) {
 				new WalkGenerator(FilePaths.DATASET.getPath(kg), WalkUtils.getBlacklist(kg), entities)
 						.generateWalks(wrtWalkOutput, 0, depth, threadCount, 0, 9_000_000);
