@@ -40,6 +40,7 @@ public class SSPEmbeddingScorer<N> implements PostScorer<PossibleAssignment<N>, 
 	public Number computeScore(PossibleAssignment<N> assignment) {
 		if (hasChanged) {
 			recomputeOptimum();
+			hasChanged = false;
 		}
 		if (bestCombination.contains(assignment.toString())) {
 			return 1;
@@ -95,7 +96,7 @@ public class SSPEmbeddingScorer<N> implements PostScorer<PossibleAssignment<N>, 
 			}
 		}
 		bestCombination.addAll(clusterPermutations.get(optPermutationIndex));
-		hasChanged = false;
+		//hasChanged = false;
 	}
 
 	@Override

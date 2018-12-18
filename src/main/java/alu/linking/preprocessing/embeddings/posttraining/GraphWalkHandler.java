@@ -17,13 +17,14 @@ import java.util.function.BiFunction;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.constants.Strings;
 import alu.linking.config.kg.EnumModelType;
-import alu.linking.preprocessing.embeddings.sentenceformatter.SSPEmbeddingSentenceFormatter;
+import alu.linking.preprocessing.embeddings.sentenceformatter.EmbeddingSentenceFormatter;
+import alu.linking.preprocessing.embeddings.sentenceformatter.RDF2VecEmbeddingSentenceFormatter;
 import alu.linking.utils.EmbeddingsUtils;
 
 public class GraphWalkHandler {
 	final EnumModelType KG;
 
-	GraphWalkHandler(final EnumModelType KG) {
+	public GraphWalkHandler(final EnumModelType KG) {
 		this.KG = KG;
 	}
 
@@ -48,41 +49,54 @@ public class GraphWalkHandler {
 		try {
 			// Reads the generated word embeddings
 			final Map<String, List<Number>> word_embeddings = EmbeddingsUtils
-					.readEmbeddings(new File(FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG)));
+					.readEmbeddings(new File(FilePaths.FILE_EMBEDDINGS_GAPH_WALK_TRAINED_EMBEDDINGS.getPath(KG)));
 			// Now rebuild all of the word embeddings into entity embeddings
-			//REALLY? THAT FILE?
-			//final String ssp_embedding_rep = FilePaths.FILE_EMBEDDINGS_GAPH_WALK_TRAINED_EMBEDDINGS.getPath(KG);
-			//Take the sentences and combine them for each entity (one line = one entity)
-			final String ssp_embedding_rep = FilePaths.FILE_GRAPH_WALK_OUTPUT_SENTENCES.getPath(KG);
-			final SSPEmbeddingSentenceFormatter ssp_formatter = new SSPEmbeddingSentenceFormatter();
-			final int ssp_key_index = 0;
-			final String ssp_textdata_sorted_delim = Strings.QUERY_RESULT_DELIMITER.val;
+			// Take the sentences and combine them as wanted for each entity (one line = one
+			// entity)
+			final String rdf2vec_embedding_rep = FilePaths.FILE_GRAPH_WALK_OUTPUT_SENTENCES.getPath(KG);
+			final EmbeddingSentenceFormatter rdf2vec_formatter = new RDF2VecEmbeddingSentenceFormatter();
+			final int rdf2vec_key_index = 0;
+			final String rdf2vec_sorted_delim = Strings.EMBEDDINGS_RDF2VEC_SPLIT_DELIM.val;
 			final Map<String, List<Number>> entityEmbeddingMap = new HashMap<>();
-			try (final BufferedReader brIn = new BufferedReader(new FileReader(new File(ssp_embedding_rep)))) {
+			int workedCounter = 0;
+			try (final BufferedReader brIn = new BufferedReader(new FileReader(new File(rdf2vec_embedding_rep)))) {
 				String line = null;
 				while ((line = brIn.readLine()) != null) {
-					final String[] words = line.split(ssp_textdata_sorted_delim);
-					final String key = ssp_formatter.extractKey(line, ssp_key_index, ssp_textdata_sorted_delim);
+					final String[] words = line.split(rdf2vec_sorted_delim);
+					final String key = rdf2vec_formatter.extractKey(line, rdf2vec_key_index, rdf2vec_sorted_delim);
 					// Embeddings for this line's sentence or sentence part are computed and added
 					// to what we already have
 					// Note: Sentences may and likely do span multiple lines, hence our multi-line
 					// sorted logic
-					final List<Number> embedding = embeddingCombineFunction.apply(entityEmbeddingMap.get(key),
-							EmbeddingsUtils.rebuildSentenceEmbedding(word_embeddings, Arrays.asList(words),
-									embeddingCombineFunction));
+					// EDIT: Can't remember why the above holds. Likely copied from sorting logic?
+					final List<Number> left = entityEmbeddingMap.get(key);// (((left = entityEmbeddingMap.get(key)) ==
+																			// null) ? Lists.newArrayList() : left);
+					final List<Number> rebuiltSentence = EmbeddingsUtils.rebuildSentenceEmbedding(word_embeddings,
+							Arrays.asList(words), embeddingCombineFunction);
+					if (rebuiltSentence == null) {
+						throw new RuntimeException("A rebuilt sentence embedding should not be null...");
+					}
+
+					final List<Number> embedding = embeddingCombineFunction.apply(left, rebuiltSentence);
+					if (embedding != null && embedding.size() > 0) {
+						workedCounter++;
+					}
 					// Overwrite the value we have as an embedding currently
 					entityEmbeddingMap.put(key, embedding);
 				}
 			}
-			// Now we should back up the proper entity embeddings for easier access later on
+			// ------------------------------------------
+			// Now we should back up the proper entity
+			// embeddings for easier access later on
+			// ------------------------------------------
 			// Raw dump
 			final ObjectOutputStream oos = new ObjectOutputStream(
-					new FileOutputStream(FilePaths.FILE_EMBEDDINGS_SSP_ENTITY_EMBEDDINGS_RAWMAP.getPath(KG)));
+					new FileOutputStream(FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS_RAWMAP.getPath(KG)));
 			oos.writeObject(entityEmbeddingMap);
 			oos.close();
 			// Human-readable dump
 			try (final BufferedWriter bwOut = new BufferedWriter(
-					new FileWriter(new File(FilePaths.FILE_EMBEDDINGS_SSP_ENTITY_EMBEDDINGS.getPath(KG))))) {
+					new FileWriter(new File(FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG))))) {
 				final String outDelim = Strings.EMBEDDINGS_ENTITY_EMBEDDINGS_DUMP_DELIMITER.val;
 				for (Map.Entry<String, List<Number>> e : entityEmbeddingMap.entrySet()) {
 					bwOut.write(e.getKey());
@@ -90,6 +104,7 @@ public class GraphWalkHandler {
 						bwOut.write(outDelim);
 						bwOut.write(n.toString());
 					}
+					bwOut.newLine();
 				}
 			}
 		} catch (IOException e) {

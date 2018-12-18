@@ -4,6 +4,7 @@ public enum EnumModelType {
 	DBPEDIA("./dbpedia/", EntityQuery.DEFAULT), //
 	FREEBASE("./freebase/", EntityQuery.DEFAULT), // 
 	CRUNCHBASE("./crunchbase/", EntityQuery.DEFAULT), // 
+	CRUNCHBASE2("./crunchbase2/", EntityQuery.DEFAULT),//
 	MAG("./mag/", EntityQuery.MAG), //
 	DEFAULT("./", EntityQuery.DEFAULT) //
 	;

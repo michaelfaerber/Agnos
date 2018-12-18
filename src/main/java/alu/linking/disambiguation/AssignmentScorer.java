@@ -1,6 +1,8 @@
 package alu.linking.disambiguation;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.concurrent.Callable;
@@ -16,7 +18,9 @@ import alu.linking.candidategeneration.PossibleAssignment;
 import alu.linking.candidategeneration.Scorable;
 import alu.linking.config.constants.Numbers;
 import alu.linking.config.kg.EnumModelType;
+import alu.linking.disambiguation.scorers.GraphWalkEmbeddingScorer;
 import alu.linking.disambiguation.scorers.PageRankScorer;
+import alu.linking.disambiguation.scorers.SSPEmbeddingScorer;
 import alu.linking.disambiguation.scorers.VicinityScorer;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
@@ -31,13 +35,17 @@ public class AssignmentScorer<N> implements Loggable {
 	private static Logger logger = Logger.getLogger(AssignmentScorer.class);
 	private final HashSet<Mention<N>> context = new HashSet<>();
 
-	public AssignmentScorer(final EnumModelType KG, final File pageRankFile) {
+	public AssignmentScorer(final EnumModelType KG, final File pageRankFile) throws FileNotFoundException, ClassNotFoundException, IOException {
 		// Determines how everything is scored!
 		PossibleAssignment.setScoreCombiner(new ScoreCombiner<PossibleAssignment>());
 		// Pre-scoring
 		PossibleAssignment.addScorer(new PageRankScorer(KG, pageRankFile));
 		// Post-scoring
-		PossibleAssignment.addPostScorer(new VicinityScorer());
+		// PossibleAssignment.addPostScorer(new VicinityScorer());
+		
+		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(KG));
+		//PossibleAssignment.addPostScorer(new SSPEmbeddingScorer(KG));
+		
 		for (PostScorer postScorer : PossibleAssignment.getPostScorers()) {
 			// Links a context object which will be updated when necessary through
 			// updateContext(Collection<Mention<N>>)
