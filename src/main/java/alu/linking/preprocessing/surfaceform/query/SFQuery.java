@@ -3,6 +3,7 @@ package alu.linking.preprocessing.surfaceform.query;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import alu.linking.config.constants.FilePaths;
@@ -24,8 +25,10 @@ public class SFQuery extends LiteralEntityQuery {
 	 */
 	private static final String delimLinking = Strings.ENTITY_SURFACE_FORM_LINKING_DELIM.val;
 	private static final String delimQueryResults = Strings.QUERY_RESULT_DELIMITER.val;
-	private static final String entityVarName = "entity";
-	private static final String surfaceFormVarName = "lit";
+	private static final List<String> entityVarNames = Arrays
+			.asList(new String[] { "entity", "s", "subject", "a", "asubject", "asubj", "a_subject" });
+	private static final List<String> surfaceFormVarNames = Arrays
+			.asList(new String[] { "lit", "o", "object", "b", "bobject", "bobj", "b_object" });
 
 	public SFQuery(EnumModelType KG) {
 		super(KG);
@@ -33,7 +36,7 @@ public class SFQuery extends LiteralEntityQuery {
 
 	@Override
 	protected BufferedWriter initAlternateChannelWriter() throws IOException {
-		return new BufferedWriter(new FileWriter(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
+		return new BufferedWriter(new FileWriter(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG), false));
 	}
 
 	@Override
@@ -56,8 +59,9 @@ public class SFQuery extends LiteralEntityQuery {
 	@Override
 	protected void outputAlternateChannels(String varName, String value, boolean hasNext, List<BufferedWriter> writers)
 			throws IOException {
-		if ((varName.equals(entityVarName)) || (varName.equals(surfaceFormVarName))) {
-			final String dynamicDelimLinking = ((hasNext && varName.equals(entityVarName)) ? delimLinking : newline);
+		varName = varName.toLowerCase();
+		if ((entityVarNames.contains(varName)) || surfaceFormVarNames.contains(varName)) {
+			final String dynamicDelimLinking = ((hasNext && entityVarNames.contains(varName)) ? delimLinking : newline);
 			writers.get(0).write(value + dynamicDelimLinking);
 		}
 

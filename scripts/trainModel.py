@@ -20,18 +20,20 @@ class MySentences():
             print("Grabbing sentences from: %s" % sentencesPath)
             try:
                 for line in open(sentencesPath, mode='rt'):
-                    lineTokens = line.rstrip('\n').split('\t')
+                    lineTokens = line.rstrip('\n').split("\t")
                     words = []
                     for token in lineTokens:
-                        words.extend(line.split('->'))
-                    yield words
+                        sentence = token.split('->')
+                        yield sentence
+#                        words.append(sentence)
+#                    yield words
             except Exception:
                 print("Failed reading file:")
                 print(sentencesPath)
 
 # sg 500
 #sentencez = grab_sentences()
-model = Word2Vec(sentences=MySentences(), min_count=1, size=500, workers=60, window=10, sg=1, negative=15, iter=5)
+model = Word2Vec(sentences=MySentences(), min_count=1, size=500, workers=55, window=10, sg=1, negative=15, iter=2)
 #model.build_vocab(MySentences())
 #model.train(MySentences())
 

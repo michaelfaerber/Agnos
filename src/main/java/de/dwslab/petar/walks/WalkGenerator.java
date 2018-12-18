@@ -60,9 +60,15 @@ public class WalkGenerator {
 
 	public String fileName = "walks.txt";
 
-	public WalkGenerator(final String repoLocation) {
+	private final List<String> predicateBlacklist;
+
+	private final List<String> entities;
+
+	public WalkGenerator(final String repoLocation, List<String> predicateBlacklist, List<String> entities) {
 		this.dataset = TDBFactory.createDataset(repoLocation);
 		this.model = dataset.getDefaultModel();
+		this.predicateBlacklist = predicateBlacklist;
+		this.entities = entities;
 	}
 
 	public void generateWalks(String outputFile, int nmWalks, int dpWalks, int nmThreads, int offset, int limit) {
@@ -96,12 +102,20 @@ public class WalkGenerator {
 		// set the parameters
 		this.numberWalks = nmWalks;
 		this.depthWalk = dpWalks;
+		// No need to when we iterate through all possibilities from 1 to whatever we
+		// want
 		final boolean computeDirectConnections = false;
 
 		// generate the query
 		this.walkQuery = generateQuery(depthWalk, numberWalks);
-		System.out.println("SELECTING all entities from repo");
-		final List<String> entities = selectAllEntities(dataset, model, offset, limit);
+		final List<String> entities;
+		if (this.entities == null || this.entities.size() == 0) {
+			System.out.println("SELECTING all entities from repo");
+			entities = selectAllEntities(dataset, model, offset, limit);
+		} else {
+			System.out.println("Using passed entities ("+this.entities.size()+")");
+			entities = this.entities;
+		}
 
 		System.out.println("Total number of entities to process: " + entities.size());
 		ThreadPoolExecutor pool = new ThreadPoolExecutor(nmThreads, nmThreads, 0, TimeUnit.SECONDS,
@@ -199,15 +213,22 @@ public class WalkGenerator {
 	 * @param depth
 	 * @return
 	 */
-	public static String generateQuery(int depth, int numberWalks) {
+	public String generateQuery(int depth, int numberWalks) {
 		String selectPart = "SELECT ?p0 ?o1";
-		String mainPart = "{ $ENTITY$ ?p0 ?o1  ";
+		String hopPart = "{ $ENTITY$ ?p0 ?o1  ";
 		String query = "";
+		String blacklistedPredicatesStr = predicateBlacklist.toString();
+		blacklistedPredicatesStr = blacklistedPredicatesStr.substring(1, blacklistedPredicatesStr.length() - 1);
+		String predicateBlacklistNotIn = ((predicateBlacklist != null && predicateBlacklist.size() > 0)
+				? " NOT IN (" + blacklistedPredicatesStr + " )"
+				: "");
+		String blacklistPart = "";
 		for (int i = 1; i < depth; i++) {
-			mainPart += ". ?o" + i + " ?p" + i + "?o" + (i + 1) + " ";
-			selectPart += " ?p" + i + "?o" + (i + 1) + " ";
+			hopPart += ". ?o" + i + " ?p" + i + " ?o" + (i + 1) + " ";
+			selectPart += " ?p" + i + " ?o" + (i + 1) + " ";
+			blacklistPart += " . ?p" + i + " " + predicateBlacklistNotIn;
 		}
-		query = selectPart + " WHERE " + mainPart + "}";
+		query = selectPart + " WHERE " + hopPart + ((predicateBlacklistNotIn.length() > 0) ? blacklistPart : "") + "}";
 		// + " BIND(RAND() AS ?sortKey) } ORDER BY ?sortKey LIMIT "
 		// + numberWalks;
 		return query;
@@ -318,7 +339,7 @@ public class WalkGenerator {
 
 	public static void main(String[] args) {
 		System.out.println("USAGE:  repoLocation outputFile nmWalks dpWalks nmThreads");
-		WalkGenerator generator = new WalkGenerator(args[0]);
+		WalkGenerator generator = new WalkGenerator(args[0], null, null);
 		generator.generateWalks(args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]),
 				Integer.parseInt(args[4]), Integer.parseInt(args[5]), Integer.parseInt(args[6]));
 	}

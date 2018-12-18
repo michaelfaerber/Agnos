@@ -131,26 +131,34 @@ public enum FilePaths {
 	// FILE_BABELFY_DEFAULT_OUTPUT(DIR_BABELFY_OUTPUT.path +
 	// "babelfy_default_output.json"), //
 	FILE_ENTITY_SURFACEFORM_LINKING(DIR_DATA.path + "links_surfaceForms.txt"), //
+
 	// Walk Generator Embeddings files
 	FILE_GRAPH_WALK_OUTPUT(DIR_WALK_GENERATOR.path + "walk.txt"), //
 	FILE_GRAPH_WALK_OUTPUT_SENTENCES(DIR_WALK_GENERATOR.path + "walk_sentences.txt"), //
-	FILE_EMBEDDINGS_GAPH_WALK_TRAINED_EMBEDDINGS(DIR_WALK_GENERATOR.path + "graphwalk_trained_embeddings.txt",
-			"File containing all words and their respective embedding - one embedding per line. Note: should be the same path as indicated for results saving in the Python training script"), //
 	FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS(DIR_WALK_GENERATOR.path + "graphwalk_entity_embeddings.txt",
 			"Proper output for computed entity embeddings"), //
 	FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS_RAWMAP(DIR_WALK_GENERATOR.path + "graphwalk_entity_embeddings_map.raw",
 			"RAW dump of the used hashmap (should be faster for loading rather than using line-by-line logic)"), //
+
+	// Walk Generator general files
+	FILE_GRAPH_WALK_BLACKLIST_PREDICATE(DIR_WALK_GENERATOR.path + "blacklist_predicates.txt"),//
+	
 	// SSP Embeddings files
 	FILE_EMBEDDINGS_SSP_TEXTDATA_SORTED(DIR_SSP.path + "ssp_file_textdata_sorted.txt",
 			"Mapping of files and entities for SSP entity representations"), //
 	FILE_EMBEDDINGS_SSP_SENTENCES(DIR_SSP.path + "ssp_sentences.txt"), //
-	FILE_EMBEDDINGS_SSP_TRAINED_EMBEDDINGS(DIR_SSP.path + "ssp_trained_embeddings.txt",
-			"File containing all words and their respective embedding - one embedding per line. Note: should be the same path as indicated for results saving in the Python training script"), //
 	FILE_EMBEDDINGS_SSP_ENTITY_EMBEDDINGS(DIR_SSP.path + "ssp_entity_embeddings.txt",
 			"Proper output for computed entity embeddings"), //
 	FILE_EMBEDDINGS_SSP_ENTITY_EMBEDDINGS_RAWMAP(DIR_SSP.path + "ssp_entity_embeddings_map.raw",
 			"RAW dump of the used hashmap (should be faster for loading rather than using line-by-line logic)"), //
-	FILE_QUERY_OUT_COMBINED_OUTPUT(DIR_QUERY_OUT.path + "query_output_combined.txt"), //
+	FILE_SSP_QUERY_OUT_COMBINED_OUTPUT(DIR_QUERY_OUT.path + "query_output_combined.txt"), //
+
+	// Embeddings Python-related files
+	FILE_EMBEDDINGS_GAPH_WALK_TRAINED_EMBEDDINGS(DIR_WALK_GENERATOR.path + "graphwalk_trained_embeddings.txt",
+			"File containing all words and their respective embedding - one embedding per line. Note: should be the same path as indicated for results saving in the Python training script"), //
+	FILE_EMBEDDINGS_SSP_TRAINED_EMBEDDINGS(DIR_SSP.path + "ssp_trained_embeddings.txt",
+			"File containing all words and their respective embedding - one embedding per line. Note: should be the same path as indicated for results saving in the Python training script"), //
+
 	// ##################################
 	// LOG FILES
 	// ##################################

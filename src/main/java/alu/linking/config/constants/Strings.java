@@ -31,14 +31,17 @@ public enum Strings {
 	PATH_EDGE_DELIM_START("--"), //
 	PATH_EDGE_DELIM_END("->"), //
 	// Query-related settings
-	ENTITY_SURFACE_FORM_LINKING_DELIM(" %%%%% "), //" %%%%% "//"\t"
-	QUERY_RESULT_DELIMITER("\t;\t"),//
-	
+	ENTITY_SURFACE_FORM_LINKING_DELIM(" %%%%% "), // " %%%%% "//"\t"
+	QUERY_RESULT_DELIMITER("\t;\t"), //
+
 	// Embeddings- and Walks-related settings
-	EMBEDDINGS_SENTENCES_DELIM("\t", "Delimiter used for outputting sentences to the appropriate files"),//
-	EMBEDDINGS_TRAINED_DELIM("\t", "Delimiter used in python to output the trained word embeddings into word:embedding lines"),//
-	EMBEDDINGS_TRAINED_SENTENCES_DELIM("\t", "Delimiter used for the combination of the word embeddings into sentence embeddings (e.g. through summing, etc)"),//
-	EMBEDDINGS_ENTITY_EMBEDDINGS_DUMP_DELIMITER("\t", "Delimiter for the dumping of entity embeddings"),
+	EMBEDDINGS_SENTENCES_DELIM("\t", "Delimiter used for outputting sentences to the appropriate files"), //
+	EMBEDDINGS_TRAINED_DELIM("\t",
+			"Delimiter used in python to output the trained word embeddings into word:embedding lines"), //
+	EMBEDDINGS_TRAINED_SENTENCES_DELIM("\t",
+			"Delimiter used for the combination of the word embeddings into sentence embeddings (e.g. through summing, etc)"), //
+	EMBEDDINGS_ENTITY_EMBEDDINGS_DUMP_DELIMITER("\t", "Delimiter for the dumping of entity embeddings"), //
+	EMBEDDINGS_RDF2VEC_SPLIT_DELIM("(\\t)|(->)"),//
 	;
 	public final String val;
 	public final String desc;

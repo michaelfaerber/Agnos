@@ -50,7 +50,7 @@ public class SSPEmbeddingGenerator implements Executable {
 			final File[] np_url_hsfInputFiles = new File(FilePaths.DIR_QUERY_OUT_NP_URL_HELPING_SURFACEFORM.getPath(KG))
 					.listFiles();
 			final FileCombiner fc = new FileCombiner();
-			final File fileCombinedQueryOutput = new File(FilePaths.FILE_QUERY_OUT_COMBINED_OUTPUT.getPath(KG));
+			final File fileCombinedQueryOutput = new File(FilePaths.FILE_SSP_QUERY_OUT_COMBINED_OUTPUT.getPath(KG));
 			boolean notFirst = false;
 			// Surface Forms
 			for (File f : sfInputFiles) {

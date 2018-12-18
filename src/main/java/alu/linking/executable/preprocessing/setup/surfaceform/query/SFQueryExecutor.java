@@ -31,6 +31,11 @@ public class SFQueryExecutor implements Executable {
 				}
 			}
 		}
+		else
+		{
+			getLogger().warn("No KG defined, using default.");
+			KGhelper = EnumModelType.DEFAULT;
+		}
 		KG = KGhelper;
 		KGhelper = null;
 		new SFQuery(KG).execQueries();

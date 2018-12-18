@@ -2,6 +2,7 @@ package alu.linking.disambiguation;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +30,7 @@ public class AssignmentChooser<N> {
 	private static Logger logger = Logger.getLogger(AssignmentChooser.class);
 	private AssignmentScorer<N> scorer = null;
 
-	public AssignmentChooser(final EnumModelType KG, final File pageRankFile) throws FileNotFoundException {
+	public AssignmentChooser(final EnumModelType KG, final File pageRankFile) throws ClassNotFoundException, IOException {
 		this.scorer = new AssignmentScorer<N>(KG, pageRankFile);
 		Graph.getInstance().readIn(FilePaths.FILE_HOPS_GRAPH_DUMP.getPath(KG), FilePaths.FILE_HOPS_GRAPH_DUMP_PATH_IDS.getPath(KG),
 				FilePaths.FILE_HOPS_GRAPH_DUMP_EDGE_IDS.getPath(KG));

@@ -76,7 +76,7 @@ public class EmbeddingsUtils {
 			BiFunction<List<Number>, List<Number>, List<Number>> method) {
 		List<Number> embedding = null;
 		for (String s : sentence) {
-			method.apply(embedding, embeddings.get(s));
+			embedding = method.apply(embedding, embeddings.get(s));
 		}
 		return embedding;
 	}
