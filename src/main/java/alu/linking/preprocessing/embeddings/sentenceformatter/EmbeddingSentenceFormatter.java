@@ -46,11 +46,14 @@ public abstract class EmbeddingSentenceFormatter implements Loggable {
 			// prev/curr group logic only works due to
 			// (1) the output being in groups
 			// (2) once a 'group' ends, it doesn't return
-			int lineCounter = 0;
+			long lineCounter = 0l;
+			long normalGroupCount = 0l;
 			while ((line = br.readLine()) != null) {
 				currGroup = extractKey(line, keyPos, inDelim);
 				if (!currGroup.startsWith("http://")) {
 					System.out.println("Weird-looking group(" + lineCounter + "): " + currGroup);
+				} else {
+					normalGroupCount++;
 				}
 				lineCounter++;
 				if (currGroup != null) {
@@ -72,6 +75,7 @@ public abstract class EmbeddingSentenceFormatter implements Loggable {
 				}
 				prevGroup = currGroup;
 			}
+			getLogger().info("Normal groups: " + normalGroupCount + " / " + lineCounter);
 			getLogger().info("Output sentences into:");
 			getLogger().info(new File(outputFile).getAbsolutePath());
 		} catch (FileNotFoundException e) {

@@ -11,6 +11,6 @@ import alu.linking.preprocessing.embeddings.posttraining.GraphWalkHandler;
  */
 public class LauncherEmbeddingComputer {
 	public static void main(String[] args) {
-		new GraphWalkHandler(EnumModelType.MAG).computeRequiredEntityEmbeddings();
+		new GraphWalkHandler(EnumModelType.CRUNCHBASE).computeRequiredEntityEmbeddings();
 	}
 }
