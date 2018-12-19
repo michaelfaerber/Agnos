@@ -18,7 +18,7 @@ public class LauncherWalkGeneratorDisplayQuery implements Loggable {
 		final String walkOutput = FilePaths.FILE_GRAPH_WALK_OUTPUT.getPath(kg);
 		final String sentencesOut = FilePaths.FILE_GRAPH_WALK_OUTPUT_SENTENCES.getPath(kg);
 		final String s = new WalkGenerator("",
-				Arrays.asList(new String[] { "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>" })).generateQuery(7,
+				Arrays.asList(new String[] { "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>" }), null).generateQuery(7,
 						40);
 		System.out.println(s);
 	}

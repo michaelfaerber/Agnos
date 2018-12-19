@@ -169,7 +169,7 @@ public class WalkGenerator {
 		processedWalks += 1;
 		fileProcessedLines += 1;
 		try {
-			wrt.write(str + newline);
+			wrt.write(str.replace(newline, " ").replace("\n", " ").replace("\r", " ").replace("  ", " ") + newline);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -256,7 +256,8 @@ public class WalkGenerator {
 			selectPart += " ?p" + i + " ?o" + (i + 1) + " ";
 			blacklistPart += " . ?p" + i + " " + predicateBlacklistNotIn;
 		}
-		query = selectPart + " WHERE " + hopPart + ((predicateBlacklistNotIn.length() > 0) ? blacklistPart : "") + "}";
+		final String notLiteral = ". FILTER(!isLiteral(?o"+depth+"))";
+		query = selectPart + " WHERE " + hopPart + ((predicateBlacklistNotIn.length() > 0) ? blacklistPart : "") + notLiteral + "}";
 		// + " BIND(RAND() AS ?sortKey) } ORDER BY ?sortKey LIMIT "
 		// + numberWalks;
 		return query;

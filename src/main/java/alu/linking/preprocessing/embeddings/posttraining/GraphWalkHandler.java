@@ -74,6 +74,13 @@ public class GraphWalkHandler {
 					final List<Number> rebuiltSentence = EmbeddingsUtils.rebuildSentenceEmbedding(word_embeddings,
 							Arrays.asList(words), embeddingCombineFunction);
 					if (rebuiltSentence == null) {
+						System.err.println("Words: "+Arrays.asList(words));
+						int foundEmbedding = 0;
+						for (String word : words)
+						{
+							foundEmbedding+=(word_embeddings.get(word)!=null?1:0);
+						}
+						System.out.println("Found embeddings for "+foundEmbedding+" / "+words.length);
 						throw new RuntimeException("A rebuilt sentence embedding should not be null...");
 					}
 
