@@ -29,6 +29,7 @@ public class GraphWalkEmbeddingScorer<N> implements PostScorer<PossibleAssignmen
 	private boolean hasChanged = true;
 	private Collection<Mention<N>> context;
 	private final Set<String> bestCombination = new HashSet<>();
+	private final String changedLock = "hasChangedLock";
 
 	public GraphWalkEmbeddingScorer(final EnumModelType KG)
 			throws FileNotFoundException, IOException, ClassNotFoundException {
@@ -56,10 +57,9 @@ public class GraphWalkEmbeddingScorer<N> implements PostScorer<PossibleAssignmen
 
 	@Override
 	public Number computeScore(PossibleAssignment<N> assignment) {
-		synchronized ("hasChanged") {
+		synchronized (changedLock) {
 			if (hasChanged) {
 				recomputeOptimum();
-				hasChanged = false;
 			}
 		}
 		if (bestCombination.contains(assignment.toString())) {
@@ -113,14 +113,14 @@ public class GraphWalkEmbeddingScorer<N> implements PostScorer<PossibleAssignmen
 				// Summing up distances/similarity to determine optimal entity combination (aka.
 				// 'cluster')
 				for (int i = 0; i < permutation.size(); i++) {
-					for (int j = i+1; j < permutation.size(); j++) {
+					for (int j = i + 1; j < permutation.size(); j++) {
 						if (i != j) {
 							final List<Number> leftEmbedding = this.entityEmbeddingsMap.get(permutation.get(i));
 							final List<Number> rightEmbedding = this.entityEmbeddingsMap.get(permutation.get(j));
-							//getLogger().info("l:" + permutation.get(i) + " " + (leftEmbedding == null));
-							//getLogger().info("r:" + permutation.get(j) + " " + (rightEmbedding == null));
-							//getLogger().info("Permutation:" + permutation);
-							// TODO: FIX LOGIC SO WE CAN REMOVE THIS PART OF THE LOGIC
+							// getLogger().info("l:" + permutation.get(i) + " " + (leftEmbedding == null));
+							// getLogger().info("r:" + permutation.get(j) + " " + (rightEmbedding == null));
+							// getLogger().info("Permutation:" + permutation);
+							// TODO: FIX SO WE CAN REMOVE THIS PART OF THE LOGIC
 							if (leftEmbedding == null || rightEmbedding == null) {
 								continue;
 							}
@@ -160,7 +160,7 @@ public class GraphWalkEmbeddingScorer<N> implements PostScorer<PossibleAssignmen
 
 	@Override
 	public void updateContext() {
-		synchronized ("hasChanged") {
+		synchronized (changedLock) {
 			hasChanged = true;
 		}
 	}
