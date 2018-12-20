@@ -38,6 +38,7 @@ model = Word2Vec(sentences=MySentences(), min_count=1, size=500, workers=55, win
 #model.train(MySentences())
 
 outFile = open(vocabPath, "w")
+print("Vocab keys size:",len(model.wv.vocab.keys()))
 print("Outputting vocab to: ",vocabPath)
 for key in model.wv.vocab.keys():
     outFile.write("%s" % key)

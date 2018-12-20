@@ -153,12 +153,6 @@ public enum FilePaths {
 			"RAW dump of the used hashmap (should be faster for loading rather than using line-by-line logic)"), //
 	FILE_SSP_QUERY_OUT_COMBINED_OUTPUT(DIR_QUERY_OUT.path + "query_output_combined.txt"), //
 
-	// Embeddings Python-related files
-	FILE_EMBEDDINGS_GAPH_WALK_TRAINED_EMBEDDINGS(DIR_WALK_GENERATOR.path + "graphwalk_trained_embeddings.txt",
-			"File containing all words and their respective embedding - one embedding per line. Note: should be the same path as indicated for results saving in the Python training script"), //
-	FILE_EMBEDDINGS_SSP_TRAINED_EMBEDDINGS(DIR_SSP.path + "ssp_trained_embeddings.txt",
-			"File containing all words and their respective embedding - one embedding per line. Note: should be the same path as indicated for results saving in the Python training script"), //
-
 	// ##################################
 	// LOG FILES
 	// ##################################

@@ -237,7 +237,8 @@ public class EmbeddingsUtils {
 	 * @param l2 second vector
 	 * @return cosine similarity of the two vectors
 	 */
-	public static Number cosineSimilarity(final List<Number> l1, final List<Number> l2) {
+	public static Number cosineSimilarity(final List<? extends Number> l1, final List<? extends Number> l2)
+			throws RuntimeException {
 		if (l1.size() != l2.size()) {
 			throw new RuntimeException("Incompatible dimensions: Left(" + l1.size() + ") vs. Right(" + l2.size() + ")");
 		}
