@@ -11,8 +11,9 @@ import alu.linking.disambiguation.PostScorer;
 import alu.linking.disambiguation.ScoreCombiner;
 import alu.linking.disambiguation.Scorer;
 import alu.linking.mentiondetection.Mention;
+import alu.linking.structure.Loggable;
 
-public class PossibleAssignment<N> implements Scorable, Comparable<PossibleAssignment<N>> {
+public class PossibleAssignment<N> implements Scorable, Comparable<PossibleAssignment<N>>, Loggable {
 	private static Logger logger = Logger.getLogger(PossibleAssignment.class);
 	private Number score = Float.valueOf(0f);
 	private final N assignment;

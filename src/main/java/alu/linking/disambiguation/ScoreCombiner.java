@@ -3,8 +3,9 @@ package alu.linking.disambiguation;
 import alu.linking.config.constants.Numbers;
 import alu.linking.disambiguation.scorers.PageRankScorer;
 import alu.linking.disambiguation.scorers.VicinityScorer;
+import alu.linking.structure.Loggable;
 
-public class ScoreCombiner<T> {
+public class ScoreCombiner<T> implements Loggable {
 	public Number combine(final Number currScore, final Scorer<T> scorer, final T scorerParam) {
 		// Add all types of scorers here with the appropriate weights
 		final Number weight = scorer.getWeight();

@@ -1,7 +1,6 @@
 package alu.linking.disambiguation;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -13,9 +12,7 @@ import org.apache.log4j.Logger;
 import com.google.common.collect.Lists;
 
 import alu.linking.candidategeneration.PossibleAssignment;
-import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
-import alu.linking.disambiguation.hops.graph.Graph;
 import alu.linking.mentiondetection.Mention;
 
 /**
@@ -30,10 +27,16 @@ public class AssignmentChooser<N> {
 	private static Logger logger = Logger.getLogger(AssignmentChooser.class);
 	private AssignmentScorer<N> scorer = null;
 
-	public AssignmentChooser(final EnumModelType KG, final File pageRankFile) throws ClassNotFoundException, IOException {
+	public AssignmentChooser(final EnumModelType KG, final File pageRankFile)
+			throws ClassNotFoundException, IOException {
 		this.scorer = new AssignmentScorer<N>(KG, pageRankFile);
-		Graph.getInstance().readIn(FilePaths.FILE_HOPS_GRAPH_DUMP.getPath(KG), FilePaths.FILE_HOPS_GRAPH_DUMP_PATH_IDS.getPath(KG),
-				FilePaths.FILE_HOPS_GRAPH_DUMP_EDGE_IDS.getPath(KG));
+		// Graph.getInstance().readIn(FilePaths.FILE_HOPS_GRAPH_DUMP.getPath(KG),
+		// FilePaths.FILE_HOPS_GRAPH_DUMP_PATH_IDS.getPath(KG),
+		// FilePaths.FILE_HOPS_GRAPH_DUMP_EDGE_IDS.getPath(KG));
+	}
+	public AssignmentChooser(final EnumModelType KG)
+			throws ClassNotFoundException, IOException {
+		this.scorer = new AssignmentScorer<N>(KG);
 	}
 
 	/**
@@ -43,7 +46,7 @@ public class AssignmentChooser<N> {
 	 * @throws InterruptedException
 	 */
 	private Collection<PossibleAssignment<N>> score(final Mention<N> mention) throws InterruptedException {
-		//logger.debug(mention.getMention() + " / " + mention.getSource());
+		// logger.debug(mention.getMention() + " / " + mention.getSource());
 		return scorer.score(mention);
 	}
 

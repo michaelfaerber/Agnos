@@ -33,7 +33,9 @@ public class SSPHandler {
 	 * Entity Embeddings are combined through addition.<br>
 	 * <b>Note</b>: If you want to define a custom combination function, please use
 	 * {@link #computeRequiredEntityEmbeddings(BiFunction)} instead
+	 * @Deprecated Embeddings are combined in python due to its high RAM advantage
 	 */
+	@Deprecated
 	public void computeRequiredEntityEmbeddings() {
 		computeRequiredEntityEmbeddings(EmbeddingsUtils::add);
 	}
@@ -42,13 +44,15 @@ public class SSPHandler {
 	 * Reads computed word embeddings and computes required entity embeddings based
 	 * on them. <br>
 	 * Entity Embeddings are combined through use of the passed BiFunction
+	 * @Deprecated Embeddings are combined in python due to its high RAM advantage
 	 */
+	@Deprecated
 	public void computeRequiredEntityEmbeddings(
 			BiFunction<List<Number>, List<Number>, List<Number>> embeddingCombineFunction) {
 		try {
 			// Reads the generated word embeddings
 			final Map<String, List<Number>> word_embeddings = EmbeddingsUtils
-					.readEmbeddings(new File(FilePaths.FILE_EMBEDDINGS_SSP_TRAINED_EMBEDDINGS.getPath(KG)));
+					.readEmbeddings(new File(""));//FilePaths.FILE_EMBEDDINGS_SSP_TRAINED_EMBEDDINGS.getPath(KG)));
 			// Now rebuild all of the word embeddings into entity embeddings
 			final String ssp_embedding_rep = FilePaths.FILE_EMBEDDINGS_SSP_TEXTDATA_SORTED.getPath(KG);
 			final SSPEmbeddingSentenceFormatter ssp_formatter = new SSPEmbeddingSentenceFormatter();

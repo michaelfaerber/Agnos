@@ -3,6 +3,7 @@ package alu.linking.preprocessing.embeddings.posttraining;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -34,7 +35,10 @@ public class GraphWalkHandler {
 	 * Entity Embeddings are combined through addition.<br>
 	 * <b>Note</b>: If you want to define a custom combination function, please use
 	 * {@link #computeRequiredEntityEmbeddings(BiFunction)} instead
+	 * 
+	 * @Deprecated Done in python now (way more efficient RAM-wise)
 	 */
+	@Deprecated
 	public void computeRequiredEntityEmbeddings() {
 		computeRequiredEntityEmbeddings(EmbeddingsUtils::add);
 	}
@@ -43,13 +47,15 @@ public class GraphWalkHandler {
 	 * Reads computed word embeddings and computes required entity embeddings based
 	 * on them. <br>
 	 * Entity Embeddings are combined through use of the passed BiFunction
+	 * 
+	 * @Deprecated Done in python now (way more efficient RAM-wise)
 	 */
+	@Deprecated
 	public void computeRequiredEntityEmbeddings(
 			BiFunction<List<Number>, List<Number>, List<Number>> embeddingCombineFunction) {
 		try {
 			// Reads the generated word embeddings
-			final Map<String, List<Number>> word_embeddings = EmbeddingsUtils
-					.readEmbeddings(new File(FilePaths.FILE_EMBEDDINGS_GAPH_WALK_TRAINED_EMBEDDINGS.getPath(KG)));
+			final Map<String, List<Number>> word_embeddings = EmbeddingsUtils.readEmbeddings(new File(""));// FilePaths.FILE_EMBEDDINGS_GAPH_WALK_TRAINED_EMBEDDINGS.getPath(KG)));
 			// Now rebuild all of the word embeddings into entity embeddings
 			// Take the sentences and combine them as wanted for each entity (one line = one
 			// entity)
@@ -74,13 +80,12 @@ public class GraphWalkHandler {
 					final List<Number> rebuiltSentence = EmbeddingsUtils.rebuildSentenceEmbedding(word_embeddings,
 							Arrays.asList(words), embeddingCombineFunction);
 					if (rebuiltSentence == null) {
-						System.err.println("Words: "+Arrays.asList(words));
+						System.err.println("Words: " + Arrays.asList(words));
 						int foundEmbedding = 0;
-						for (String word : words)
-						{
-							foundEmbedding+=(word_embeddings.get(word)!=null?1:0);
+						for (String word : words) {
+							foundEmbedding += (word_embeddings.get(word) != null ? 1 : 0);
 						}
-						System.out.println("Found embeddings for "+foundEmbedding+" / "+words.length);
+						System.out.println("Found embeddings for " + foundEmbedding + " / " + words.length);
 						throw new RuntimeException("A rebuilt sentence embedding should not be null...");
 					}
 
@@ -117,5 +122,30 @@ public class GraphWalkHandler {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Newer version of {@link #computeRequiredEntityEmbeddings()} Reads computed
+	 * entity embeddings (done via python) and constructs a HashMap based on it
+	 * which is dumped in its raw byte format for faster loading for disambiguation
+	 * 
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+	public void readPythonEntityEmbeddingsOutputHashMap() throws FileNotFoundException, IOException {
+		final Map<String, List<Number>> entityEmbeddingMap = EmbeddingsUtils
+				.readEmbeddings(new File(FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG)));
+		// ------------------------------------------
+		// Now we should back up the proper entity
+		// embeddings for easier access later on
+		// ------------------------------------------
+		// Raw dump
+		try (FileOutputStream fos = new FileOutputStream(
+				FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS_RAWMAP.getPath(KG))) {
+			try (final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+				oos.writeObject(entityEmbeddingMap);
+			}
+		}
+
 	}
 }
