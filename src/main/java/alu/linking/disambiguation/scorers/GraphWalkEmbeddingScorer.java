@@ -18,6 +18,7 @@ import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.PostScorer;
 import alu.linking.disambiguation.scorers.embedhelp.ClusterItemPicker;
 import alu.linking.disambiguation.scorers.embedhelp.GreedyOptimalPicker;
+import alu.linking.disambiguation.scorers.embedhelp.SubPageRankPicker;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 import alu.linking.utils.EmbeddingsUtils;
@@ -53,7 +54,8 @@ public class GraphWalkEmbeddingScorer<N> implements PostScorer<PossibleAssignmen
 					.readEmbeddings(new File(FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG)));
 		}
 
-		clusterHelper = new GreedyOptimalPicker<N>(this.entityEmbeddingsMap);
+		//clusterHelper = new GreedyOptimalPicker<N>(this.entityEmbeddingsMap);
+		clusterHelper = new SubPageRankPicker<N>(this.entityEmbeddingsMap);
 	}
 
 	@Override
