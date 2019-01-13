@@ -24,25 +24,26 @@ import alu.linking.structure.Loggable;
 public class LauncherSetupTDB implements Loggable {
 	public static void main(String[] args) {
 		// new LauncherSetupTDB().exec();
-//			final String[] MAG_load_locations = new String[] {
-//					"/home/faerberm/inRDF/Affiliations.nt",
-//					"/home/faerberm/inRDF/Authors.nt",
-//					"/home/faerberm/inRDF/ConferenceInstances.nt",
-//					"/home/faerberm/inRDF/ConferenceSeries.nt",
-//					"/home/faerberm/inRDF/FieldsOfStudy.nt",
-//					"/home/faerberm/inRDF/Journals.nt",
-//					"/home/faerberm/inRDF/PaperAuthorAffiliations.nt",
-//					"/home/faerberm/inRDF/PaperCitationContexts.nt",//???
-//					"/home/faerberm/inRDF/PaperFieldsOfStudy.nt",
-//					"/home/faerberm/inRDF/PaperLanguages.nt",//???
-//					"/home/faerberm/inRDF/Papers.nt",
-//					"/home/faerberm/inRDF/PaperUrls.nt",
-//					"/home/faerberm/inRDF/RelatedFieldOfStudy.nt",
-//			};
+
 		// Load the crunchbase graph into the crunchbase dataset
-		final EnumModelType KG = null;//EnumModelType.CRUNCHBASE;
-		final String KGpath = "/vol1/cb/crunchbase-201510/dumps/crunchbase-dump-201510.nt";
+		final EnumModelType KG = EnumModelType.
+		// MINI_MAG;
+				DBLP;
+		// CRUNCHBASE2;
+		// CRUNCHBASE;
+		System.out.println("Setting up TDB for: " + KG.name());
+		final String KGpath =
+				// "/vol1/cb/crunchbase-201510/dumps/crunchbase-dump-201510.nt";//CB1
+				// "/vol1/cb/crunchbase-201806/dumps/crunchbase-dump-2018-06.nt";//CB2
+				// "/vol1/dblp/dumps/dblp_2018-11-02_unique.nt";//DBLP
+				// "/vol1/mag/data/2018-07-19/MAGFieldsOfStudyKG/MAGFieldsOfStudyKG.nt";//MAG
+				// "./crunchbase-dump-2018-06_normalized.nt";// normalized CB2
+				"./dblp_2018-11-02_unique_normalized.nt";// normalized DBLP
+		System.out.println("Source: " + KGpath);
 		new LauncherSetupTDB().exec(KG, KGpath);
+
+		// Set up for other
+
 	}
 
 	/**

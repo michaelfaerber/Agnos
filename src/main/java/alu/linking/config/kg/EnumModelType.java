@@ -5,7 +5,9 @@ public enum EnumModelType {
 	FREEBASE("./freebase/", EntityQuery.DEFAULT), // 
 	CRUNCHBASE("./crunchbase/", EntityQuery.DEFAULT), // 
 	CRUNCHBASE2("./crunchbase2/", EntityQuery.DEFAULT),//
+	MINI_MAG("./mini_mag/", EntityQuery.MAG), //
 	MAG("./mag/", EntityQuery.MAG), //
+	DBLP("./dblp/", EntityQuery.DEFAULT), //
 	DEFAULT("./", EntityQuery.DEFAULT) //
 	;
 	public final String root;

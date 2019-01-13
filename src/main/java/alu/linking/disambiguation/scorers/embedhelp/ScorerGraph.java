@@ -3,10 +3,12 @@ package alu.linking.disambiguation.scorers.embedhelp;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.jena.ext.com.google.common.collect.Lists;
@@ -14,6 +16,7 @@ import org.apache.jena.ext.com.google.common.collect.Lists;
 import alu.linking.utils.EmbeddingsUtils;
 
 public class ScorerGraph {
+	public final Set<String> notFoundIRIs = new HashSet<>();
 	final Map<String, List<Number>> embeddings;
 	final Map<String, ScorerGraphNode> nodes = new HashMap<String, ScorerGraphNode>();
 	public Double defaultValue = 1d;
@@ -88,15 +91,24 @@ public class ScorerGraph {
 				return;
 			}
 
-			final Number weight = EmbeddingsUtils.cosineSimilarity(embeddings.get(this.nodeName),
-					embeddings.get(next.nodeName));
-			if (weight == null || weight.doubleValue() < 0 || weight.doubleValue() > 1) {
-				throw new RuntimeException("Invalid weight");
-			}
+			try {
+				final Number weight = EmbeddingsUtils.cosineSimilarity(embeddings.get(this.nodeName),
+						embeddings.get(next.nodeName));
+				if (weight == null || weight.doubleValue() < 0 || weight.doubleValue() > 1) {
+					throw new RuntimeException("Invalid weight");
+				}
 
-			// Adds weight and successor
-			nextWeights.add(weight);
-			nexts.add(next);
+				// Adds weight and successor
+				nextWeights.add(weight);
+				nexts.add(next);
+			} catch (NullPointerException npe) {
+				if (embeddings.get(this.nodeName) == null) {
+					notFoundIRIs.add(this.nodeName);
+				}
+				if (embeddings.get(next.nodeName) == null) {
+					notFoundIRIs.add(next.nodeName);
+				}
+			}
 		}
 	}
 
@@ -220,6 +232,7 @@ public class ScorerGraph {
 
 	/**
 	 * Nodes from one cluster are connected to nodes of all other clusters
+	 * 
 	 * @return
 	 */
 	public ScorerGraph connectDifferentGroups() {

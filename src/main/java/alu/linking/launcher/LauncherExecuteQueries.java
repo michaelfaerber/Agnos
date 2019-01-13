@@ -11,7 +11,7 @@ public class LauncherExecuteQueries {
 
 	public static void main(String[] args) {
 		Pipeline pipeline = new Pipeline();
-		final EnumModelType KG = EnumModelType.CRUNCHBASE;
+		final EnumModelType KG = EnumModelType.CRUNCHBASE2;
 		pipeline.queue(new SFQueryExecutor(), KG);
 		pipeline.queue(new HSFQueryExecutor(), KG);
 		pipeline.queue(new NP_HSFQueryExecutor(), KG);
