@@ -1,11 +1,19 @@
 package alu.linking.preprocessing.webcrawler;
 
 import java.io.IOException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.List;
+
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLProtocolException;
 
 import org.jsoup.Connection;
 import org.jsoup.Connection.Response;
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
+import org.jsoup.UnsupportedMimeTypeException;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -34,12 +42,12 @@ public class CrawlerConnection implements TextProcessor {
 	}
 
 	@Override
-	public CrawlerConnection call() {
+	public CrawlerConnection call() throws IOException {
 		callFinish = false;
+//		 System.out.println(Thread.currentThread().getName() + " - Executing: " +
+//		 url);
 		try {
-			// System.out.println(Thread.currentThread().getName() + " - Executing: " +
-			// url);
-			final Connection connection = Jsoup.connect(url).userAgent(USER_AGENT).followRedirects(false);
+			final Connection connection = Jsoup.connect(url).userAgent(USER_AGENT);// .followRedirects(false);
 			final Document htmlDocument = connection.get();
 			connection.timeout(Numbers.WEBCRAWLER_CONNECTIONS_TIMEOUT_MS.val.intValue());
 
@@ -68,6 +76,7 @@ public class CrawlerConnection implements TextProcessor {
 			}
 			if (htmlDocument != null && (htmlBody = htmlDocument.body()) != null) {
 				ret += htmlBody.text();
+				// System.out.println("Found website for: " + url);
 			} else if (htmlDocument != null && htmlDocument.body() == null) {
 				System.out.println("No body for: " + url);
 			} else {
@@ -76,11 +85,24 @@ public class CrawlerConnection implements TextProcessor {
 			this.textResult = ret;
 			callFinish = true;
 			return this;
+		} catch (HttpStatusException httpCodeError) {
+			// do nothing about 404 etc
+		} catch (UnknownHostException uhe) {
+			// DNS
+		} catch (SocketException | SocketTimeoutException socketException) {
+			// ignore socket exceptions
+		} catch (SSLProtocolException sslProtocolException) {
+			// SSL protocol exception
+		} catch (SSLHandshakeException sslHandshakeException) {
+			// handshake exception
+		} catch (UnsupportedMimeTypeException mimeException) {
+			// Mime exception
 		} catch (IOException ioe) {
+			ioe.printStackTrace();
 		}
 		callFinish = true;
 		return null;
-
+//
 	}
 
 	private List<String> searchForLinks(Document htmlDocument) {
@@ -93,7 +115,7 @@ public class CrawlerConnection implements TextProcessor {
 	}
 
 	@Override
-	public String getText() {
+	public String getText() throws IOException {
 		if (!callFinish) {
 			call();
 		}

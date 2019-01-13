@@ -38,7 +38,11 @@ public class SubPageRankPicker<S> implements ClusterItemPicker<S> {
 		scorerGraph.pagerank();
 		Map<Integer, ImmutablePair<String, Double>> groupedMap = scorerGraph.topByGroup();
 		for (Map.Entry<Integer, ImmutablePair<String, Double>> e : groupedMap.entrySet()) {
+			System.out.println("Value / Score: " + e.getValue().left + " - " + e.getValue().right);
 			retList.add((S) e.getValue().left);
+		}
+		for (String s : scorerGraph.notFoundIRIs) {
+			System.out.println("Could not find (" + scorerGraph.notFoundIRIs.size() + "): " + s);
 		}
 		return retList;
 	}

@@ -1,5 +1,6 @@
 package alu.linking.preprocessing.webcrawler;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -26,11 +27,11 @@ public class Crawler {
 	/**
 	 * Simply visits website and grabs the text.
 	 * 
-	 * @param url
-	 *            website to visit
+	 * @param url website to visit
 	 * @return text content of website, NULL if any error occurs
+	 * @throws IOException
 	 */
-	public String crawlSimple(final String url) {
+	public String crawlSimple(final String url) throws IOException {
 		return crawlSimple(url, false);
 	}
 
@@ -38,14 +39,13 @@ public class Crawler {
 	 * Simply visits website and grabs the text and saves links if saveLinks flag is
 	 * set to TRUE.
 	 * 
-	 * @param url
-	 *            page to visit
-	 * @param saveLinks
-	 *            whether to save links
+	 * @param url       page to visit
+	 * @param saveLinks whether to save links
 	 * @return
+	 * @throws IOException
 	 * @throws Exception
 	 */
-	public String crawlSimple(final String url, final boolean saveLinks) {
+	public String crawlSimple(final String url, final boolean saveLinks) throws IOException {
 		return new CrawlerConnection(url, saveLinks).call().getText();
 	}
 
@@ -55,6 +55,10 @@ public class Crawler {
 
 	public CrawlerConnection createConnection(final String url) {
 		return new CrawlerConnection(url);
+	}
+
+	public CrawlerConnection createConnection(final String url, final String outPath) {
+		return new CrawlerConnectionOutput(url, outPath);
 	}
 
 	public List<String> getSavedLinks() {

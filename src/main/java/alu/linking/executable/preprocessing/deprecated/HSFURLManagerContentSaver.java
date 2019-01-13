@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -35,6 +36,7 @@ public class HSFURLManagerContentSaver implements Executable, RDFFormatter<java.
 	final Queue<ImmutablePair<Future<TextProcessor>, String>> futureQueue = new LinkedList<ImmutablePair<Future<TextProcessor>, String>>();
 	private static long fileCounter = 0l;
 	private final EnumModelType KG;
+
 	public HSFURLManagerContentSaver(final EnumModelType KG) {
 		this.executorService = Executors.newFixedThreadPool(Numbers.WEBCRAWLER_CONNECTIONS.val.intValue());
 		this.KG = KG;
@@ -65,14 +67,22 @@ public class HSFURLManagerContentSaver implements Executable, RDFFormatter<java.
 			outFolder.getParentFile().mkdirs();
 		}
 		List<Object> line = null;
+		String lineStr = null;
 		try (BufferedReader brIn = Files.newBufferedReader(Paths.get(inFile.getPath()))) {
-			final FileInParser parser = enumFileTypeIn.parserInClass.newInstance().create(brIn);
+			// final FileInParser parser =
+			// enumFileTypeIn.parserInClass.newInstance().create(brIn,
+			// Strings.QUERY_RESULT_DELIMITER.val);
 			if (headLine) {
-				parser.withHeader(headLine);
+				// Ignore first line
+				brIn.readLine();
+				// parser.withHeader(headLine);
 			}
-			try (BufferedWriter bwLog = Files.newBufferedWriter(Paths.get(FilePaths.FILE_OUT_HSFURL_MAPPING.getPath(KG)),
-					StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-				while ((line = parser.getNext()) != null) {
+			try (BufferedWriter bwLog = Files.newBufferedWriter(
+					Paths.get(FilePaths.FILE_OUT_HSFURL_MAPPING.getPath(KG)), StandardOpenOption.WRITE,
+					StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+				// while ((line = parser.getNext()) != null) {
+				while ((lineStr = brIn.readLine()) != null) {
+					line = Arrays.asList(lineStr.split(Strings.QUERY_RESULT_DELIMITER.val));
 					final String url = line.get(line.size() - 1).toString();
 					final String outPath = FilePaths.DIR_OUT_HSFURL.getPath(KG) + (fileCounter++) + ".txt";
 

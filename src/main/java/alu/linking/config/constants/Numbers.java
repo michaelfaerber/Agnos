@@ -11,9 +11,9 @@ public enum Numbers {
 	// ##################################
 	THRESHOLD_NOUN_PHRASE_MIN_LEN(50,
 			"Minimal character length of a string literal to be considered for noun-phrase extraction (to get helping surface forms)"), //
-	WEBCRAWLER_CONNECTIONS(512,
+	WEBCRAWLER_CONNECTIONS(10240,
 			"Number of threads/connections used for crawling the web. Note that it can/should be 'high' due to the sometimes long waiting times for web responses"), //
-	WEBCRAWLER_CONNECTIONS_TIMEOUT_MS(5_000L, "Timeout for connections, generally 300s is way more than enough"), //
+	WEBCRAWLER_CONNECTIONS_TIMEOUT_MS(30_000L, "Timeout for connections, generally 300s is way more than enough"), //
 	HOPS_PATH_LENGTH(1, "Maximum length of paths to be computed"), //
 	HOPS_THREAD_AMT(10, "Number of threads computing hops"), //
 	SCORER_THREAD_AMT(10, "Number of threads computing scores"), //

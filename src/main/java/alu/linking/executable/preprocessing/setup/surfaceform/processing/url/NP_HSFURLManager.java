@@ -179,7 +179,7 @@ public class NP_HSFURLManager implements Executable, RDFFormatter<java.lang.Stri
 	}
 
 	@Override
-	public List<TaggedWord> exec(Object... o) {
+	public List<TaggedWord> exec(Object... o) throws IOException {
 		if (o != null && o.length == 1) {
 			return NP_HSFManager.splitTextToNounPhrases(new Crawler().crawlSimple(o[0].toString()));
 			// return tripleToHelpingSurfaceForm(o[0].toString());
