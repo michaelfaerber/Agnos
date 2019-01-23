@@ -42,6 +42,8 @@ public enum Strings {
 			"Delimiter used for the combination of the word embeddings into sentence embeddings (e.g. through summing, etc)"), //
 	EMBEDDINGS_ENTITY_EMBEDDINGS_DUMP_DELIMITER("\t", "Delimiter for the dumping of entity embeddings"), //
 	EMBEDDINGS_RDF2VEC_SPLIT_DELIM("(\\t)|(->)"),//
+	// ID Mapping separator (for human readable output)
+	ID_MAPPING_SEPARATOR("\t"),//
 	;
 	public final String val;
 	public final String desc;

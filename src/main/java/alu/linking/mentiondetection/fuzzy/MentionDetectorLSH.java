@@ -636,6 +636,7 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 			// System.out.println("hash2: " + hash2.length);
 			final int[] hash2 = hashes[i];
 			final boolean oneOrMoreSimilar = FuzzyUtils.sameHashOnSameIndex(query_hash, hash2);
+			//Just for understanding purposes
 			final boolean possiblyFits = oneOrMoreSimilar;
 			if (possiblyFits) {
 				try {

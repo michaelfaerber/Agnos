@@ -230,6 +230,11 @@ public class EmbeddingsUtils {
 		return currChoices;
 	}
 
+	public static Number cosineSimilarity(final List<? extends Number> left, final List<? extends Number> right)
+			throws RuntimeException {
+		return cosineSimilarity(left, right, true);
+	}
+
 	/**
 	 * Computes cosine similarity of two vectors in terms of double values
 	 * 
@@ -237,11 +242,24 @@ public class EmbeddingsUtils {
 	 * @param l2 second vector
 	 * @return cosine similarity of the two vectors
 	 */
-	public static Number cosineSimilarity(final List<? extends Number> l1, final List<? extends Number> l2)
-			throws RuntimeException {
-		if (l1.size() != l2.size()) {
-			throw new RuntimeException("Incompatible dimensions: Left(" + l1.size() + ") vs. Right(" + l2.size() + ")");
+	public static Number cosineSimilarity(final List<? extends Number> left, final List<? extends Number> right,
+			final boolean normalize) throws RuntimeException {
+		if (left.size() != right.size()) {
+			throw new RuntimeException(
+					"Incompatible dimensions: Left(" + left.size() + ") vs. Right(" + right.size() + ")");
 		}
+
+		// Normalize input vectors
+		final List<? extends Number> l1;
+		final List<? extends Number> l2;
+		if (normalize) {
+			l1 = normalize(left);
+			l2 = normalize(right);
+		} else {
+			l1 = left;
+			l2 = right;
+		}
+
 		Number num = 0d;
 		Number denLeft = 0d;
 		Number denRight = 0d;
@@ -256,5 +274,28 @@ public class EmbeddingsUtils {
 		final Number den = (denLeft.doubleValue() * denRight.doubleValue());
 
 		return num.doubleValue() / den.doubleValue();
+	}
+
+	/**
+	 * 
+	 * <b>Note</b>: Does NOT change original list
+	 * 
+	 * @param inputList to normalize
+	 * @return normalized list
+	 */
+	public static List<? extends Number> normalize(final List<? extends Number> inputList) {
+		// Compute sum so we know what to divide each element by
+		final List<Number> list = Lists.newArrayList();
+		Number sum = 0d;
+		for (Number n : inputList) {
+			sum = sum.doubleValue() + n.doubleValue();
+		}
+
+		// Add prior values divided by their sum to the returned list
+		for (int i = 0; i < inputList.size(); ++i) {
+			final Number normalizedVal = inputList.get(i).doubleValue() / sum.doubleValue();
+			list.add(normalizedVal);
+		}
+		return list;
 	}
 }

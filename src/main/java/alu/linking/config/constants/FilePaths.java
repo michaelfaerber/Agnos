@@ -141,7 +141,13 @@ public enum FilePaths {
 			"RAW dump of the used hashmap (should be faster for loading rather than using line-by-line logic)"), //
 
 	// Walk Generator general files
-	FILE_GRAPH_WALK_BLACKLIST_PREDICATE(DIR_WALK_GENERATOR.path + "blacklist_predicates.txt"),//
+	FILE_GRAPH_WALK_BLACKLIST_PREDICATE(DIR_WALK_GENERATOR.path + "blacklist_predicates.txt"), //
+	FILE_GRAPH_WALK_ID_MAPPING_PREDICATE_HUMAN(DIR_WALK_GENERATOR.path + "walk_predicate_mapping.txt"), //
+	FILE_GRAPH_WALK_ID_MAPPING_PREDICATE_MACHINE(DIR_WALK_GENERATOR.path + "walk_predicate_mapping.raw"), //
+	FILE_GRAPH_WALK_ID_MAPPING_ENTITY_HUMAN(DIR_WALK_GENERATOR.path + "walk_entity_mapping.txt"), //
+	FILE_GRAPH_WALK_ID_MAPPING_ENTITY_MACHINE(DIR_WALK_GENERATOR.path + "walk_entity_mapping.raw"), //
+	// Walk generator entity log file
+	FILE_GRAPH_WALK_LOG_ENTITY(DIR_WALK_GENERATOR.path + "processed_entities.log"), //
 	
 	// SSP Embeddings files
 	FILE_EMBEDDINGS_SSP_TEXTDATA_SORTED(DIR_SSP.path + "ssp_file_textdata_sorted.txt",

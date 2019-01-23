@@ -1,14 +1,18 @@
 package alu.linking.launcher;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.tdb.TDBFactory;
 import org.apache.jena.tdb.TDBLoader;
+
+import com.google.common.collect.Lists;
 
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
@@ -22,15 +26,18 @@ import alu.linking.structure.Loggable;
  *
  */
 public class LauncherSetupTDB implements Loggable {
+	private static List<String> abortedList = Lists.newArrayList();
+
 	public static void main(String[] args) {
 		// new LauncherSetupTDB().exec();
 
 		// Load the crunchbase graph into the crunchbase dataset
 		final EnumModelType KG = EnumModelType.
 		// MINI_MAG;
-				DBLP;
+		DBLP;
 		// CRUNCHBASE2;
 		// CRUNCHBASE;
+				//DBPEDIA_FULL;
 		System.out.println("Setting up TDB for: " + KG.name());
 		final String KGpath =
 				// "/vol1/cb/crunchbase-201510/dumps/crunchbase-dump-201510.nt";//CB1
@@ -39,9 +46,28 @@ public class LauncherSetupTDB implements Loggable {
 				// "/vol1/mag/data/2018-07-19/MAGFieldsOfStudyKG/MAGFieldsOfStudyKG.nt";//MAG
 				// "./crunchbase-dump-2018-06_normalized.nt";// normalized CB2
 				"./dblp_2018-11-02_unique_normalized.nt";// normalized DBLP
-		System.out.println("Source: " + KGpath);
-		new LauncherSetupTDB().exec(KG, KGpath);
+				//"/vol1/data_faerberm/kris/data_dbpedia_extracted";// DBpedia
+		// Handle appropriately both for input file (just load it)
+		// and input directory (get all files within it, aka. ignore subdirectories)
+		final File inFile = new File(KGpath);
+		final List<String> inFiles = Lists.newArrayList();
+		if (inFile.isDirectory()) {
+			for (File f : inFile.listFiles()) {
+				if (f.isFile()) {
+					inFiles.add(f.getAbsolutePath());
+				}
+			}
+		} else {
+			inFiles.add(inFile.getAbsolutePath());
+		}
+		// Execute the loading part...
+		for (String kgInPath : inFiles) {
+			System.out.println("Source(" + (inFiles.indexOf(kgInPath) + 1) + "/" + inFiles.size() + "): " + kgInPath);
+			new LauncherSetupTDB().exec(KG, kgInPath);
+			System.out.println("Aborted (" + abortedList.size() + "): " + abortedList);
+		}
 
+		System.out.println("Aborted files(" + abortedList.size() + "): " + abortedList);
 		// Set up for other
 
 	}
@@ -90,9 +116,16 @@ public class LauncherSetupTDB implements Loggable {
 		// Now load it all into the Model
 		dataset.begin(ReadWrite.WRITE);
 		model = dataset.getDefaultModel();
-		TDBLoader.loadModel(model, KGpath, true);
-		model.commit();
-		dataset.end();
+		try {
+			TDBLoader.loadModel(model, KGpath, true);
+			model.commit();
+		} catch (Exception e) {
+			System.out.println("Aborted: " + KGpath);
+			abortedList.add(KGpath);
+			model.abort();
+		} finally {
+			dataset.end();
+		}
 
 	}
 }
