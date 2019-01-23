@@ -19,20 +19,33 @@ public class QuerySolutionIterator implements Iterator<String> {
 
 			@Override
 			public int compare(String o1, String o2) {
+				// Idea: sX -> pX -> oX
+				// negative -> o1 is smaller than o2
+
 				// Putting non-predicate/-object variables first
-				if (!o1.startsWith("p") && !o1.startsWith("o")) {
+				if (!o1.startsWith("s") && !o1.startsWith("p") && !o1.startsWith("o")) {
 					// it's not a predicate nor an object, so it's likely the entity
 					return 1;
 				}
-				if (!o2.startsWith("p") && !o2.startsWith("o")) {
+
+				if (!o2.startsWith("s") && !o2.startsWith("p") && !o2.startsWith("o")) {
 					// it's not a predicate nor an object, so it's likely the entity
 					return -1;
 				}
 
-				// Same type of variable
-				if (o1.charAt(0) == o2.charAt(0)) {
+				// both of them are either s, p or o
+				int commonIndex = 0;
+				for (; commonIndex < Math.max(o1.length(), o2.length()); ++commonIndex) {
+					if (o1.charAt(commonIndex) != o2.charAt(commonIndex)) {
+						break;
+					}
+				}
+
+				if (commonIndex != 0) {
+					// if (o1.charAt(0) == o2.charAt(0)) {
 					// starts with same, so compare just the numbers
-					return o1.substring(1).compareTo(o2.substring(1));
+					// return o1.substring(1).compareTo(o2.substring(1));
+					return o1.substring(commonIndex).compareTo(o2.substring(commonIndex));
 				}
 
 				// One is smaller than the other

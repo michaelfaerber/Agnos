@@ -4,7 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -18,15 +18,36 @@ import alu.linking.config.kg.EnumModelType;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
 import alu.linking.preprocessing.embeddings.sentenceformatter.RDF2VecEmbeddingSentenceFormatter;
 import alu.linking.structure.Executable;
+import alu.linking.utils.IDMappingGenerator;
 import alu.linking.utils.WalkUtils;
 import de.dwslab.petar.walks.StringDelims;
 import de.dwslab.petar.walks.WalkGenerator;
 
 public class RDF2VecWalkGenerator implements Executable {
 	private final EnumModelType kg;
+	private final int threadCount;
+	private final int walkDepth;
+	private List<String> predicateBlacklist;
 
 	public RDF2VecWalkGenerator(EnumModelType KG) {
+		this(KG, 4);
+	}
+
+	public RDF2VecWalkGenerator(EnumModelType KG, final int walkDepth) {
+		this(KG, walkDepth, 20);
+	}
+
+	public RDF2VecWalkGenerator(EnumModelType KG, int walkDepth, final int threadCount) {
+		this(KG, walkDepth, threadCount,
+				Arrays.asList(new String[] { "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>" }));
+	}
+
+	public RDF2VecWalkGenerator(EnumModelType KG, int walkDepth, final int threadCount,
+			final List<String> predicateBlacklist) {
 		this.kg = KG;
+		this.walkDepth = walkDepth;
+		this.threadCount = threadCount;
+		this.predicateBlacklist = predicateBlacklist;
 	}
 
 	@Override
@@ -47,14 +68,33 @@ public class RDF2VecWalkGenerator implements Executable {
 		for (Map.Entry<String, Set<String>> e : map.entrySet()) {
 			entitiesSet.addAll(e.getValue());
 		}
-		final List<String> entities = new ArrayList<String>(entitiesSet);
 
-		try (final BufferedWriter wrtWalkOutput = new BufferedWriter(new FileWriter(walkOutput))) {
+		try (final BufferedWriter wrtWalkOutput = new BufferedWriter(new FileWriter(walkOutput));
+				final IDMappingGenerator<String> predicateMapper = new IDMappingGenerator<>(
+						new File(FilePaths.FILE_GRAPH_WALK_ID_MAPPING_PREDICATE_HUMAN.getPath(kg)),
+						true ? null : new File(FilePaths.FILE_GRAPH_WALK_ID_MAPPING_PREDICATE_MACHINE.getPath(kg)), true);
+				final IDMappingGenerator<String> entityMapper = new IDMappingGenerator<>(
+						new File(FilePaths.FILE_GRAPH_WALK_ID_MAPPING_ENTITY_HUMAN.getPath(kg)),
+						true ? null : new File(FilePaths.FILE_GRAPH_WALK_ID_MAPPING_ENTITY_MACHINE.getPath(kg)), true, "e")) {
 			// Generate walks into wanted output file
-			int threadCount = 40;
-			for (int depth = 1; depth < 2; ++depth) {
-				new WalkGenerator(FilePaths.DATASET.getPath(kg), WalkUtils.getBlacklist(kg), entities)
-						.generateWalks(wrtWalkOutput, 0, depth, threadCount, 0, 9_000_000);
+			final int offset = -1, limit = -1;
+
+			final HashSet<String> uniqueBlacklist = new HashSet<>(WalkUtils.getBlacklist(kg));
+			if (this.predicateBlacklist != null)
+			{
+				uniqueBlacklist.addAll(this.predicateBlacklist);
+			}
+
+			final WalkGenerator wg = new WalkGenerator(FilePaths.DATASET.getPath(kg), uniqueBlacklist,
+					entitiesSet, kg.query.query, predicateMapper, entityMapper, FilePaths.FILE_GRAPH_WALK_LOG_ENTITY.getPath(kg));
+			for (int depth = 1; depth < this.walkDepth; ++depth) {
+				// Load the entities from the walk generator - assuming there is enough space
+				// for all entities in RAM
+				if (entitiesSet.size() == 0) {
+					entitiesSet.addAll(wg.selectAllEntities(wg.dataset, wg.model, offset, limit));
+				}
+				// Generate the walks
+				wg.generateWalks(wrtWalkOutput, 0, depth, this.threadCount, offset, limit);
 			}
 		} catch (IOException e1) {
 			e1.printStackTrace();

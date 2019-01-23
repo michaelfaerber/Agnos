@@ -3,10 +3,12 @@ package de.dwslab.petar.walks;
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -25,13 +27,15 @@ import org.apache.jena.tdb.TDBFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import alu.linking.utils.IDMappingGenerator;
+
 public class WalkGenerator {
 	public static final Logger log = LoggerFactory.getLogger(WalkGenerator.class);
 
-	public static String directPropsQuery = "SELECT ?b ?c WHERE {$ENTITY$ ?b ?c}";
+	public String directPropsQuery = "SELECT ?b ?c WHERE {$ENTITY$ ?b ?c}";
 
 	/**
-	 * defines the depth of the walk (only nodes are considered as a step)
+	 * defines the DEFAULT depth of the walk (only nodes are considered as a step)
 	 */
 	public int depthWalk = 7;
 	/**
@@ -42,15 +46,14 @@ public class WalkGenerator {
 	/**
 	 * the query for extracting paths
 	 */
-	public String walkQuery = "";
 
-	public int processedEntities = 0;
-	public static int processedWalks = 0;
-	public static int fileProcessedLines = 0;
+	public long processedEntities = 0;
+	public long processedWalks = 0;
+	public long fileProcessedLines = 0;
 
 	public static final String newline = System.getProperty("line.separator");
 
-	public static long startTime = System.currentTimeMillis();
+	public long startTime = System.currentTimeMillis();
 
 	/**
 	 * the rdf model
@@ -61,15 +64,43 @@ public class WalkGenerator {
 
 	public String fileName = "walks.txt";
 
-	private final List<String> predicateBlacklist;
+	private final Collection<String> predicateBlacklist;
 
-	private final List<String> entities;
+	private final Collection<String> entities;
 
-	public WalkGenerator(final String repoLocation, List<String> predicateBlacklist, List<String> entities) {
+	private final String entityQueryStr;
+
+	private final String prefixSubject = "s";
+	private final String prefixPredicate = "p";
+	private final String prefixObject = "o";
+	private final IDMappingGenerator<String> predicateMapper;
+	private final IDMappingGenerator<String> entityMapper;
+
+	private long entityAmt = -1;
+
+	private final String logEntities;
+
+	public WalkGenerator(final String repoLocation, List<String> predicateBlacklist, List<String> entities,
+			final String entityQueryStr) {
+		this(repoLocation, predicateBlacklist, entities, entityQueryStr, null, null, null);
+	}
+
+	public WalkGenerator(final String repoLocation, Collection<String> predicateBlacklist, Collection<String> entities,
+			final String entityQueryStr, final IDMappingGenerator<String> predicateMapper,
+			final IDMappingGenerator<String> entityMapper, final String logEntities) {
 		this.dataset = TDBFactory.createDataset(repoLocation);
 		this.model = dataset.getDefaultModel();
 		this.predicateBlacklist = predicateBlacklist;
 		this.entities = entities;
+		if (entityQueryStr != null && entityQueryStr.length() > 0) {
+			this.entityQueryStr = entityQueryStr;
+		} else {
+			this.entityQueryStr = EntityDefinitions.MAGEntityDefinition;
+		}
+		this.predicateMapper = predicateMapper;
+		this.entityMapper = entityMapper;
+
+		this.logEntities = logEntities;
 	}
 
 	public void generateWalks(String outputFile, int nmWalks, int dpWalks, int nmThreads, int offset, int limit) {
@@ -97,16 +128,21 @@ public class WalkGenerator {
 	 * @param offset    whether we need an offset in the query (useful for large
 	 *                  quantities)
 	 * @param limit     how many should be returned (useful for large quantities)
+	 * @throws IOException
 	 */
-	public void generateWalks(BufferedWriter wrt, int nmWalks, int dpWalks, int nmThreads, int offset, int limit) {
+	public void generateWalks(BufferedWriter wrt, int nmWalks, int dpWalks, int nmThreads, int offset, int limit)
+			throws IOException {
 
 		// set the parameters
 		this.numberWalks = nmWalks;
+
 		this.depthWalk = dpWalks;
 
 		// generate the query
-		this.walkQuery = generateQuery(depthWalk, numberWalks);
-		final List<String> entities;
+		final String walkQuery = generateQuery(depthWalk);
+		System.out.println("Walk query(" + depthWalk + "):");
+		System.out.println(walkQuery);
+		final Collection<String> entities;
 		if (this.entities == null || this.entities.size() == 0) {
 			System.out.println("SELECTING all entities from repo");
 			entities = selectAllEntities(dataset, model, offset, limit);
@@ -114,14 +150,27 @@ public class WalkGenerator {
 			System.out.println("Using passed entities (" + this.entities.size() + ")");
 			entities = this.entities;
 		}
-
-		System.out.println("Total number of entities to process: " + entities.size());
+		this.entityAmt = entities.size();
+		System.out.println("Total number of entities to process: " + entityAmt);
 		ThreadPoolExecutor pool = new ThreadPoolExecutor(nmThreads, nmThreads, 0, TimeUnit.SECONDS,
 				new java.util.concurrent.ArrayBlockingQueue<Runnable>(entities.size()));
 
+		final BufferedWriter bwLogEntities;
+		if (this.logEntities != null) {
+			bwLogEntities = new BufferedWriter(new FileWriter(logEntities));
+			// Output which depth we are at to keep track of iteration
+			// All previous ones were executed anyway, so no need to keep track of all
+			// entities, so just overwrite previous file
+			bwLogEntities.write("" + dpWalks);
+			bwLogEntities.newLine();
+
+		} else {
+			bwLogEntities = null;
+		}
+
 		for (String entity : entities) {
 			// Thread which will compute the hops for this particular entity
-			EntityThread th = new EntityThread(entity, walkQuery, wrt);
+			EntityThread th = new EntityThread(entity, walkQuery, wrt, bwLogEntities);
 			pool.execute(th);
 		}
 
@@ -141,9 +190,9 @@ public class WalkGenerator {
 	 */
 	public List<String> selectAllEntities(Dataset dataset, Model model, int offset, int limit) {
 		List<String> allEntities = new ArrayList<String>();
-
-		final String queryString = EntityDefinitions.MAGEntityDefinition + " OFFSET " + offset + " LIMIT " + limit;
-
+		final String queryString = this.entityQueryStr + (offset >= 0 ? " OFFSET " + offset : "")
+				+ (limit >= 0 ? " LIMIT " + limit : "");
+		System.out.println("Entity query: " + queryString);
 		Query query = QueryFactory.create(queryString);
 
 		// Execute the query and obtain results
@@ -154,7 +203,7 @@ public class WalkGenerator {
 
 		while (results.hasNext()) {
 			QuerySolution result = results.next();
-			allEntities.add(result.get("s").toString());
+			allEntities.add(result.get(prefixSubject).toString());
 		}
 		qe.close();
 		return allEntities;
@@ -174,7 +223,9 @@ public class WalkGenerator {
 			e.printStackTrace();
 		}
 		if (processedWalks % 1_000_000 == 0) {
-			System.out.println("TOTAL NUMBER OF PATHS : " + processedWalks);
+			System.out.println("TOTAL NUMBER OF PATHS(" + this.depthWalk + " =?= "
+					+ ((this.processedEntities / this.entityAmt)+1) + " ; " + (this.processedEntities % this.entityAmt)
+					+ " / " + this.entityAmt + ") : " + processedWalks);
 			System.out.println("TOTAL TIME:" + ((System.currentTimeMillis() - startTime) / 1000));
 			// flush the file
 			if (fileProcessedLines > 3_000_000) {
@@ -241,23 +292,34 @@ public class WalkGenerator {
 	 * @param depth
 	 * @return
 	 */
-	public String generateQuery(int depth, int numberWalks) {
-		String selectPart = "SELECT ?p0 ?o1";
-		String hopPart = "{ $ENTITY$ ?p0 ?o1  ";
+	public String generateQuery(int depth) {
+		String selectPart = "SELECT ?p0 ?o0";
+		String hopPart = "{ $ENTITY$ ?p0 ?o0  ";
 		String query = "";
-		String blacklistedPredicatesStr = predicateBlacklist.toString();
+		// Relies on collection outputting correctly with commas between string items
+		String blacklistedPredicatesStr = this.predicateBlacklist.toString();
 		blacklistedPredicatesStr = blacklistedPredicatesStr.substring(1, blacklistedPredicatesStr.length() - 1);
-		String predicateBlacklistNotIn = ((predicateBlacklist != null && predicateBlacklist.size() > 0)
-				? " NOT IN (" + blacklistedPredicatesStr + " )"
+		String predicateBlacklistNotIn = ((this.predicateBlacklist != null && this.predicateBlacklist.size() > 0)
+				? (" NOT IN (" + blacklistedPredicatesStr + " )")
 				: "");
-		String blacklistPart = "";
+
+		final String filterStart = " . FILTER(";
+		final String filterEnd = ") ";
+		String blacklistPart = filterStart + " ?p0 " + predicateBlacklistNotIn + filterEnd;
 		for (int i = 1; i < depth; i++) {
-			hopPart += ". ?o" + i + " ?p" + i + " ?o" + (i + 1) + " ";
-			selectPart += " ?p" + i + " ?o" + (i + 1) + " ";
-			blacklistPart += " . ?p" + i + " " + predicateBlacklistNotIn;
+			hopPart += ". ?o" + (i - 1) + " ?p" + i + " ?o" + i + " ";
+			selectPart += " ?p" + i + " ?o" + i + " ";
+			blacklistPart += filterStart + " ?p" + i + " " + predicateBlacklistNotIn + filterEnd;
 		}
-		final String notLiteral = ". FILTER(!isLiteral(?o"+depth+"))";
-		query = selectPart + " WHERE " + hopPart + ((predicateBlacklistNotIn.length() > 0) ? blacklistPart : "") + notLiteral + "}";
+		final String notLiteral = "!isLiteral(?o" + (depth - 1) + ")";
+		query = selectPart + " WHERE " + hopPart + filterStart + notLiteral + filterEnd
+				+ ((predicateBlacklistNotIn.length() > 0) ? blacklistPart : "") + " }";
+		System.out.println("DEBUG - S");
+		System.out.println(this.predicateBlacklist);
+		System.out.println(blacklistedPredicatesStr);
+		System.out.println(predicateBlacklistNotIn);
+		System.out.println(blacklistPart);
+		System.out.println("DEBUG - E");
 		// + " BIND(RAND() AS ?sortKey) } ORDER BY ?sortKey LIMIT "
 		// + numberWalks;
 		return query;
@@ -267,18 +329,20 @@ public class WalkGenerator {
 		private final String entity;
 		private final String walkQuery;
 		private final BufferedWriter writer;
+		private final BufferedWriter entityLog;
 
-		public EntityThread(final String entity, final String walkQuery, final BufferedWriter writer) {
+		public EntityThread(final String entity, final String walkQuery, final BufferedWriter writer,
+				final BufferedWriter entityLog) {
 			this.entity = entity;
 			this.walkQuery = walkQuery;
 			this.writer = writer;
+			this.entityLog = entityLog;
 		}
 
 		@Override
 		public void run() {
 			processEntity();
 			// writeToFile(finalList, writer);
-
 		}
 
 		private void processEntity() {
@@ -295,16 +359,27 @@ public class WalkGenerator {
 		 * @param queryStr
 		 */
 		public void executeQuery(String queryStr) {
-			Query query = QueryFactory.create(queryStr);
+			final Query query = QueryFactory.create(queryStr);
 			dataset.begin(ReadWrite.READ);
-			QueryExecution qe = QueryExecutionFactory.create(query, model);
-			ResultSet resultsTmp = qe.execSelect();
-			ResultSet results = ResultSetFactory.copyResults(resultsTmp);
+			final QueryExecution qe = QueryExecutionFactory.create(query, model);
+			final ResultSet resultsTmp = qe.execSelect();
+			final ResultSet results = ResultSetFactory.copyResults(resultsTmp);
 			qe.close();
 			dataset.end();
 			while (results.hasNext()) {
 				final QuerySolution result = results.next();
-				String singleWalk = entity;
+				String singleWalk;
+				if (entityMapper != null) {
+					try {
+						singleWalk = entityMapper.generateMapping(entity);
+					} catch (Exception e) {
+						// Do the same as 'else' clause to be consistent
+						System.err.println("Mapping Error for entity (" + entity + ")");
+						singleWalk = entity;
+					}
+				} else {
+					singleWalk = entity;
+				}
 				// construct the walk from each node or property on the path
 				// Need to make sure that the iteration order is preserved...
 				// (QuerySolutionIterator sorts variables alphabetically)
@@ -314,23 +389,48 @@ public class WalkGenerator {
 					final String var = it.next();
 					try {
 						// clean it if it is a literal
-						singleWalk += StringDelims.WALK_DELIM + result.get(var).toString();
+						final String nodeVal;
+						if (var.startsWith(prefixPredicate) && predicateMapper != null) {
+							// Check if mapping exists
+							// If not -> create
+							// Else -> grab it
+							// Note that nodeVal will now be a string-Integer (in order to minimize storage
+							// space usage for frequently occurring things, in thise case: predicates)
+							// Reasoning on predicates: Storing all nodes in-memory for storage space
+							// reduction would potentially be REALLY heavy RAM-wise, so cutting out a large
+							// chunk of space required by very repetitive/repeatedly-used predicates makes a
+							// lot more sense since it will 'barely' impact RAM while helping out greatly
+							// storage-wise
+							nodeVal = predicateMapper.generateMapping(result.get(var).toString()).toString();
+						} else {
+							nodeVal = result.get(var).toString();
+						}
+						singleWalk += StringDelims.WALK_DELIM + nodeVal;
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				}
 				// writeToFile is synchronized, but watch out not to use this.writer anywhere
 				// else
+				// Outputs every line one by one rather than accumulating
 				writeToFile(singleWalk, this.writer);
 			}
-
+			processedEntities++;
+			try {
+				synchronized (this.entityLog) {
+					this.entityLog.write(entity);
+					this.entityLog.newLine();
+				}
+				this.entityLog.flush();
+			} catch (IOException ioe) {
+				System.err.println("Error outputting to log file.");
+			}
 		}
-
 	}
 
 	public static void main(String[] args) {
 		System.out.println("USAGE:  repoLocation outputFile nmWalks dpWalks nmThreads");
-		WalkGenerator generator = new WalkGenerator(args[0], null, null);
+		WalkGenerator generator = new WalkGenerator(args[0], null, null, EntityDefinitions.originalEntityDefinition);
 		generator.generateWalks(args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3]),
 				Integer.parseInt(args[4]), Integer.parseInt(args[5]), Integer.parseInt(args[6]));
 	}
