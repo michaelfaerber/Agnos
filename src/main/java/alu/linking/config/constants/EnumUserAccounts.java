@@ -10,7 +10,7 @@ import alu.linking.config.kg.EnumModelType;
 public enum EnumUserAccounts {
 	TAGTOG_CONNECTION_TEST(EnumProperty.AUTHENTICATE_TAGTOG_TESTING), //
 	TAGTOG_CONNECTION(EnumProperty.AUTHENTICATE_TAGTOG),//
-
+	VIRTUOSO_DBA(EnumProperty.AUTHENTICATE_VIRTUOSO),//
 	;
 	private transient final char[] username, password;
 
@@ -60,7 +60,6 @@ public enum EnumUserAccounts {
 	}
 
 	public byte[] getUserpassBytes(char sep) {
-		StringBuilder sb = new StringBuilder();
 		char[] userPassArr = new char[username.length + 1 + password.length];
 		int i = 0;
 		for (; i < username.length; ++i) {

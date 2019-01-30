@@ -6,6 +6,7 @@ import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.structure.Loggable;
 import de.dwslab.petar.walks.WalkGenerator;
+import de.dwslab.petar.walks.WalkGeneratorJena;
 
 public class LauncherWalkGeneratorDisplayQuery implements Loggable {
 	public static void main(String[] args) {
@@ -17,8 +18,8 @@ public class LauncherWalkGeneratorDisplayQuery implements Loggable {
 		final EnumModelType kg = EnumModelType.DEFAULT;
 		final String walkOutput = FilePaths.FILE_GRAPH_WALK_OUTPUT.getPath(kg);
 		final String sentencesOut = FilePaths.FILE_GRAPH_WALK_OUTPUT_SENTENCES.getPath(kg);
-		final String s = new WalkGenerator("./to_delete/",
-				Arrays.asList(new String[] { "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>" }), null, kg.query.query).generateQuery(7);
+		final String s = new WalkGeneratorJena("./to_delete/",
+				Arrays.asList(new String[] { "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>" }), kg.query.query, null).generateQuery(7);
 		System.out.println(s);
 	}
 }
