@@ -15,6 +15,7 @@ public enum FilePaths {
 	AUTHENTICATION_TAGTOG("./config/tagtog.properties"), //
 	AUTHENTICATION_TAGTOG_TESTING("./config/tagtog_testing.properties"), //
 	AUTHENTICATION_BABELFY("./config/babelfy.properties"), //
+	AUTHENTICATION_VIRTUOSO("./config/virtuoso.properties"), //
 	RULES_PROPERTIES("./config/predicates.properties"), //
 	SPARQL_QUERY("./config/queries/sparlq_query.txt"), //
 	SPARQL_QUERY_STEM("./config/queries/sparlq_query_stem.txt"), //

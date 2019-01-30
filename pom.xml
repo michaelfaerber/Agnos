@@ -16,8 +16,8 @@
 		<lucene.version>3.6.0</lucene.version>
 		<jersey.version>1.10</jersey.version>
 
-		<heapspace.Xmx.compiler>-Xmx1g</heapspace.Xmx.compiler>
-		<heapspace.Xmx.indexer>-Xmx1g</heapspace.Xmx.indexer>
+		<heapspace.Xmx.compiler>-Xmx2g</heapspace.Xmx.compiler>
+		<heapspace.Xmx.indexer>-Xmx2g</heapspace.Xmx.indexer>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<spotlight.basedir>${project.basedir}</spotlight.basedir>
@@ -265,6 +265,29 @@
 			<artifactId>externalsortinginjava</artifactId>
 			<version>[0.1.9,)</version>
 		</dependency>
+
+		<!-- These do not have a Maven repository -->
+		<dependency>
+			<groupId>com.openlink.virtuoso</groupId>
+			<artifactId>virtjdbc4</artifactId>
+			<version>4.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.openlink.virtuoso</groupId>
+			<artifactId>virt_jena3</artifactId>
+			<version>3.0</version>
+		</dependency>
+
+		<!-- JENA ARQ for HTTP queries -->
+		<!-- https://mvnrepository.com/artifact/org.apache.jena/jena-arq -->
+		<!-- <dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-arq</artifactId>
+			<version>3.10.0</version>
+		</dependency>
+		 -->
+
 	</dependencies>
 
 </project>

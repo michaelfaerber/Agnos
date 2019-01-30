@@ -1,5 +1,7 @@
 package alu.linking.config.constants;
 
+import virtuoso.jena.driver.VirtGraph;
+
 public enum EnumConnection {
 	// Connecting for downloading / uploading annotation files
 	TAGTOG(EnumUserAccounts.TAGTOG_CONNECTION, "https", "www.tagtog.net", "/-api/documents/v1"), //
@@ -7,9 +9,12 @@ public enum EnumConnection {
 	// KIT SPARQL Endpoint
 	KIT(null, "http", "km.aifb.kit.edu", "/services/crunchbase-sparql"), //
 	// TUCO/CELEBES SPARQL Endpoint
-	CELEBES(null, "http", "10.8.150.43:8890", "/sparql"),//
+	CELEBES(null, "http", "10.8.150.43:8890", "/sparql"), //
 	// BABELFY has its own API, so no need for a separate connection
-	;
+	SHETLAND_VIRTUOSO(EnumUserAccounts.VIRTUOSO_DBA, "", "jdbc:virtuoso://localhost:1112"),
+	//Seeland and Shetland have the same accounts
+	SEELAND_VIRTUOSO(EnumUserAccounts.VIRTUOSO_DBA, "", "jdbc:virtuoso://seeland.informatik.privat:1112");
+
 	public final EnumUserAccounts userAcc;
 	public final String protocol;
 	public final String baseURL;
