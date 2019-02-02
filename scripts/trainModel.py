@@ -13,20 +13,24 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', filename
 pathsLocator = "./sentencesPaths.txt"
 vocabPath = "./embeddings_vocabulary.txt"
 
+#What is the newline character on the machine
+newline = '\n'
+#What separates one walk from another (aka. one sentence from another)?
+walkSeparator = "\t"
+#What separates the single 'units' of a given walk?
+hopSeparator = '->'
+
 class MySentences():
     def __iter__(self):
         for fname in open(pathsLocator, mode='rt'):  # os.listdir(self.dirname):
-            sentencesPath = fname.rstrip('\n')
+            sentencesPath = fname.rstrip(newline)
             print("Grabbing sentences from: %s" % sentencesPath)
             try:
                 for line in open(sentencesPath, mode='rt'):
-                    lineTokens = line.rstrip('\n').split("\t")
-                    words = []
+                    lineTokens = line.rstrip(newline).split(walkSeparator)
                     for token in lineTokens:
-                        sentence = token.split('->')
+                        sentence = token.split(hopSeparator)
                         yield sentence
-#                        words.append(sentence)
-#                    yield words
             except Exception:
                 print("Failed reading file:")
                 print(sentencesPath)
