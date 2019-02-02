@@ -145,20 +145,7 @@ public class RDF2VecWalkGenerator implements Executable {
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
-		try {
-			getLogger().info("External Sorting/Grouping of " + walkOutput);
-			// new ExternalSortByKey(" ->", 0).process(walkOutput);
-
-			ExternalSort.mergeSortedFiles(ExternalSort.sortInBatch(new File(walkOutput)), new File(walkOutput));
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-		getLogger().info("Output walks into:");
-		getLogger().info(new File(walkOutput).getAbsolutePath());
-		final String DELIM = Strings.EMBEDDINGS_SENTENCES_DELIM.val;
-		// Now group the walked paths into the appropriate sentences
-		new RDF2VecEmbeddingSentenceFormatter().groupSortedFile(walkOutput, sentencesOut, DELIM,
-				StringDelims.WALK_DELIM, 0);
+		new ExtSortGrouper().exec(walkOutput, sentencesOut);
 		return null;
 	}
 
