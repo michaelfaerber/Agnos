@@ -12,13 +12,13 @@ public enum FilePaths {
 	// Contains all constant paths
 	// Attempting to keep a specific order
 	//
-	AUTHENTICATION_TAGTOG("./config/tagtog.properties"), //
-	AUTHENTICATION_TAGTOG_TESTING("./config/tagtog_testing.properties"), //
-	AUTHENTICATION_BABELFY("./config/babelfy.properties"), //
-	AUTHENTICATION_VIRTUOSO("./config/virtuoso.properties"), //
-	RULES_PROPERTIES("./config/predicates.properties"), //
-	SPARQL_QUERY("./config/queries/sparlq_query.txt"), //
-	SPARQL_QUERY_STEM("./config/queries/sparlq_query_stem.txt"), //
+	AUTHENTICATION_TAGTOG("./config/tagtog.properties", (EnumModelType) null), //
+	AUTHENTICATION_TAGTOG_TESTING("./config/tagtog_testing.properties", (EnumModelType) null), //
+	AUTHENTICATION_BABELFY("./config/babelfy.properties", (EnumModelType) null), //
+	AUTHENTICATION_VIRTUOSO("./config/virtuoso.properties", (EnumModelType) null), //
+	RULES_PROPERTIES("./config/predicates.properties", (EnumModelType) null), //
+	SPARQL_QUERY("./config/queries/sparlq_query.txt", (EnumModelType) null), //
+	SPARQL_QUERY_STEM("./config/queries/sparlq_query_stem.txt", (EnumModelType) null), //
 	// ##################################
 	// # MAIN
 	// ##################################
@@ -87,6 +87,8 @@ public enum FilePaths {
 	// NPComplete's required tagger file
 	FILE_NPCOMPLETE_ENGLISH_TAGGER("./lib/english-left3words-distsim.tagger"), //
 	FILE_MENTIONS_BLACKLIST(DIR_MENTIONS.path + "blacklist.txt"), //
+	FILE_LSH_DOCUMENT_VECTORS_SPARSE(DIR_MENTIONS.path + "document_vectors_sparse_entries.txt"), //
+	FILE_LSH_HASHES(DIR_MENTIONS.path + "hashes.txt"), //
 	FILE_PAGERANK(DIR_DATA.path + "pagerank.nt"), //
 	FILE_PAGERANK_ADAPTED(DIR_DATA.path + "pagerank_adapted.nt"), //
 	// Query-related files
@@ -149,7 +151,7 @@ public enum FilePaths {
 	FILE_GRAPH_WALK_ID_MAPPING_ENTITY_MACHINE(DIR_WALK_GENERATOR.path + "walk_entity_mapping.raw"), //
 	// Walk generator entity log file
 	FILE_GRAPH_WALK_LOG_ENTITY(DIR_WALK_GENERATOR.path + "processed_entities.log"), //
-	
+
 	// SSP Embeddings files
 	FILE_EMBEDDINGS_SSP_TEXTDATA_SORTED(DIR_SSP.path + "ssp_file_textdata_sorted.txt",
 			"Mapping of files and entities for SSP entity representations"), //
@@ -225,7 +227,7 @@ public enum FilePaths {
 	TRAINING_FILES(DIR_DATA.path + "TESTING/"), //
 
 	;
-	private final String path;
+	protected final String path;
 	private final String val;
 
 	FilePaths(final String path) {
@@ -253,19 +255,21 @@ public enum FilePaths {
 	}
 
 	FilePaths(final String path, final String desc, final boolean initFile, final EnumModelType KG) {
-		switch (KG) {
-		case DEFAULT:
-			for (EnumModelType initKG : EnumModelType.values()) {
-				init((initKG.root.endsWith("/") ? initKG.root : initKG.root + "/") + path, desc, initFile);
+		if (KG != null) {
+			switch (KG) {
+			case DEFAULT:
+				for (EnumModelType initKG : EnumModelType.values()) {
+					init((initKG.root.endsWith("/") ? initKG.root : initKG.root + "/") + path, desc, initFile);
+				}
+				break;
+			case CRUNCHBASE:
+			case DBPEDIA:
+			case FREEBASE:
+			case MAG:
+			default:
+				init(path, desc, initFile);
+				break;
 			}
-			break;
-		case CRUNCHBASE:
-		case DBPEDIA:
-		case FREEBASE:
-		case MAG:
-		default:
-			init(path, desc, initFile);
-			break;
 		}
 		this.path = path;
 		this.val = path;

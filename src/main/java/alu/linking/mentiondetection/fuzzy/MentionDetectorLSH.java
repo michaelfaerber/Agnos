@@ -27,7 +27,9 @@ import org.semanticweb.yars.nx.Node;
 import com.google.common.collect.Lists;
 
 import alu.linking.candidategeneration.lsh.LSHSparseVector;
+import alu.linking.config.constants.FilePaths;
 import alu.linking.config.constants.Numbers;
+import alu.linking.config.kg.EnumModelType;
 import alu.linking.mentiondetection.EnumDetectionType;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
@@ -58,16 +60,15 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	private int buckets = bucketsDefaultValue;
 	private LSHMinHash lsh = null;
 	private int[][] hashes = null;
-	private final Map<String, Set<String>> linking;
 	private LSHSparseVector<Boolean>[] document_vectors_sparse;
 	// Text processing variables
 	private final EnumDetectionType detectionType;
 	private final int n_gram_length = 3;
 	// Precomputed data variables
-	final String outDocVectorsEntries = "./document_vectors_sparse_entries.txt";
-	final String outHashes = "./hashes.txt";
-	final String docArraySplitStr = "\t;\t";
-
+	private final String outDocVectorsEntries;
+	private final String outHashes;
+	private final String docArraySplitStr = "\t;\t";
+	private final EnumModelType KG;
 	// JS similarity min. threshold
 	private final double threshold;
 	// Whether or not data was loaded
@@ -77,8 +78,8 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	// #################################
 	// ########## CONSTRUCTOR ##########
 	// #################################
-	public MentionDetectorLSH(final Map<String, Set<String>> map) {
-		this(map, 0.7);
+	public MentionDetectorLSH(final EnumModelType KG) {
+		this(KG, 0.7);
 	}
 
 	/**
@@ -86,68 +87,62 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	 * threshold and the bands and buckets default values
 	 * 
 	 */
-	public MentionDetectorLSH(final Map<String, Set<String>> map, final double threshold) {
-		this(map, threshold, bandsDefaultValue, bucketsDefaultValue);
+	public MentionDetectorLSH(final EnumModelType KG, final double threshold) {
+		this(KG, threshold, bandsDefaultValue, bucketsDefaultValue);
 	}
 
 	/**
 	 * 
-	 * @param map
-	 *            Map where keys represent the text occurrences that are possible to
-	 *            be detected from input text
-	 * @param threshold
-	 *            similarity threshold for fuzzy matching
-	 * @param value
-	 *            either buckets or bands (other one will get its default value)
-	 * @param bucketsVsBands
-	 *            TRUE means that passed VALUE parameter represents the number of
-	 *            buckets, FALSE means that it represents the number of bands
+	 * @param map            Map where keys represent the text occurrences that are
+	 *                       possible to be detected from input text
+	 * @param threshold      similarity threshold for fuzzy matching
+	 * @param value          either buckets or bands (other one will get its default
+	 *                       value)
+	 * @param bucketsVsBands TRUE means that passed VALUE parameter represents the
+	 *                       number of buckets, FALSE means that it represents the
+	 *                       number of bands
 	 */
-	public MentionDetectorLSH(final Map<String, Set<String>> map, final double threshold, final int value,
-			final boolean bucketsVsBands) {
-		this(map, threshold, bucketsVsBands ? bandsDefaultValue : value, bucketsVsBands ? value : bandsDefaultValue);
+	public MentionDetectorLSH(final EnumModelType KG, final double threshold,
+			final int value, final boolean bucketsVsBands) {
+		this(KG, threshold, bucketsVsBands ? bandsDefaultValue : value,
+				bucketsVsBands ? value : bandsDefaultValue);
 	}
 
 	/**
 	 * 
-	 * @param map
-	 *            Contains all possible String occurrences along with the associated
-	 *            resources. Only its keyset will be used in practice (as this is
-	 *            simple mention detection)
-	 * @param threshold
-	 *            Similarity threshold that should be passed for fuzzy matches
-	 * @param bands
-	 *            how many bands LSH should be computed with
-	 * @param buckets
-	 *            how many buckets LSH should be computed with
+	 * @param map       Contains all possible String occurrences along with the
+	 *                  associated resources. Only its keyset will be used in
+	 *                  practice (as this is simple mention detection)
+	 * @param threshold Similarity threshold that should be passed for fuzzy matches
+	 * @param bands     how many bands LSH should be computed with
+	 * @param buckets   how many buckets LSH should be computed with
 	 */
-	public MentionDetectorLSH(Map<String, Set<String>> map, final double threshold, final int bands,
-			final int buckets) {
-		this(map, threshold, bands, buckets, EnumDetectionType.BOUND_DYNAMIC_WINDOW);
+	public MentionDetectorLSH(final EnumModelType KG, final double threshold,
+			final int bands, final int buckets) {
+		this(KG, threshold, bands, buckets, EnumDetectionType.BOUND_DYNAMIC_WINDOW);
 	}
 
 	/**
 	 * 
-	 * @param map
-	 *            Contains all possible String occurrences along with the associated
-	 *            resources. Only its keyset will be used in practice (as this is
-	 *            simple mention detection)
-	 * @param threshold
-	 *            Similarity threshold that should be passed for fuzzy matches
-	 * @param bands
-	 *            how many bands LSH should be computed with
-	 * @param buckets
-	 *            how many buckets LSH should be computed with
-	 * @param detectionType
-	 *            which type of tokenization should be applied to the input text
+	 * @param map           Contains all possible String occurrences along with the
+	 *                      associated resources. Only its keyset will be used in
+	 *                      practice (as this is simple mention detection)
+	 * @param threshold     Similarity threshold that should be passed for fuzzy
+	 *                      matches
+	 * @param bands         how many bands LSH should be computed with
+	 * @param buckets       how many buckets LSH should be computed with
+	 * @param detectionType which type of tokenization should be applied to the
+	 *                      input text
 	 */
-	public MentionDetectorLSH(Map<String, Set<String>> map, final double threshold, final int bands, final int buckets,
-			EnumDetectionType detectionType) {
-		this.linking = map;
+	public MentionDetectorLSH(final EnumModelType KG, final double threshold,
+			final int bands, final int buckets, EnumDetectionType detectionType) {
 		this.detectionType = detectionType;
 		this.threshold = threshold;
 		this.bands = bands;
 		this.buckets = buckets;
+		this.KG = KG;
+		this.outHashes = FilePaths.FILE_LSH_HASHES.getPath(KG);
+		this.outDocVectorsEntries = FilePaths.FILE_LSH_DOCUMENT_VECTORS_SPARSE.getPath(KG);
 	}
 
 	/**
@@ -253,8 +248,7 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	/**
 	 * Short-hand call to {@link #detect(String, String)} with {@param source=null}
 	 * 
-	 * @param input
-	 *            input text/corpus to detect mentions from
+	 * @param input input text/corpus to detect mentions from
 	 */
 	@Override
 	public List<Mention<Node>> detect(String input) {
@@ -262,10 +256,8 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	}
 
 	/**
-	 * @param input
-	 *            input text/corpus to detect mentions from
-	 * @param source
-	 *            where this text comes from or what it is linked to
+	 * @param input  input text/corpus to detect mentions from
+	 * @param source where this text comes from or what it is linked to
 	 */
 	@Override
 	public List<Mention<Node>> detect(final String input, final String source) {
@@ -421,13 +413,10 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	/**
 	 * Finds a mention for a given input token
 	 * 
-	 * @param input
-	 *            token or word
-	 * @param source
-	 *            what entity this word is linked to
+	 * @param input     token or word
+	 * @param source    what entity this word is linked to
 	 * 
-	 * @param threshold
-	 *            minimum similarity threshold for it to be accepted
+	 * @param threshold minimum similarity threshold for it to be accepted
 	 * @return mention with the closest possible mate
 	 * 
 	 */
@@ -448,8 +437,7 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 		// + Stopwatch.endDiff(watchName) + "ms.");
 
 		// Create a mention with the best-found word
-		final Mention<Node> mention = new Mention<Node>(word, source,
-				null, offset, findConfidence, input);
+		final Mention<Node> mention = new Mention<Node>(word, source, null, offset, findConfidence, input);
 		return mention;
 	}
 
@@ -459,14 +447,14 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	 * @return
 	 * @throws Exception
 	 */
-	public void setup() throws Exception {
+	public void setup(final Map<String, Set<String>> map) throws Exception {
 		if (setup)
 			return;// this.hashes;
 		ngrams.clear();
 		this.surface_forms.clear();
-		this.surface_forms.addAll(this.linking.keySet());
+		this.surface_forms.addAll(map.keySet());
 		final TreeSet<String> allNGrams = new TreeSet<>();
-		for (String word : this.linking.keySet()) {
+		for (String word : map.keySet()) {
 			// This is a word we want to ngram and add
 			for (String ngram : FuzzyUtils.generateNgrams(word, n_gram_length)) {
 				allNGrams.add(ngram);
@@ -481,6 +469,7 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 
 		// Required as this.ngrams is not final
 		final SortedMap<String, Integer> dictionary = this.ngrams;
+		System.out.println("Dict size: " + dictionary.size());
 		final TreeSet<String> documents = this.surface_forms;
 		// Number of sets ('documents', I assume?)
 		int documentSize = documents.size();
@@ -565,10 +554,8 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	 * Generates signature for input query and retrieves with given minimum
 	 * threshold the best word for it!
 	 * 
-	 * @param query
-	 *            input query which we want to fuzzily match with
-	 * @param threshold
-	 *            minimum threshold for Jaccard similarity to accept a word
+	 * @param query     input query which we want to fuzzily match with
+	 * @param threshold minimum threshold for Jaccard similarity to accept a word
 	 * @return most similar word to passed one or null if threshold is not met
 	 */
 	private Object[] minhash(final String query, final double threshold) {
@@ -636,17 +623,18 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 			// System.out.println("hash2: " + hash2.length);
 			final int[] hash2 = hashes[i];
 			final boolean oneOrMoreSimilar = FuzzyUtils.sameHashOnSameIndex(query_hash, hash2);
-			//Just for understanding purposes
+			// Just for understanding purposes
 			final boolean possiblyFits = oneOrMoreSimilar;
 			if (possiblyFits) {
 				try {
 					similarity = FuzzyUtils.jaccardSimilarity(queryDocument, doc2);
 					// MinHash.jaccardIndex(doc1, doc2);
 					if (similarity >= threshold) {
-					//if (FuzzyUtils.reachesThreshold(queryDocument.getEntries(), doc2.getEntries(), threshold)) {
+						// if (FuzzyUtils.reachesThreshold(queryDocument.getEntries(),
+						// doc2.getEntries(), threshold)) {
 						// Add index of the document to ret list
 						ret.put(i, similarity);
-						//ret.put(i, threshold);
+						// ret.put(i, threshold);
 					} else {
 						collisionCounter.incrementAndGet();
 					}

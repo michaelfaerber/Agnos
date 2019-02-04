@@ -36,8 +36,9 @@ public class MentionDetectionSetup implements Executable {
 		// Map<String, Set<String>> map = mpe.exec(new
 		// File(FilePaths.FILE_EXTENDED_GRAPH.path));
 		Map<String, Set<String>> map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
-		final MentionDetectorLSH md = new MentionDetectorLSH(map);
-		md.setup();
+		System.out.println("Map size:" + map.size());
+		final MentionDetectorLSH md = new MentionDetectorLSH(KG);
+		md.setup(map);
 		getLogger().debug("Backing up computed files!");
 		md.backup();
 		getLogger().debug("Finished setting up mention detector stuff");

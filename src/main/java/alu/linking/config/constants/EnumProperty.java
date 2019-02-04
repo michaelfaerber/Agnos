@@ -6,21 +6,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import alu.linking.config.kg.EnumModelType;
-
 public enum EnumProperty {
 
 	// ##################################
 	// # User Data (i.e. basic client authentication)
 	// ##################################
-	AUTHENTICATE_TAGTOG(FilePaths.AUTHENTICATION_TAGTOG), //
-	AUTHENTICATE_TAGTOG_TESTING(FilePaths.AUTHENTICATION_TAGTOG), //
-	AUTHENTICATE_BABELFY(FilePaths.AUTHENTICATION_BABELFY),//
-	AUTHENTICATE_VIRTUOSO(FilePaths.AUTHENTICATION_VIRTUOSO),//
+	AUTHENTICATE_TAGTOG(FilePaths.AUTHENTICATION_TAGTOG.path), //
+	AUTHENTICATE_TAGTOG_TESTING(FilePaths.AUTHENTICATION_TAGTOG.path), //
+	AUTHENTICATE_BABELFY(FilePaths.AUTHENTICATION_BABELFY.path), //
+	AUTHENTICATE_VIRTUOSO(FilePaths.AUTHENTICATION_VIRTUOSO.path),//
 	;
-	private final FilePaths path;
+	private final String path;
 
-	EnumProperty(final FilePaths path) {
+	EnumProperty(final String path) {
 		this.path = path;
 	}
 
@@ -30,8 +28,8 @@ public enum EnumProperty {
 	 * @param keyword
 	 * @return
 	 */
-	public char[] get(final EnumModelType KG, final String keyword) {
-		try (InputStream is = new FileInputStream(new File(this.path.getPath(KG)))) {
+	public char[] get(final String keyword) {
+		try (InputStream is = new FileInputStream(new File(this.path))) {
 			final Properties prop = new Properties();
 			prop.load(is);
 			// Long call-chain for fail-fast behaviour
@@ -45,10 +43,11 @@ public enum EnumProperty {
 			// Likely a FNFE from a sub-optimally set-up project environment
 			e.printStackTrace();
 		} catch (NullPointerException npe) {
-			throw new IllegalArgumentException("Invalid value requested. (" + keyword + ") for " + this.path.getPath(KG));
+			throw new IllegalArgumentException("Invalid value requested. (" + keyword + ") for " + this.path);
 		}
 		// Shouldn't be reached as it either defaults to the try-block or should throw a
 		// NPE if no valid value is found
 		return null;
 	}
+
 }

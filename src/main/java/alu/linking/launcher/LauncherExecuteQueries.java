@@ -6,6 +6,7 @@ import alu.linking.executable.preprocessing.setup.surfaceform.query.HSFQueryExec
 import alu.linking.executable.preprocessing.setup.surfaceform.query.NP_HSFQueryExecutor;
 import alu.linking.executable.preprocessing.setup.surfaceform.query.NP_URLHSFQueryExecutor;
 import alu.linking.executable.preprocessing.setup.surfaceform.query.SFQueryExecutor;
+import virtuoso.jena.driver.VirtGraph;
 
 public class LauncherExecuteQueries {
 

@@ -61,7 +61,7 @@ public class LauncherMentionDetectionTuning {
 				final int bands = bandsArr[j];
 				for (int i = 0; i < bucketsArr.length; ++i) {
 					final int buckets = bucketsArr[i];
-					final MentionDetectorLSH md = new MentionDetectorLSH(map, threshold, bands, buckets);
+					final MentionDetectorLSH md = new MentionDetectorLSH(KG, map, threshold, bands, buckets);
 					md.setup();
 					md.backup();
 					Stopwatch.start(getClass().getName());

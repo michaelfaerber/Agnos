@@ -57,7 +57,7 @@ public class LauncherInputLinking {
 		// ########################################################
 		// Mention Detection
 		// ########################################################
-		chooser = new AssignmentChooser<Node>(KG, new File(FilePaths.FILE_PAGERANK.getPath(KG)));
+		chooser = new AssignmentChooser<Node>(KG);
 		// Blacklisting stuff from graph
 		Stopwatch.start("Blacklist");
 		NodeBlacklisting nBlacklisting = new NodeBlacklisting(Graph.getInstance());

@@ -20,8 +20,6 @@ import alu.linking.candidategeneration.CandidateGeneratorMap;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.AssignmentChooser;
-import alu.linking.disambiguation.hops.graph.Graph;
-import alu.linking.disambiguation.hops.graph.NodeBlacklisting;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
@@ -33,7 +31,7 @@ public class LauncherContinuousMentionDetector {
 
 	public static void main(String[] args) {
 		openBrowser = false;
-		new LauncherContinuousMentionDetector(EnumModelType.DEFAULT).run();
+		new LauncherContinuousMentionDetector(EnumModelType.DBPEDIA_FULL).run();
 	}
 
 	private final EnumModelType KG;
@@ -46,12 +44,13 @@ public class LauncherContinuousMentionDetector {
 		try {
 			Stopwatch.start(getClass().getName());
 			final Map<String, Set<String>> map;
+			System.out.println("Loading mention possibilities...");
 			final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG);
 			map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
 			// FILE_EXTENDED_GRAPH
 			Stopwatch.endOutputStart(getClass().getName());
-			System.out.println("Number of entries: " + map.size());
-			final MentionDetector md = new MentionDetectorLSH(map, 0.8);
+			System.out.println("Number of entries (aka. different surface forms): " + map.size());
+			final MentionDetector md = new MentionDetectorLSH(KG, 0.8);
 			Stopwatch.endOutputStart(getClass().getName());
 			// ########################################################
 			// Mention Detection
@@ -64,20 +63,8 @@ public class LauncherContinuousMentionDetector {
 			final String chooserWatch = "chooser - init (loads graph)";
 			// Initialise AssignmentChooser
 			Stopwatch.start(chooserWatch);
-			final AssignmentChooser<Node> chooser = new AssignmentChooser<Node>(this.KG,
-					new File(FilePaths.FILE_PAGERANK.getPath(KG)));
+			final AssignmentChooser<Node> chooser = new AssignmentChooser<Node>(this.KG);
 			Stopwatch.endOutput(chooserWatch);
-			// Blacklisting stuff from graph
-			Stopwatch.start("Blacklist");
-			NodeBlacklisting blacklisting = new NodeBlacklisting(Graph.getInstance());
-			for (Map.Entry<String, String> e : blacklistMap().entrySet()) {
-				blacklisting.blacklist(e.getKey());
-			}
-			final int amtBlacklisted = blacklisting.blacklistConnectionsOver(0.05);
-			System.out.println("Blacklisted items: " + amtBlacklisted);
-			System.out.println("Enforcing...");
-			blacklisting.enforce();
-			Stopwatch.endOutput("Blacklist");
 
 			String inputLine = null;
 			try (final Scanner sc = new Scanner(System.in)) {

@@ -8,7 +8,7 @@ public class LauncherSetup {
 	public static void main(String[] args) {
 		final boolean t = true;
 		final boolean f = false;
-		final EnumModelType KG = EnumModelType.CRUNCHBASE;
+		final EnumModelType KG = EnumModelType.DBPEDIA_FULL;
 		try {
 			final Pipeline pipeline = new Pipeline();
 			// pipeline.setOutput(true);

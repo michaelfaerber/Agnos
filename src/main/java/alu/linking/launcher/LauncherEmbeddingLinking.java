@@ -51,7 +51,7 @@ public class LauncherEmbeddingLinking {
 			// FILE_EXTENDED_GRAPH
 			Stopwatch.endOutputStart(getClass().getName());
 			System.out.println("Number of entries: " + map.size());
-			final MentionDetector md = new MentionDetectorLSH(map, 0.8);
+			final MentionDetector md = new MentionDetectorLSH(KG, map, 0.8);
 			Stopwatch.endOutputStart(getClass().getName());
 			// ########################################################
 			// Mention Detection
