@@ -33,29 +33,13 @@ public class AssignmentScorer<N> implements Loggable {
 	private static Logger logger = Logger.getLogger(AssignmentScorer.class);
 	private final HashSet<Mention<N>> context = new HashSet<>();
 
-	public AssignmentScorer(final EnumModelType KG, final File pageRankFile)
-			throws FileNotFoundException, ClassNotFoundException, IOException {
-		// Determines how everything is scored!
-		PossibleAssignment.setScoreCombiner(new ScoreCombiner<PossibleAssignment>());
-		// Pre-scoring
-		PossibleAssignment.addScorer(new PageRankScorer(KG, pageRankFile));
-
-		// Post-scoring
-		// PossibleAssignment.addPostScorer(new VicinityScorer());
-
-		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(KG));
-		// PossibleAssignment.addPostScorer(new SSPEmbeddingScorer(KG));
-
-		for (PostScorer postScorer : PossibleAssignment.getPostScorers()) {
-			// Links a context object which will be updated when necessary through
-			// updateContext(Collection<Mention<N>>)
-			postScorer.linkContext(context);
-		}
-	}
 
 	public AssignmentScorer(final EnumModelType KG) throws FileNotFoundException, ClassNotFoundException, IOException {
 		// Determines how everything is scored!
 		PossibleAssignment.setScoreCombiner(new ScoreCombiner<PossibleAssignment>());
+
+		// Pre-scoring
+		PossibleAssignment.addScorer(new PageRankScorer(KG));
 
 		// Post-scoring
 		// PossibleAssignment.addPostScorer(new VicinityScorer());

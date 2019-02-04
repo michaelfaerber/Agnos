@@ -17,11 +17,11 @@ import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.PostScorer;
 import alu.linking.disambiguation.scorers.embedhelp.ClusterItemPicker;
-import alu.linking.disambiguation.scorers.embedhelp.GreedyOptimalPicker;
 import alu.linking.disambiguation.scorers.embedhelp.SubPageRankPicker;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 import alu.linking.utils.EmbeddingsUtils;
+import alu.linking.utils.IDMappingLoader;
 
 public class GraphWalkEmbeddingScorer<N> implements PostScorer<PossibleAssignment<N>, Mention<N>>, Loggable {
 	private final EnumModelType KG;
@@ -35,6 +35,8 @@ public class GraphWalkEmbeddingScorer<N> implements PostScorer<PossibleAssignmen
 	public GraphWalkEmbeddingScorer(final EnumModelType KG)
 			throws FileNotFoundException, IOException, ClassNotFoundException {
 		this.KG = KG;
+		// Whether to load it from a raw object-dump or a line-separated entity
+		// embeddings output
 		final boolean RAW_LOAD = false;
 		if (RAW_LOAD) {
 			Map<String, List<Number>> helperMap = null;
@@ -50,11 +52,14 @@ public class GraphWalkEmbeddingScorer<N> implements PostScorer<PossibleAssignmen
 				this.entityEmbeddingsMap = helperMap;
 			}
 		} else {
-			this.entityEmbeddingsMap = EmbeddingsUtils
-					.readEmbeddings(new File(FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG)));
+			IDMappingLoader<String> entityMapping = new IDMappingLoader<String>()
+					.loadHumanFile(new File(FilePaths.FILE_GRAPH_WALK_ID_MAPPING_ENTITY_HUMAN.getPath(KG)));
+			this.entityEmbeddingsMap = EmbeddingsUtils.readEmbeddings(
+					new File(FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG)), entityMapping);
+			entityMapping = null;
 		}
 
-		//clusterHelper = new GreedyOptimalPicker<N>(this.entityEmbeddingsMap);
+		// clusterHelper = new GreedyOptimalPicker<N>(this.entityEmbeddingsMap);
 		clusterHelper = new SubPageRankPicker<N>(this.entityEmbeddingsMap);
 	}
 

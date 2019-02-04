@@ -20,7 +20,7 @@ import org.apache.jena.tdb.TDBFactory;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.constants.Strings;
 import alu.linking.config.kg.EnumModelType;
-import alu.linking.preprocessing.surfaceform.query.QuerySolutionIterator;
+import de.dwslab.petar.walks.QuerySolutionIterator;
 
 public class QueryResultAggregator {
 

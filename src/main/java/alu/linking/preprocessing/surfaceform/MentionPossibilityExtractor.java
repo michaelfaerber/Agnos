@@ -6,17 +6,23 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
+import org.semanticweb.yars.nx.Literal;
 import org.semanticweb.yars.nx.Node;
 import org.semanticweb.yars.nx.Resource;
 import org.semanticweb.yars.nx.parser.NxParser;
+import org.semanticweb.yars.nx.util.NxUtil;
 
 import alu.linking.config.constants.Strings;
 import alu.linking.structure.MentionPossibilityProcessor;
@@ -32,7 +38,9 @@ import alu.linking.structure.RDFLineProcessor;
  */
 public class MentionPossibilityExtractor implements MentionPossibilityProcessor {
 	private final int DEFAULT_MIN_LENGTH_THRESHOLD = 0;// 0 pretty much means 'no threshold'
+	private final int DEFAULT_MAX_LENGTH_THRESHOLD = 50;// 0 pretty much means 'no threshold'
 	private int lengthMinThreshold = DEFAULT_MIN_LENGTH_THRESHOLD;
+	private int lengthMaxThreshold = DEFAULT_MAX_LENGTH_THRESHOLD;
 	private final HashSet<String> blackList = new HashSet<String>();
 	private final HashMap<String, Set<String>> mentionPossibilities = new HashMap<String, Set<String>>();
 	private final String delim = Strings.ENTITY_SURFACE_FORM_LINKING_DELIM.val;
@@ -95,17 +103,76 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor 
 	 */
 	private void processFileEntitySurfaceFormLinking(final BufferedReader brIn) throws IOException {
 		String line = null;
+		boolean nxparsing = false;
 		int counter = 0;
-		while ((line = brIn.readLine()) != null) {
-			final String[] tokens = line.split(delim);
-			if (tokens.length == 2) {
-				addPossibility(mentionPossibilities, tokens[1], tokens[0]);
-			} else if (tokens.length == 3) {
-				addPossibility(mentionPossibilities, tokens[2], tokens[0]);
-			} else if (tokens.length != 0) {
-				System.err.println("Invalid line...: " + line);
+		if (!nxparsing) {
+			while ((line = brIn.readLine()) != null) {
+				final String[] tokens = line.split(delim);
+				if (tokens.length == 2) {
+					mentionPossibility(tokens[0], "<link>", tokens[1]);
+					// addPossibility(mentionPossibilities, tokens[1], tokens[0]);
+				} else if (tokens.length == 3) {
+					// addPossibility(mentionPossibilities, tokens[2], tokens[0]);
+					mentionPossibility(tokens[0], tokens[1], tokens[2]);
+				} else if (tokens.length != 0) {
+					System.err.println("Invalid line...: " + line);
+				}
+			}
+		} else {
+
+			final Iterator<String> bufferIterator = new Iterator<String>() {
+				String[] currLine = new String[] { "" };
+				final String dummyPredicate = "<link>";
+				// predicate position reosurce is missing
+				final int missingResourceIndex = 1;
+
+				@Override
+				public boolean hasNext() {
+					return currLine != null;
+				}
+
+				@Override
+				public String next() {
+					if (hasNext()) {
+						String line;
+						try {
+							line = brIn.readLine();
+						} catch (IOException e) {
+							line = null;
+						}
+						if (line != null) {
+							currLine = line.split(delim);
+						} else {
+							return null;
+						}
+						final StringBuilder ret = new StringBuilder();
+						for (int i = 0; i < currLine.length; ++i) {
+							if (i == missingResourceIndex) {
+								ret.append(dummyPredicate + " ");
+							}
+							ret.append(currLine[i] + " ");
+						}
+						ret.append(".");
+						return ret.toString();
+					} else {
+						return null;
+					}
+				}
+			};
+			// Making use of NxParser to remove String definition etc
+			NxParser parser = new NxParser(new ArrayList<String>() {
+				@Override
+				public Iterator<String> iterator() {
+					return bufferIterator;
+				}
+			});
+
+			while (parser.hasNext()) {
+				Node[] triple = parser.next();
+				mentionPossibility(triple[0], triple[1], triple[2]);
 			}
 		}
+
 	}
 
 	/**
@@ -114,7 +181,7 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor 
 	 * @param brIn
 	 * @throws IOException
 	 */
-	private void processFileNTriples(BufferedReader brIn) throws IOException {
+	private void processFileNTriples(Reader brIn) throws IOException {
 		final NxParser parser = new NxParser(brIn);
 		int lineCounter = 0;
 		final PrintStream syserr = System.err;
@@ -182,7 +249,12 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor 
 	 * @return whether it passes threshold and blacklist requirements
 	 */
 	private boolean passesRequirements(String word) {
-		return word != null && word.length() > lengthMinThreshold && !blackList.contains(word);
+		boolean ret = (word != null && word.length() > lengthMinThreshold && !blackList.contains(word));
+		if (word.length() > lengthMaxThreshold) {
+//			System.out.println("Too long(" + word.length() + "): " + word.substring(0, 40));
+			ret = false;
+		}
+		return ret;
 	}
 
 	public void setMinLenThreshold(final int minLen) {
@@ -194,7 +266,21 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor 
 	 * Add the possibility if it fits what we want
 	 */
 	public void mentionPossibility(String s, String p, String o) {
-		mentionPossibility(new Resource(s, true), new Resource(p, true), new Resource(o, true));
+		try {
+			int endIndex = o.indexOf("^^http://");
+			final String cleanedO;
+			if (endIndex == -1) {
+				cleanedO = NxUtil.escapeForMarkup(o);
+			} else {
+				cleanedO = NxUtil.escapeForMarkup(o.substring(0, endIndex));
+			}
+			mentionPossibility(new Resource(s, true), new Resource(p, true), new Literal(cleanedO));
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("s:" + s);
+			System.out.println("p:" + p);
+			System.out.println("o:" + o);
+		}
 		// if (RDFNodeUtils.isTypedLiteral(o)) {
 		// addPossibility(mentionPossibilities,
 		// RDFNodeUtils.stripLiteralQuotesAndType(o), s);
@@ -205,12 +291,12 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor 
 	public void mentionPossibility(Node s, Node p, Node o) {
 		// <http://www.w3.org/1999/02/22-rdf-syntax-ns#label>
 		if (o instanceof org.semanticweb.yars.nx.Literal) {
-			final boolean addPoss;
-			if (p instanceof org.semanticweb.yars.nx.Resource
-			// && ((org.semanticweb.yars.nx.Resource) p).toString().equals(labelURI)
-			) {
-				addPossibility(mentionPossibilities, o.toString(), s.toString());
-			}
+//			final boolean addPoss;
+//			if (p instanceof org.semanticweb.yars.nx.Resource
+//			// && ((org.semanticweb.yars.nx.Resource) p).toString().equals(labelURI)
+//			) {
+			addPossibility(mentionPossibilities, o.toString(), s.toString());
+//			}
 		}
 	}
 }

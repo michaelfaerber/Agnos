@@ -12,9 +12,9 @@ import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.tdb.TDBFactory;
 
+import alu.linking.config.constants.EnumConnection;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
-import alu.linking.preprocessing.surfaceform.query.QuerySolutionIterator;
 import virtuoso.jena.driver.VirtGraph;
 import virtuoso.jena.driver.VirtuosoQueryExecution;
 import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
@@ -46,17 +46,29 @@ public class LauncherTestQuery {
 	private static void testVirtuoso() {
 		final boolean LOCAL = true;
 		if (LOCAL) {
-			final String user = "";
-			final String password = "";
-			final String url = "jdbc:virtuoso://localhost:1112";
+			final String graphName = "http://dbpedia.org";
+			final EnumConnection connShetland = EnumConnection.SHETLAND_VIRTUOSO;
+			final String url = connShetland.baseURL;
+			// final String url = "jdbc:virtuoso://localhost:1112";
 			// "http://shetland.informatik.uni-freiburg.de:8890/sparql";//
 			// virtuoso.jdbc4.VirtuosoException:
 			// Wrong port number
-			final String graphName = "http://dbpedia.org";
-			final String queryStr = "select ?s ?p ?o where { ?s ?p ?o } LIMIT 100";
+			final String queryStr =
+//					"select ?s ?p ?o where { ?s ?p ?o } LIMIT 100";
+//					"select distinct ?s ?p ?o where { ?s ?p ?o "
+//							+ ". FILTER( "//
+//							+ "isLiteral(?o) "//
+//							+ " ) "//
+//							+ ". FILTER( "//
+//							+ "STRLEN(?o) > 0 "//
+//							+ " ) "//
+//							+ " } limit 100";
+					"select distinct ?p where { ?s ?p ?o . FILTER(isLiteral(?o)) )} limit 1000";
 			// "select distinct ?bPred where { \n" + "?aSubj ?bPred ?cObj . \n" + "} LIMIT
 			// 100";
-			final VirtGraph virtGraph = new VirtGraph(graphName, url, user, password);
+			final VirtGraph virtGraph = new VirtGraph(graphName, url,
+					new String(connShetland.userAcc.getBytesUsername()),
+					new String(connShetland.userAcc.getBytesPassword()));
 			execQuery(virtGraph, queryStr);
 		} else {
 //			final String queryStr = "select distinct ?bPred where { \n" + "?aSubj ?bPred ?cObj . \n" + "} LIMIT 100";
@@ -80,6 +92,7 @@ public class LauncherTestQuery {
 	}
 
 	private static void execQuery(VirtGraph virtGraph, String queryStr) {
+		System.out.println("Executing: " + queryStr);
 		final VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create(queryStr, virtGraph);
 		final ResultSet results = vqe.execSelect();
 		displayQuery(results);
@@ -156,9 +169,10 @@ public class LauncherTestQuery {
 	private static void displayQuery(ResultSet results) {
 		while (results.hasNext()) {
 			final QuerySolution qs = results.next();
-			Iterator<String> it = new QuerySolutionIterator(qs);
+			Iterator<String> it = new de.dwslab.petar.walks.QuerySolutionIterator(qs);
 			while (it.hasNext()) {
-				System.out.print(qs.get(it.next()) + " ");
+				final String varName = it.next();
+				System.out.print(varName + ":" + qs.get(varName) + " ");
 			}
 			System.out.println();
 		}

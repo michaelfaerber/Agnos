@@ -12,14 +12,32 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
+import org.apache.log4j.Logger;
+
 import com.google.common.collect.Lists;
 
 import alu.linking.config.constants.Strings;
+import alu.linking.disambiguation.AssignmentChooser;
 
 public class EmbeddingsUtils {
+	private static Logger logger = Logger.getLogger(EmbeddingsUtils.class);
+
 	/**
-	 * Reads a python embeddings file and loads it into a Map<String, List<Number>>
-	 * structure<br>
+	 * See {@link #readEmbeddings(File, IDMappingLoader)}
+	 * 
+	 * @param intputFile
+	 * @return
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+	public static Map<String, List<Number>> readEmbeddings(final File intputFile)
+			throws FileNotFoundException, IOException {
+		return readEmbeddings(intputFile, null);
+	}
+
+	/**
+	 * Reads a python embeddings file and loads it into a Map&lt;String,
+	 * List&lt;Number&gt;&gt; structure<br>
 	 * <b>Note</b>: If a vocabulary word appears multiple times, the latter will
 	 * replace the existing one
 	 * 
@@ -28,8 +46,8 @@ public class EmbeddingsUtils {
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	public static Map<String, List<Number>> readEmbeddings(final File intputFile)
-			throws FileNotFoundException, IOException {
+	public static Map<String, List<Number>> readEmbeddings(final File intputFile,
+			final IDMappingLoader<String> mappingLoader) throws FileNotFoundException, IOException {
 		// Embeddings format: vocabularyWord <delim> List<Double>
 		final Map<String, List<Number>> embeddings = new HashMap<>();
 		final String delim = Strings.EMBEDDINGS_TRAINED_DELIM.val;
@@ -38,7 +56,14 @@ public class EmbeddingsUtils {
 			while ((line = brIn.readLine()) != null) {
 				// Word \t 1.23123 \t 2.1421421 ...
 				final String[] tokens = line.split(delim);
-				final String vocab = tokens[0];
+				String vocab = tokens[0];
+				if (mappingLoader != null) {
+					final String associatedWord = mappingLoader.getMapping(vocab);
+					if (associatedWord != null) {
+						vocab = associatedWord;
+					}
+				}
+
 				List<Number> embedding = Lists.newArrayList();
 				for (int i = 1; i < tokens.length; ++i) {
 					embedding.add(Double.valueOf(tokens[i]));

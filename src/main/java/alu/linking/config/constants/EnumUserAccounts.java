@@ -5,11 +5,9 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
-import alu.linking.config.kg.EnumModelType;
-
 public enum EnumUserAccounts {
 	TAGTOG_CONNECTION_TEST(EnumProperty.AUTHENTICATE_TAGTOG_TESTING), //
-	TAGTOG_CONNECTION(EnumProperty.AUTHENTICATE_TAGTOG),//
+	TAGTOG_CONNECTION(EnumProperty.AUTHENTICATE_TAGTOG), //
 	VIRTUOSO_DBA(EnumProperty.AUTHENTICATE_VIRTUOSO),//
 	;
 	private transient final char[] username, password;
@@ -20,8 +18,8 @@ public enum EnumUserAccounts {
 	}
 
 	EnumUserAccounts(final EnumProperty property) {
-		this.username = property.get(EnumModelType.DEFAULT, "user");
-		this.password = property.get(EnumModelType.DEFAULT, "password");
+		this.username = property.get("user");
+		this.password = property.get("password");
 	}
 
 	EnumUserAccounts(final String username, final char[] password) {
@@ -42,8 +40,7 @@ public enum EnumUserAccounts {
 	 * recommendation
 	 * https://stackoverflow.com/questions/5513144/converting-char-to-byte#9670279
 	 * 
-	 * @param chars
-	 *            input array
+	 * @param chars input array
 	 * @return input as bytes (UTF-8)
 	 */
 	public byte[] getBytes(final char[] chars) {

@@ -17,13 +17,14 @@ public class PageRankScorer<K> implements Scorer<PossibleAssignment<K>> {
 	private static Logger logger = Logger.getLogger(PageRankScorer.class);
 	private static Map<String, Number> pageRankMap = null;
 	private final EnumModelType KG;
+	private int warnCounter = 0;
 
 	public PageRankScorer(final EnumModelType KG) {
 		this(KG, false);
 	}
 
 	public PageRankScorer(final EnumModelType KG, final boolean forceReload) {
-		this(KG, forceReload, new File(FilePaths.FILE_PAGERANK_ADAPTED.getPath(KG)));
+		this(KG, forceReload, new File(FilePaths.FILE_PAGERANK.getPath(KG)));
 	}
 
 	public PageRankScorer(final EnumModelType KG, final File pageRankFile) {
@@ -51,7 +52,11 @@ public class PageRankScorer<K> implements Scorer<PossibleAssignment<K>> {
 		if (assignment != null) {
 			final Number retNumber = pageRankMap.get(assignment.toString());
 			if (retNumber == null) {
-				logger.warn("No page rank value found for: Assignment(" + assignment.toString() + ")");
+				warnCounter++;
+				if (warnCounter % 10_000 == 0) {
+					logger.warn(
+							warnCounter + " - No page rank value found for: Assignment(" + assignment.toString() + ")");
+				}
 			}
 			return retNumber == null ? 0f : retNumber;
 		} else {
