@@ -12,50 +12,47 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.code.externalsorting.ExternalSort;
-
 import alu.linking.config.constants.EnumConnection;
 import alu.linking.config.constants.FilePaths;
-import alu.linking.config.constants.Strings;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
-import alu.linking.preprocessing.embeddings.sentenceformatter.RDF2VecEmbeddingSentenceFormatter;
 import alu.linking.structure.Executable;
 import alu.linking.utils.IDMappingGenerator;
 import alu.linking.utils.WalkUtils;
-import de.dwslab.petar.walks.StringDelims;
 import de.dwslab.petar.walks.WalkGenerator;
 import de.dwslab.petar.walks.WalkGeneratorJena;
 import de.dwslab.petar.walks.WalkGeneratorVirtuoso;
 import de.dwslab.petar.walks.WalkResultProcessor;
 import de.dwslab.petar.walks.WalkResultProcessorAll;
-import de.dwslab.petar.walks.WalkResultProcessorRandomUniform;
 import de.dwslab.petar.walks.WalkResultprocessorRandomDecreasingDepth;
 import virtuoso.jena.driver.VirtGraph;
 
 public class RDF2VecWalkGenerator implements Executable {
 	private final EnumModelType kg;
 	private final int threadCount;
-	private final int walkDepth;
+	private final int maxWalkDepth;
+	private final int minWalkDepth;
 	private List<String> predicateBlacklist;
+	private static final int DEFAULT_MIN_WALK_DEPTH = 1;
 
 	public RDF2VecWalkGenerator(EnumModelType KG) {
 		this(KG, 4);
 	}
 
 	public RDF2VecWalkGenerator(EnumModelType KG, final int walkDepth) {
-		this(KG, walkDepth, 20);
+		this(KG, walkDepth, DEFAULT_MIN_WALK_DEPTH, 20);
 	}
 
-	public RDF2VecWalkGenerator(EnumModelType KG, int walkDepth, final int threadCount) {
-		this(KG, walkDepth, threadCount,
+	public RDF2VecWalkGenerator(EnumModelType KG, int walkDepthMin, int walkDepthMax, final int threadCount) {
+		this(KG, walkDepthMin, walkDepthMax, threadCount,
 				Arrays.asList(new String[] { "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>" }));
 	}
 
-	public RDF2VecWalkGenerator(EnumModelType KG, int walkDepth, final int threadCount,
-			final List<String> predicateBlacklist) {
+	public RDF2VecWalkGenerator(final EnumModelType KG, final int walkDepthMin, final int walkDepthMax,
+			final int threadCount, final List<String> predicateBlacklist) {
 		this.kg = KG;
-		this.walkDepth = walkDepth;
+		this.maxWalkDepth = walkDepthMax;
+		this.minWalkDepth = walkDepthMin;
 		this.threadCount = threadCount;
 		this.predicateBlacklist = predicateBlacklist;
 	}
@@ -102,8 +99,9 @@ public class RDF2VecWalkGenerator implements Executable {
 			if (ALL_VS_RANDOM) {
 				resultProcessor = new WalkResultProcessorAll(entityMapper, predicateMapper);
 			} else {
-				resultProcessor = new WalkResultprocessorRandomDecreasingDepth(new float[] { 0.1f, 0.05f, 0.03f })
-						.entityMapper(entityMapper).predicateMapper(predicateMapper).minWalks(20);
+				resultProcessor = new WalkResultprocessorRandomDecreasingDepth(
+						new float[] { 0.1f, 0.05f, 0.02f, 0.01f }).entityMapper(entityMapper)
+								.predicateMapper(predicateMapper).minWalks(20).maxWalks(1_000);
 			}
 
 			if (JENA_VS_VIRTUOSO) {
@@ -152,7 +150,7 @@ public class RDF2VecWalkGenerator implements Executable {
 	private void executeWalks(WalkGenerator wg, final String walkOutput, final Collection<String> uniqueEntities,
 			final int offset, final int limit) throws IOException {
 		try (final BufferedWriter wrtWalkOutput = new BufferedWriter(new FileWriter(walkOutput))) {
-			for (int depth = 1; depth <= this.walkDepth; ++depth) {
+			for (int depth = Math.max(minWalkDepth, 1); depth <= this.maxWalkDepth; ++depth) {
 				System.out.println("Doing depth(" + depth + ")");
 				// Chunk it into separate files
 				// Generate the walks
@@ -191,7 +189,7 @@ public class RDF2VecWalkGenerator implements Executable {
 			try (final BufferedWriter wrtWalkOutput = new BufferedWriter(
 					new FileWriter(walkOutput + "_" + chunkIndex + "_" + entitiesChunk.size() + ".txt"))) {
 				System.out.println("Starting chunk #" + chunkIndex + " with entities (" + entitiesChunk.size() + ")");
-				for (int depth = 1; depth <= this.walkDepth; ++depth) {
+				for (int depth = 1; depth <= this.maxWalkDepth; ++depth) {
 					// Chunk it into separate files
 					// Generate the walks
 					wg.generateWalks(wrtWalkOutput, entitiesChunk, 0, depth, this.threadCount, offset, limit);
@@ -212,7 +210,7 @@ public class RDF2VecWalkGenerator implements Executable {
 			System.out.println("Outputting missing entities into:");
 			System.out.println(missingWalkOutput);
 			try (final BufferedWriter wrtWalkOutput = new BufferedWriter(new FileWriter(missingWalkOutput))) {
-				for (int depth = 1; depth <= this.walkDepth; ++depth) {
+				for (int depth = 1; depth <= this.maxWalkDepth; ++depth) {
 					// Generate walks for the entities that weren't computed yet
 					wg.generateWalks(wrtWalkOutput, missingEntities, 0, depth, this.threadCount, offset, limit);
 				}

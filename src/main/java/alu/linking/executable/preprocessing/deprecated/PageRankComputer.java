@@ -36,6 +36,7 @@ public class PageRankComputer implements Executable {
 		final String in = FilePaths.FILE_EXTENDED_GRAPH.getPath(KG);
 		final String out = FilePaths.FILE_PAGERANK.getPath(KG);
 		System.out.println(in);
+
 		PageRankRDF pageRankRDF = new PageRankRDF(in, 0.50, 1.0, 50, true);
 		pageRankRDF.compute();
 		try (PrintWriter wrt = new PrintWriter(new BufferedWriter(new FileWriter(new File(out))))) {

@@ -6,7 +6,7 @@ public class WalkResultprocessorRandomDecreasingDepth extends WalkResultProcesso
 
 	public WalkResultprocessorRandomDecreasingDepth(long seed) {
 		super(seed);
-		// Take all
+		// Take all as default
 		depthDistribution(new float[] { 1.0f });
 	}
 
@@ -23,6 +23,8 @@ public class WalkResultprocessorRandomDecreasingDepth extends WalkResultProcesso
 	@Override
 	public WalkResultProcessor updateDepth(int currDepth) {
 		super.updateDepth(currDepth);
+		// If no more probability is defined, it takes the last item on the distribution
+		// list for it
 		this.probability(this.depthDistribution[Math.min(currDepth - 1, this.depthDistribution.length - 1)]);
 		return this;
 	}

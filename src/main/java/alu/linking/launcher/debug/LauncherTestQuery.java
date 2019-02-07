@@ -24,8 +24,8 @@ public class LauncherTestQuery {
 	public static void main(String[] args) {
 		final EnumModelType KG = EnumModelType.DBPEDIA_FULL;
 		System.out.println("Testing query for: " + KG.name());
-		final Dataset dataset = TDBFactory.createDataset(FilePaths.DATASET.getPath(KG));
-		final Model model = dataset.getDefaultModel();
+		//final Dataset dataset = TDBFactory.createDataset(FilePaths.DATASET.getPath(KG));
+		//final Model model = dataset.getDefaultModel();
 //		final String queryStr = "select distinct ?s (CONCAT(CONCAT(?fname, \" \"), ?lname) AS ?o) where {\r\n"
 //				+ "?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://ontologycentral.com/2010/05/cb/vocab#Person> .\r\n"
 //				+ "?s <http://ontologycentral.com/2010/05/cb/vocab#last_name> ?lname .\r\n"
@@ -63,9 +63,14 @@ public class LauncherTestQuery {
 //							+ "STRLEN(?o) > 0 "//
 //							+ " ) "//
 //							+ " } limit 100";
-					"select distinct ?p where { ?s ?p ?o . FILTER(isLiteral(?o)) )} limit 1000";
-			// "select distinct ?bPred where { \n" + "?aSubj ?bPred ?cObj . \n" + "} LIMIT
-			// 100";
+//					"select distinct ?p where { ?s ?p ?o . FILTER(isLiteral(?o)) )} limit 1000";
+					// "select distinct ?bPred where { \n" + "?aSubj ?bPred ?cObj . \n" + "} LIMIT
+					// 100";
+					// "SELECT DISTINCT ?s ?o WHERE { ?s
+					// <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>
+					// <http://www.w3.org/2002/07/owl#Thing> . ?s <http://xmlns.com/foaf/0.1/name>
+					// ?o }"
+					"SELECT DISTINCT ?p ?o WHERE { <http://dbpedia.org/resource/David_Beckham> ?p ?o . FILTER( isLiteral(?o) ) }";
 			final VirtGraph virtGraph = new VirtGraph(graphName, url,
 					new String(connShetland.userAcc.getBytesUsername()),
 					new String(connShetland.userAcc.getBytesPassword()));

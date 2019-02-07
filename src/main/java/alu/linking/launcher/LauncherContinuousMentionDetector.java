@@ -21,6 +21,7 @@ import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.AssignmentChooser;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
+import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
 import alu.linking.mentiondetection.fuzzy.MentionDetectorLSH;
@@ -50,7 +51,9 @@ public class LauncherContinuousMentionDetector {
 			// FILE_EXTENDED_GRAPH
 			Stopwatch.endOutputStart(getClass().getName());
 			System.out.println("Number of entries (aka. different surface forms): " + map.size());
-			final MentionDetector md = new MentionDetectorLSH(KG, 0.8);
+			final MentionDetector md =
+					// new MentionDetectorMap(map);//
+					new MentionDetectorLSH(KG, 0.9);
 			Stopwatch.endOutputStart(getClass().getName());
 			// ########################################################
 			// Mention Detection
@@ -75,7 +78,7 @@ public class LauncherContinuousMentionDetector {
 					inputLine = sc.nextLine();
 					Stopwatch.start(iterationWatchname);
 					Stopwatch.start(detectionWatchName);
-					mentions = md.detect(inputLine);
+					mentions = md.detect(InputProcessor.combineProcessedInput(InputProcessor.process(inputLine)));
 					System.out.println("Detection duration: " + Stopwatch.endDiffStart(detectionWatchName) + " ms.");
 					System.out.println("Detected [" + mentions.size() + "] mentions.");
 					// Once we know where something was mentioned, we need to generate candidates

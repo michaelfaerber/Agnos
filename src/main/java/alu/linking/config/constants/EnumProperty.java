@@ -11,11 +11,12 @@ public enum EnumProperty {
 	// ##################################
 	// # User Data (i.e. basic client authentication)
 	// ##################################
-	AUTHENTICATE_TAGTOG(FilePaths.AUTHENTICATION_TAGTOG.path), //
-	AUTHENTICATE_TAGTOG_TESTING(FilePaths.AUTHENTICATION_TAGTOG.path), //
-	AUTHENTICATE_BABELFY(FilePaths.AUTHENTICATION_BABELFY.path), //
-	AUTHENTICATE_VIRTUOSO(FilePaths.AUTHENTICATION_VIRTUOSO.path),//
+	AUTHENTICATE_TAGTOG("./config/tagtog.properties"), //
+	AUTHENTICATE_TAGTOG_TESTING("./config/tagtog_testing.properties"), //
+	AUTHENTICATE_BABELFY("./config/babelfy.properties"), //
+	AUTHENTICATE_VIRTUOSO("./config/virtuoso.properties"),//
 	;
+
 	private final String path;
 
 	EnumProperty(final String path) {

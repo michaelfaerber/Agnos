@@ -8,6 +8,13 @@
 	<name>kg_agnostic_el</name>
 
 	<properties>
+		<!-- GERBIL properties - START -->
+		<slf4j.version>1.7.6</slf4j.version>
+		<junit.version>4.11</junit.version>
+		<!-- prev version 3.7.0 -->
+		<jena.version>3.10.0</jena.version>
+		<!-- GERBIL properties - END -->
+
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<dbpedia.spotlight.version>0.7.1</dbpedia.spotlight.version>
 
@@ -72,6 +79,20 @@
 		</plugins>
 	</build>
 
+	<!-- GERBIL repositories - START -->
+	<repositories>
+		<repository>
+			<id>maven.aksw.internal</id>
+			<name>University Leipzig, AKSW Maven2 Repository</name>
+			<url>http://maven.aksw.org/repository/internal</url>
+		</repository>
+		<repository>
+			<id>maven.aksw.snapshots</id>
+			<name>University Leipzig, AKSW Maven2 Repository</name>
+			<url>http://maven.aksw.org/repository/snapshots</url>
+		</repository>
+	</repositories>
+	<!-- GERBIL repositories - END -->
 
 	<dependencies>
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-csv -->
@@ -126,20 +147,20 @@
 		<dependency>
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-tdb</artifactId>
-			<version>3.7.0</version>
+			<version>${jena.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.jena/jena -->
 		<dependency>
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena</artifactId>
-			<version>3.7.0</version>
+			<version>${jena.version}</version>
 			<type>pom</type>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.jena/jena-core -->
 		<dependency>
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-core</artifactId>
-			<version>3.7.0</version>
+			<version>${jena.version}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-collections4 -->
 		<dependency>
@@ -281,12 +302,19 @@
 
 		<!-- JENA ARQ for HTTP queries -->
 		<!-- https://mvnrepository.com/artifact/org.apache.jena/jena-arq -->
-		<!-- <dependency>
+		<dependency>
 			<groupId>org.apache.jena</groupId>
 			<artifactId>jena-arq</artifactId>
-			<version>3.10.0</version>
+			<!-- prev version: 3.10.0 -->
+			<version>${jena.version}</version>
 		</dependency>
-		 -->
+
+		<!-- GERBIL Dependency -->
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.4</version>
+		</dependency>
 
 	</dependencies>
 

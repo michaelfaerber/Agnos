@@ -16,7 +16,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +43,7 @@ public abstract class WalkGenerator implements AutoCloseable {
 	private final String prefixPredicate = "p";
 	private final String prefixObject = "o";
 	private final WalkResultProcessor resultProcessor;
-
+	private String walkQuery;
 	private final String logEntities;
 
 	public WalkGenerator(Collection<String> predicateBlacklist, final String entityQueryStr, final String logEntities,
@@ -139,10 +138,12 @@ public abstract class WalkGenerator implements AutoCloseable {
 			bwLogEntities = null;
 		}
 
+		this.walkQuery = walkQuery;
+		final EntityThreadFactory th = new EntityThreadFactory(this, walkQuery, wrt, resultProcessor, bwLogEntities,
+				isLineByLineOutput());
 		for (String entity : entities) {
 			// Thread which will compute the hops for this particular entity
-			EntityThread th = new EntityThread(entity, walkQuery, wrt, bwLogEntities, isLineByLineOutput());
-			pool.execute(th);
+			pool.execute(th.createNew(entity));
 		}
 
 		pool.shutdown();
@@ -212,61 +213,6 @@ public abstract class WalkGenerator implements AutoCloseable {
 		// + " BIND(RAND() AS ?sortKey) } ORDER BY ?sortKey LIMIT "
 		// + numberWalks;
 		return query;
-	}
-
-	private class EntityThread implements Runnable {
-		private final String entity;
-		private final String walkQuery;
-		private final BufferedWriter writer;
-		private final BufferedWriter entityLog;
-		private final boolean lineByLineOutput;
-
-		public EntityThread(final String entity, final String walkQuery, final BufferedWriter writer,
-				final BufferedWriter entityLog, final boolean lineByLineOutput) {
-			this.entity = entity;
-			this.walkQuery = walkQuery;
-			this.writer = writer;
-			this.entityLog = entityLog;
-			this.lineByLineOutput = lineByLineOutput;
-		}
-
-		@Override
-		public void run() {
-			processEntity();
-			// writeToFile(finalList, writer);
-		}
-
-		private void processEntity() {
-			String queryStr = walkQuery.replace("$ENTITY$", "<" + entity + ">");
-			// This part does the 'long' path query computation
-			executeQuery(queryStr);
-			// Note: Removed 'direct query' computation, as it can also be done with this at
-			// length 1...
-		}
-
-		/**
-		 * Executes specified query on the wanted model
-		 * 
-		 * @param queryStr
-		 */
-		public void executeQuery(String queryStr) {
-			beginREAD();
-			try (final QueryExecution qe = queryCreate(queryStr)) {
-				final ResultSet resultsTmp = qe.execSelect();
-				final ResultSet results = ResultSetFactory.copyResults(resultsTmp);
-				endTransaction();
-				resultProcessor.processResultLines(results, entity, this.writer, this.lineByLineOutput);
-			}
-			try {
-				synchronized (this.entityLog) {
-					this.entityLog.write(entity);
-					this.entityLog.newLine();
-				}
-				this.entityLog.flush();
-			} catch (IOException ioe) {
-				System.err.println("Error outputting to log file.");
-			}
-		}
 	}
 
 }

@@ -17,7 +17,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.semanticweb.yars.nx.Literal;
 import org.semanticweb.yars.nx.Node;
 import org.semanticweb.yars.nx.Resource;
@@ -103,7 +102,7 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor 
 	 */
 	private void processFileEntitySurfaceFormLinking(final BufferedReader brIn) throws IOException {
 		String line = null;
-		boolean nxparsing = false;
+		boolean nxparsing = true;
 		int counter = 0;
 		if (!nxparsing) {
 			while ((line = brIn.readLine()) != null) {
@@ -121,6 +120,8 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor 
 		} else {
 
 			final Iterator<String> bufferIterator = new Iterator<String>() {
+				final StringBuilder ret = new StringBuilder();
+				final StringBuilder tokenBuilder = new StringBuilder();
 				String[] currLine = new String[] { "" };
 				final String dummyPredicate = "<link>";
 				// predicate position reosurce is missing
@@ -134,6 +135,9 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor 
 				@Override
 				public String next() {
 					if (hasNext()) {
+						ret.setLength(0);
+						tokenBuilder.setLength(0);
+
 						String line;
 						try {
 							line = brIn.readLine();
@@ -143,18 +147,82 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor 
 						if (line != null) {
 							currLine = line.split(delim);
 						} else {
+							currLine = null;
 							return null;
 						}
-						final StringBuilder ret = new StringBuilder();
+
 						for (int i = 0; i < currLine.length; ++i) {
-							if (i == missingResourceIndex) {
-								ret.append(dummyPredicate + " ");
+							if (i != currLine.length - 1) {
+								// For any token that's not the last
+								final String token = currLine[i];
+								final boolean isLiteral = token.contains("^^http://") || token.contains("^^<http://");
+								if (!token.startsWith("<") && !isLiteral) {
+									// Does not start w/ < and is not a literal
+									tokenBuilder.append("<");
+								}
+								// add the actual token
+								tokenBuilder.append(token);
+
+								if (!token.endsWith(">") && !isLiteral) {
+									tokenBuilder.append(">");
+								}
+								tokenBuilder.append(" ");
+							} else {
+								// For the last one (should be a literal)
+								final String token = currLine[i];
+								final int literalTypeIndex = token.indexOf("^^http://");
+								final int literalTypeLtIndex = token.indexOf("^^<http://");
+								final int atEnglishLanguage = token.indexOf("@en");
+								// String is missing starting quotes
+								if (!token.startsWith("\"")) {
+									tokenBuilder.append("\"");
+								}
+
+								if (!token.endsWith("\"")) {
+									// String is missing ending quote
+									if (atEnglishLanguage != -1) {
+										// Put the quote before the @en
+										tokenBuilder.append(token.substring(0, atEnglishLanguage));
+										tokenBuilder.append("\"");
+										tokenBuilder.append(token.substring(atEnglishLanguage, token.length()));
+									} else if (literalTypeIndex != -1) {
+										// Put the quote before the string definition of ^^http:// etc
+										// but add < and > around the string definition
+										tokenBuilder.append(token.substring(0, literalTypeIndex));
+										tokenBuilder.append("\"^^<");
+										tokenBuilder.append(token.substring(literalTypeIndex + 2, token.length()));
+										tokenBuilder.append(">");
+									} else if (literalTypeLtIndex != -1) {
+										// Put the quote before the string definition of ^^<http:// etc
+										tokenBuilder.append(token.substring(0, literalTypeLtIndex));
+										tokenBuilder.append("\"");
+										tokenBuilder.append(token.substring(literalTypeLtIndex, token.length()));
+									} else {
+										// Put the quote at the end of line simply
+										tokenBuilder.append(token);
+										tokenBuilder.append("\"");
+									}
+								} else {
+									// String has an ending quote already, so no need to add one
+									tokenBuilder.append(token);
+								}
+								tokenBuilder.append(" ");
 							}
-							ret.append(currLine[i] + " ");
+							if (i == missingResourceIndex) {
+								// You're at the position you need to introduce a new resource into, so add it
+								// to the actual return value already
+								ret.append(dummyPredicate);
+								ret.append(" ");
+							}
+							ret.append(tokenBuilder.toString());
+							tokenBuilder.setLength(0);
 						}
 						ret.append(".");
 						return ret.toString();
 					} else {
+						// Should be handled by the above logic and hasNext() is resolved as currLine !=
+						// null anyway, but just in case logic somehow changes it up
+						currLine = null;
 						return null;
 					}
 				}

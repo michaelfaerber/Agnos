@@ -17,7 +17,6 @@ import org.apache.log4j.Logger;
 import com.google.common.collect.Lists;
 
 import alu.linking.config.constants.Strings;
-import alu.linking.disambiguation.AssignmentChooser;
 
 public class EmbeddingsUtils {
 	private static Logger logger = Logger.getLogger(EmbeddingsUtils.class);
@@ -32,7 +31,7 @@ public class EmbeddingsUtils {
 	 */
 	public static Map<String, List<Number>> readEmbeddings(final File intputFile)
 			throws FileNotFoundException, IOException {
-		return readEmbeddings(intputFile, null);
+		return readEmbeddings(intputFile, null, true);
 	}
 
 	/**
@@ -47,13 +46,15 @@ public class EmbeddingsUtils {
 	 * @throws IOException
 	 */
 	public static Map<String, List<Number>> readEmbeddings(final File intputFile,
-			final IDMappingLoader<String> mappingLoader) throws FileNotFoundException, IOException {
+			final IDMappingLoader<String> mappingLoader, final boolean normalize)
+			throws FileNotFoundException, IOException {
 		// Embeddings format: vocabularyWord <delim> List<Double>
 		final Map<String, List<Number>> embeddings = new HashMap<>();
 		final String delim = Strings.EMBEDDINGS_TRAINED_DELIM.val;
 		String line = null;
 		try (final BufferedReader brIn = new BufferedReader(new FileReader(intputFile))) {
 			while ((line = brIn.readLine()) != null) {
+				double sum = 0d;
 				// Word \t 1.23123 \t 2.1421421 ...
 				final String[] tokens = line.split(delim);
 				String vocab = tokens[0];
@@ -66,11 +67,19 @@ public class EmbeddingsUtils {
 
 				List<Number> embedding = Lists.newArrayList();
 				for (int i = 1; i < tokens.length; ++i) {
-					embedding.add(Double.valueOf(tokens[i]));
+					final double embedVal = Double.valueOf(tokens[i]);
+					embedding.add(embedVal);
+					// Sum it up here for normalization
+					// sum += embedVal;
+				}
+				// Normalize the list of values by dividing by its sum (aka. sum becomes 1.0)
+				if (normalize) {
+					embedding = normalize(embedding);
 				}
 				embeddings.put(vocab, embedding);
 			}
 		}
+
 		return embeddings;
 	}
 
@@ -255,8 +264,7 @@ public class EmbeddingsUtils {
 		return currChoices;
 	}
 
-	public static Number cosineSimilarity(final List<? extends Number> left, final List<? extends Number> right)
-			throws RuntimeException {
+	public static Number cosineSimilarity(final List<Number> left, final List<Number> right) throws RuntimeException {
 		return cosineSimilarity(left, right, true);
 	}
 
@@ -267,16 +275,16 @@ public class EmbeddingsUtils {
 	 * @param l2 second vector
 	 * @return cosine similarity of the two vectors
 	 */
-	public static Number cosineSimilarity(final List<? extends Number> left, final List<? extends Number> right,
-			final boolean normalize) throws RuntimeException {
+	public static Number cosineSimilarity(final List<Number> left, final List<Number> right, final boolean normalize)
+			throws RuntimeException {
 		if (left.size() != right.size()) {
 			throw new RuntimeException(
 					"Incompatible dimensions: Left(" + left.size() + ") vs. Right(" + right.size() + ")");
 		}
 
 		// Normalize input vectors
-		final List<? extends Number> l1;
-		final List<? extends Number> l2;
+		final List<Number> l1;
+		final List<Number> l2;
 		if (normalize) {
 			l1 = normalize(left);
 			l2 = normalize(right);
@@ -308,7 +316,7 @@ public class EmbeddingsUtils {
 	 * @param inputList to normalize
 	 * @return normalized list
 	 */
-	public static List<? extends Number> normalize(final List<? extends Number> inputList) {
+	public static List<Number> normalize(final List<Number> inputList) {
 		// Compute sum so we know what to divide each element by
 		final List<Number> list = Lists.newArrayList();
 		Number sum = 0d;

@@ -17,11 +17,12 @@ public class WalkResultProcessorRandomUniform extends WalkResultProcessor {
 	protected double probabilityRatio = 1.0;
 	// Maximum upper bound for random value, if it is above, it is rejected/ignored
 	// maxThreshold == max means everything goes through
-	protected int maxThreshold = 100;
+	protected int maxAcceptanceThreshold = 100;
 	// Max value of input probability, at 100 by default as we assume probabilities
 	// to be ratios
-	protected final int max = 100;
+	protected final int maxProbability = 100;
 	protected int minWalks;
+	protected int maxWalks;
 
 	public WalkResultProcessorRandomUniform(long seed) {
 		this.rand = new Random(seed);
@@ -32,16 +33,17 @@ public class WalkResultProcessorRandomUniform extends WalkResultProcessor {
 	}
 
 	public WalkResultProcessorRandomUniform(final double probabilityAdded, IDMappingGenerator<String> entityMapper,
-			IDMappingGenerator<String> predicateMapper, final int minWalks, final long seed) {
+			IDMappingGenerator<String> predicateMapper, final int minWalks, final int maxWalks, final long seed) {
 		this(seed);
 		entityMapper(entityMapper);
 		predicateMapper(predicateMapper);
 		minWalks(minWalks);
+		maxWalks(maxWalks);
 	}
 
 	public WalkResultProcessorRandomUniform probability(final float probability) {
 		this.probabilityRatio = probability;
-		this.maxThreshold = (int) (probabilityRatio * ((double) max));
+		this.maxAcceptanceThreshold = (int) (probabilityRatio * ((double) maxProbability));
 		return this;
 	}
 
@@ -60,14 +62,22 @@ public class WalkResultProcessorRandomUniform extends WalkResultProcessor {
 		return this;
 	}
 
+	public WalkResultProcessorRandomUniform maxWalks(final int maxWalks) {
+		this.maxWalks = maxWalks;
+		return this;
+	}
+
 	@Override
 	public void processResultLines(ResultSet results, String entity, BufferedWriter wrt, boolean lineByLineOutput) {
 		final List<QuerySolution> minKeeperList = new ArrayList<QuerySolution>(this.minWalks);
 		long added = 0;
 		while (results.hasNext()) {
+			if (added > this.maxWalks) {
+				break;
+			}
 			final QuerySolution result = results.next();
 			// Check if Fortuna / randomness allows us to get this triple
-			if (rand.nextInt(max) > maxThreshold) {
+			if (rand.nextInt(maxProbability) > maxAcceptanceThreshold) {
 				// Keep backup of this walk just in case there aren't enough in total to
 				// accommodate the min factor
 				if (added < this.minWalks) {
@@ -79,10 +89,13 @@ public class WalkResultProcessorRandomUniform extends WalkResultProcessor {
 				// Ignore if not within given %
 				continue;
 			}
+			// If you reach here -> it means this path was chosen to be added
 			// One more walk is output
 			added++;
 			makeStringWalk(result, entity, wrt, lineByLineOutput);
 		}
+
+		// Ranomizer for which elements should be taken out of the list of kept items
 		final Random randomizer = new Random(System.currentTimeMillis());
 
 		// Compute the 'missing' ones

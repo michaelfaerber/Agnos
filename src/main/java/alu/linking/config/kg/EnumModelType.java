@@ -45,5 +45,10 @@ public enum EnumModelType {
 	public boolean useVirtuoso() {
 		return this.useVirtuoso && this.virtuosoConn != null;
 	}
+	
+	@Override
+	public String toString() {
+		return name();
+	}
 
 }

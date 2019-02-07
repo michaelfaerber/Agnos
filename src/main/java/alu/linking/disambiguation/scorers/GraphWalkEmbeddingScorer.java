@@ -55,7 +55,7 @@ public class GraphWalkEmbeddingScorer<N> implements PostScorer<PossibleAssignmen
 			IDMappingLoader<String> entityMapping = new IDMappingLoader<String>()
 					.loadHumanFile(new File(FilePaths.FILE_GRAPH_WALK_ID_MAPPING_ENTITY_HUMAN.getPath(KG)));
 			this.entityEmbeddingsMap = EmbeddingsUtils.readEmbeddings(
-					new File(FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG)), entityMapping);
+					new File(FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG)), entityMapping, true);
 			entityMapping = null;
 		}
 
