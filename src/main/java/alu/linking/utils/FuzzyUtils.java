@@ -15,10 +15,8 @@ public class FuzzyUtils {
 	/**
 	 * Creates ngrams for given input and passed 'n' (aka. windowSize)
 	 * 
-	 * @param input
-	 *            text to be turned into ngrams/shingles
-	 * @param windowSize
-	 *            n parameter - size of resulting shingles
+	 * @param input      text to be turned into ngrams/shingles
+	 * @param windowSize n parameter - size of resulting shingles
 	 * @return
 	 */
 	public static List<String> generateNgrams(final String input, final int windowSize) {
@@ -96,6 +94,10 @@ public class FuzzyUtils {
 	}
 
 	/**
+	 * <b>WARNING</b>: Use this method only if a "anything that's above this
+	 * threshold is fine" applies in the encompassing logic. Remember that this just
+	 * makes sure that the threshold is reached, not that it is the maximal value
+	 * nor best candidate that reached it. <br>
 	 * Same as its non-threshold variant except that this one applies the prefix
 	 * filtering principle, allowing for faster returns but for
 	 * continuously-computed values
@@ -122,7 +124,7 @@ public class FuzzyUtils {
 				return true;
 			}
 			// Jump out if it's not possible to continue
-			final double ratio = ((double) (sim + ((double)(shorter_size - indexCounter)))) / longer_size;
+			final double ratio = ((double) (sim + ((double) (shorter_size - indexCounter)))) / longer_size;
 			// Ratio represents the ideal case from now on
 			if (ratio < threshold) {
 				// System.out.println("threshold(" + threshold + ") / Length(" + shorter_size +
@@ -133,7 +135,7 @@ public class FuzzyUtils {
 			indexCounter++;
 		}
 		// 5 + 9 - 4 = 10
-		double den = ((double)(set1.size() + set2.size())) - sim;
+		double den = ((double) (set1.size() + set2.size())) - sim;
 		return (sim / den) >= threshold;
 
 	}

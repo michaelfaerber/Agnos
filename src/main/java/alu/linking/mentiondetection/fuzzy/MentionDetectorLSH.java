@@ -102,10 +102,9 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	 *                       number of buckets, FALSE means that it represents the
 	 *                       number of bands
 	 */
-	public MentionDetectorLSH(final EnumModelType KG, final double threshold,
-			final int value, final boolean bucketsVsBands) {
-		this(KG, threshold, bucketsVsBands ? bandsDefaultValue : value,
-				bucketsVsBands ? value : bandsDefaultValue);
+	public MentionDetectorLSH(final EnumModelType KG, final double threshold, final int value,
+			final boolean bucketsVsBands) {
+		this(KG, threshold, bucketsVsBands ? bandsDefaultValue : value, bucketsVsBands ? value : bandsDefaultValue);
 	}
 
 	/**
@@ -117,8 +116,7 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	 * @param bands     how many bands LSH should be computed with
 	 * @param buckets   how many buckets LSH should be computed with
 	 */
-	public MentionDetectorLSH(final EnumModelType KG, final double threshold,
-			final int bands, final int buckets) {
+	public MentionDetectorLSH(final EnumModelType KG, final double threshold, final int bands, final int buckets) {
 		this(KG, threshold, bands, buckets, EnumDetectionType.BOUND_DYNAMIC_WINDOW);
 	}
 
@@ -134,8 +132,8 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	 * @param detectionType which type of tokenization should be applied to the
 	 *                      input text
 	 */
-	public MentionDetectorLSH(final EnumModelType KG, final double threshold,
-			final int bands, final int buckets, EnumDetectionType detectionType) {
+	public MentionDetectorLSH(final EnumModelType KG, final double threshold, final int bands, final int buckets,
+			EnumDetectionType detectionType) {
 		this.detectionType = detectionType;
 		this.threshold = threshold;
 		this.bands = bands;
@@ -189,7 +187,7 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 		// Read all the document names & hashes appropriately
 		surface_forms.clear();
 		int lineCounter = 0;
-		List<int[]> hashList = Lists.newArrayList();
+		final List<int[]> hashList = Lists.newArrayList();
 		try (BufferedReader bwIn = new BufferedReader(new FileReader(new File(outHashes)))) {
 			String line = null;
 			while ((line = bwIn.readLine()) != null) {
@@ -223,7 +221,7 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 			ngrams.put(ngram, nGramPosCounter++);
 		}
 		updateBuckets();
-		// Recreate the sparse vectors
+		// Recreate the sparse vectors by loading from specified file
 		try (BufferedReader bwIn = new BufferedReader(new FileReader(new File(outDocVectorsEntries)))) {
 			String line = null;
 			final List<LSHSparseVector<Boolean>> doc_vectors_list = Lists.newArrayList();
@@ -452,15 +450,17 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 			return;// this.hashes;
 		ngrams.clear();
 		this.surface_forms.clear();
-		this.surface_forms.addAll(map.keySet());
+		final Set<String> keys = map.keySet();
+		this.surface_forms.addAll(keys);
 		final TreeSet<String> allNGrams = new TreeSet<>();
-		for (String word : map.keySet()) {
+		for (String word : keys) {
 			// This is a word we want to ngram and add
 			for (String ngram : FuzzyUtils.generateNgrams(word, n_gram_length)) {
 				allNGrams.add(ngram);
 			}
 		}
 		int ngramPosCounter = 0;
+		// Populate ngrams
 		for (String ngram : allNGrams) {
 			ngrams.put(ngram, ngramPosCounter++);
 		}
@@ -478,7 +478,7 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 		this.lsh = new LSHMinHash(bands, buckets, dictionary.size(), this.seed);
 
 		// Create the vectors to execute hashes on afterwards
-		Iterator<String> documentsIterator = documents.iterator();
+		final Iterator<String> documentsIterator = documents.iterator();
 		final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(8);
 		AtomicInteger doneCounter = new AtomicInteger(0);
 		int[][] hashes = new int[documentSize][];
@@ -617,10 +617,6 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 			LSHSparseVector<Boolean> doc2 = document_vectors_sparse[i];
 			// We compute the similarity between each pair of sets
 			double similarity = 0d;
-			// System.out.println("Query dim: " + query_hash.length + "; Compare Dim.:" +
-			// hash2.length);
-			// System.out.println("Query hash: " + query_hash.length);
-			// System.out.println("hash2: " + hash2.length);
 			final int[] hash2 = hashes[i];
 			final boolean oneOrMoreSimilar = FuzzyUtils.sameHashOnSameIndex(query_hash, hash2);
 			// Just for understanding purposes

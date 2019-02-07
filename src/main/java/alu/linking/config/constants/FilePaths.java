@@ -12,13 +12,6 @@ public enum FilePaths {
 	// Contains all constant paths
 	// Attempting to keep a specific order
 	//
-	AUTHENTICATION_TAGTOG("./config/tagtog.properties", (EnumModelType) null), //
-	AUTHENTICATION_TAGTOG_TESTING("./config/tagtog_testing.properties", (EnumModelType) null), //
-	AUTHENTICATION_BABELFY("./config/babelfy.properties", (EnumModelType) null), //
-	AUTHENTICATION_VIRTUOSO("./config/virtuoso.properties", (EnumModelType) null), //
-	RULES_PROPERTIES("./config/predicates.properties", (EnumModelType) null), //
-	SPARQL_QUERY("./config/queries/sparlq_query.txt", (EnumModelType) null), //
-	SPARQL_QUERY_STEM("./config/queries/sparlq_query_stem.txt", (EnumModelType) null), //
 	// ##################################
 	// # MAIN
 	// ##################################
@@ -258,8 +251,9 @@ public enum FilePaths {
 		if (KG != null) {
 			switch (KG) {
 			case DEFAULT:
+				// Initialise for every KG if it's default one
 				for (EnumModelType initKG : EnumModelType.values()) {
-					init((initKG.root.endsWith("/") ? initKG.root : initKG.root + "/") + path, desc, initFile);
+					init((initKG.root.endsWith("/") ? initKG.root : initKG.root + "/") + path, initFile);
 				}
 				break;
 			case CRUNCHBASE:
@@ -267,9 +261,11 @@ public enum FilePaths {
 			case FREEBASE:
 			case MAG:
 			default:
-				init(path, desc, initFile);
+				init((KG.root.endsWith("/") ? KG.root : KG.root + "/") + path, initFile);
 				break;
 			}
+		} else {
+			init(path, initFile);
 		}
 		this.path = path;
 		this.val = path;
@@ -279,22 +275,24 @@ public enum FilePaths {
 		return KG.root + this.path;
 	}
 
-	private void init(final String path, final String desc, final boolean initFile) {
+	private void init(final String path, final boolean initFile) {
 		if (initFile) {
 			final File file = new File(path);
 			try {
 				if (!file.exists()) {
 					final File parentFile = file.getParentFile();
 					boolean parentCreatedSuccessfully = true;
-					if (!parentFile.exists()) {
+					if (parentFile != null && !parentFile.exists()) {
 						parentCreatedSuccessfully = parentFile.mkdirs();
 					}
 
 					if (parentCreatedSuccessfully) {
 						if (path.endsWith("/")) {
-							file.mkdir();
+							final boolean created = file.mkdir();
+							// System.out.println("Created(" + created + "): " + file.getAbsolutePath());
 						} else {
-							file.createNewFile();
+							final boolean created = file.createNewFile();
+							// System.out.println("Created(" + created + "): " + file.getAbsolutePath());
 						}
 					}
 				}

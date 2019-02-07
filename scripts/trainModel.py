@@ -37,7 +37,7 @@ class MySentences():
 
 # sg 500
 #sentencez = grab_sentences()
-model = Word2Vec(sentences=MySentences(), min_count=1, size=500, workers=55, window=10, sg=1, negative=15, iter=2)
+model = Word2Vec(sentences=MySentences(), min_count=1, size=200, workers=40, window=5, sg=1, negative=15, iter=20)
 #model.build_vocab(MySentences())
 #model.train(MySentences())
 
@@ -60,7 +60,7 @@ print("Vocab keys size:",len(model.wv.vocab.keys()))
 #print("PASSED!")
 
 # sg/cbow features iterations window negative hops random walks
-model.save('DB2Vec_sg_500_5_5_15_2_500')
+model.save('RDF2Vec_sg1_size200_mincount1_window5_neg15_iter20')
 
 # sg 200
 model1 = Word2Vec(size=200, workers=5, window=5, sg=1, negative=15, iter=5)

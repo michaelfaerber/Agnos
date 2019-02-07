@@ -2,6 +2,7 @@ package alu.linking.launcher;
 
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.executable.Pipeline;
+import alu.linking.executable.preprocessing.deprecated.PageRankComputer;
 import alu.linking.executable.preprocessing.setup.MentionDetectionSetup;
 
 public class LauncherSetup {

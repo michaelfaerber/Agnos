@@ -16,6 +16,7 @@ import com.google.common.collect.Lists;
 
 import alu.linking.config.constants.Numbers;
 import alu.linking.mentiondetection.EnumDetectionType;
+import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
 import alu.linking.structure.Loggable;
@@ -28,12 +29,12 @@ public class MentionDetectorMap implements MentionDetector<Node>, Loggable {
 
 	public MentionDetectorMap(final Map<String, Set<String>> map) {
 		Set<String> inKeys = map.keySet();
-		//Adds everything in lower case
+		// Adds everything in lower case
 		this.keys = new HashSet<>();
-		for (String key : inKeys)
-		{
-			this.keys.add(key.toLowerCase());
+		for (String key : inKeys) {
+			this.keys.add(InputProcessor.combineProcessedInput(InputProcessor.process(key)));
 		}
+
 	}
 
 	/**
@@ -53,7 +54,7 @@ public class MentionDetectorMap implements MentionDetector<Node>, Loggable {
 	@Override
 	public List<Mention<Node>> detect(final String input, final String source) {
 		try {
-			final String[] words = input.replaceAll("\\p{Punct}", "").split("\\p{Space}");// POSIX class
+			final String[] words = InputProcessor.process(input);
 			// Synchronized list
 			final List<Mention<Node>> mentions = Lists.newArrayList();
 
@@ -204,6 +205,15 @@ public class MentionDetectorMap implements MentionDetector<Node>, Loggable {
 	 */
 	public Mention<Node> find(final String input, final String source, final int offset) {
 		if (!this.keys.contains(input.toLowerCase())) {
+			System.out.println("Could not match w/:" + input.toLowerCase());
+			final int showAmt = 100;
+			int showCounter = 0;
+			System.out.println("Number of keys:" + this.keys.size());
+			for (String key : this.keys) {
+				if (showCounter++ < showAmt) {
+					System.out.println("Key:'" + key.toLowerCase() + "'");
+				}
+			}
 			return null;
 		}
 		// Create a mention with the best-found word

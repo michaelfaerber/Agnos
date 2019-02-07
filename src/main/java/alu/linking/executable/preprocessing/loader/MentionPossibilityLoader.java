@@ -7,6 +7,7 @@ import java.util.Set;
 
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
+import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.preprocessing.surfaceform.MentionPossibilityExtractor;
 import alu.linking.structure.Executable;
 
@@ -50,11 +51,11 @@ public class MentionPossibilityLoader implements Executable {
 				// linked to
 				// Returned map is of the sort Map<O, Set<S>>
 				mpe.populateBlacklist((File) (o[0]));
-				ret = mpe.addPossibilities((File) (o[1]));
+				ret = InputProcessor.processCollection(mpe.addPossibilities((File) (o[1])));
 			} else if (o.length == 1 && o[0] instanceof File) {
 				// Takes the blacklist from the default location
 				mpe.populateBlacklist(new File(FilePaths.FILE_MENTIONS_BLACKLIST.getPath(KG)));
-				ret = mpe.addPossibilities((File) (o[0]));
+				ret = InputProcessor.processCollection(mpe.addPossibilities((File) (o[0])));
 			}
 		}
 
