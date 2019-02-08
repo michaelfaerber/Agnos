@@ -43,7 +43,6 @@ public abstract class WalkGenerator implements AutoCloseable {
 	private final String prefixPredicate = "p";
 	private final String prefixObject = "o";
 	private final WalkResultProcessor resultProcessor;
-	private String walkQuery;
 	private final String logEntities;
 
 	public WalkGenerator(Collection<String> predicateBlacklist, final String entityQueryStr, final String logEntities,
@@ -138,14 +137,13 @@ public abstract class WalkGenerator implements AutoCloseable {
 			bwLogEntities = null;
 		}
 
-		this.walkQuery = walkQuery;
 		final EntityThreadFactory th = new EntityThreadFactory(this, walkQuery, wrt, resultProcessor, bwLogEntities,
 				isLineByLineOutput());
 		for (String entity : entities) {
 			// Thread which will compute the hops for this particular entity
 			pool.execute(th.createNew(entity));
 		}
-
+		entities = null;
 		pool.shutdown();
 		try {
 			pool.awaitTermination(10, TimeUnit.DAYS);

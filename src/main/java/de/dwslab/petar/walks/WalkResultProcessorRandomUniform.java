@@ -73,6 +73,7 @@ public class WalkResultProcessorRandomUniform extends WalkResultProcessor {
 		long added = 0;
 		while (results.hasNext()) {
 			if (added > this.maxWalks) {
+				minKeeperList.clear();
 				break;
 			}
 			final QuerySolution result = results.next();
@@ -138,7 +139,7 @@ public class WalkResultProcessorRandomUniform extends WalkResultProcessor {
 		// else
 		// Outputs every line one by one rather than accumulating multiple
 		writeToFile(singleWalk.toString(), wrt, lineByLineOutput);
-
+		singleWalk.setLength(0);
 	}
 
 	/**
