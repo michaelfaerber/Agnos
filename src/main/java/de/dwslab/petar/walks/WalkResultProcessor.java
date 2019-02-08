@@ -43,7 +43,8 @@ public abstract class WalkResultProcessor {
 			if (stringProcess) {
 				str = str.replace(newline, " ").replace("\n", " ").replace("\r", " ").replace("  ", " ");
 			}
-			wrt.write(str + newline);
+			wrt.write(str);
+			wrt.write(newline);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -52,16 +53,16 @@ public abstract class WalkResultProcessor {
 					+ ((this.processedEntities / this.entityAmt) + 1) + " ; "
 					+ (this.processedEntities % this.entityAmt) + " / " + this.entityAmt + ") : " + processedWalks);
 			System.out.println("TOTAL TIME:" + ((System.currentTimeMillis() - startTime) / 1000));
-			// flush the file
-			if (fileProcessedLines > 3_000_000) {
-				fileProcessedLines = 0;
-				try {
-					wrt.flush();
-					// writer.close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+		}
+		// flush the file
+		if (fileProcessedLines > 100_000) {
+			fileProcessedLines = 0;
+			try {
+				wrt.flush();
+				// writer.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 	}
