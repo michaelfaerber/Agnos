@@ -99,9 +99,8 @@ public class RDF2VecWalkGenerator implements Executable {
 			if (ALL_VS_RANDOM) {
 				resultProcessor = new WalkResultProcessorAll(entityMapper, predicateMapper);
 			} else {
-				resultProcessor = new WalkResultprocessorRandomDecreasingDepth(
-						new float[] { 0.1f, 0.05f, 0.02f, 0.01f }).entityMapper(entityMapper)
-								.predicateMapper(predicateMapper).minWalks(20).maxWalks(1_000);
+				resultProcessor = new WalkResultprocessorRandomDecreasingDepth(new float[] { 0.1f, 0.05f, 0.01f })
+						.entityMapper(entityMapper).predicateMapper(predicateMapper).minWalks(20).maxWalks(500);
 			}
 
 			if (JENA_VS_VIRTUOSO) {
@@ -149,7 +148,7 @@ public class RDF2VecWalkGenerator implements Executable {
 
 	private void executeWalks(WalkGenerator wg, final String walkOutput, final Collection<String> uniqueEntities,
 			final int offset, final int limit) throws IOException {
-		try (final BufferedWriter wrtWalkOutput = new BufferedWriter(new FileWriter(walkOutput))) {
+		try (final BufferedWriter wrtWalkOutput = new BufferedWriter(new FileWriter(walkOutput), 8192*20)) {
 			for (int depth = Math.max(minWalkDepth, 1); depth <= this.maxWalkDepth; ++depth) {
 				System.out.println("Doing depth(" + depth + ")");
 				// Chunk it into separate files

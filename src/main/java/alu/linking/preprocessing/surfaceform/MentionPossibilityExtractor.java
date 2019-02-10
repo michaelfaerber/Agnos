@@ -3,6 +3,7 @@ package alu.linking.preprocessing.surfaceform;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -24,6 +25,7 @@ import org.semanticweb.yars.nx.parser.NxParser;
 import org.semanticweb.yars.nx.util.NxUtil;
 
 import alu.linking.config.constants.Strings;
+import alu.linking.structure.Loggable;
 import alu.linking.structure.MentionPossibilityProcessor;
 import alu.linking.structure.RDFLineProcessor;
 
@@ -35,7 +37,7 @@ import alu.linking.structure.RDFLineProcessor;
  * @author Kwizzer
  *
  */
-public class MentionPossibilityExtractor implements MentionPossibilityProcessor {
+public class MentionPossibilityExtractor implements MentionPossibilityProcessor, Loggable {
 	private final int DEFAULT_MIN_LENGTH_THRESHOLD = 0;// 0 pretty much means 'no threshold'
 	private final int DEFAULT_MAX_LENGTH_THRESHOLD = 50;// 0 pretty much means 'no threshold'
 	private int lengthMinThreshold = DEFAULT_MIN_LENGTH_THRESHOLD;
@@ -76,7 +78,7 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor 
 	 * @throws IOException
 	 */
 	public HashMap<String, Set<String>> addPossibilities(final File inFile) throws IOException {
-		try (BufferedReader brIn = Files.newBufferedReader(Paths.get(inFile.getPath()))) {
+		try (final BufferedReader brIn = new BufferedReader(new FileReader(inFile), 8192 * 100)) {
 			processFile(brIn);
 		}
 		return mentionPossibilities;
@@ -102,19 +104,36 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor 
 	 */
 	private void processFileEntitySurfaceFormLinking(final BufferedReader brIn) throws IOException {
 		String line = null;
-		boolean nxparsing = true;
+		boolean nxparsing = false;
+		boolean ONLY_STRING = true;
 		int counter = 0;
 		if (!nxparsing) {
-			while ((line = brIn.readLine()) != null) {
-				final String[] tokens = line.split(delim);
-				if (tokens.length == 2) {
-					mentionPossibility(tokens[0], "<link>", tokens[1]);
-					// addPossibility(mentionPossibilities, tokens[1], tokens[0]);
-				} else if (tokens.length == 3) {
-					// addPossibility(mentionPossibilities, tokens[2], tokens[0]);
-					mentionPossibility(tokens[0], tokens[1], tokens[2]);
-				} else if (tokens.length != 0) {
-					System.err.println("Invalid line...: " + line);
+			if (ONLY_STRING) {
+				// Assumes that it's just plain strings and no RDF fanciness
+				while ((line = brIn.readLine()) != null) {
+					final String[] tokens = line.split(delim);
+					if (tokens.length == 2) {
+						addPossibility(mentionPossibilities, tokens[1], tokens[0]);
+					} else if (tokens.length == 3) {
+						addPossibility(mentionPossibilities, tokens[2], tokens[0]);
+					} else if (tokens.length != 0) {
+						getLogger().error("Invalid line...: " + line);
+					}
+				}
+
+			} else {
+				// Makes RDF Nodes out of the strings
+				while ((line = brIn.readLine()) != null) {
+					final String[] tokens = line.split(delim);
+					if (tokens.length == 2) {
+						mentionPossibility(tokens[0], "<link>", tokens[1]);
+						// addPossibility(mentionPossibilities, tokens[1], tokens[0]);
+					} else if (tokens.length == 3) {
+						// addPossibility(mentionPossibilities, tokens[2], tokens[0]);
+						mentionPossibility(tokens[0], tokens[1], tokens[2]);
+					} else if (tokens.length != 0) {
+						getLogger().error("Invalid line...: " + line);
+					}
 				}
 			}
 		} else {
@@ -235,9 +254,18 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor 
 				}
 			});
 
+			final StringBuilder sb = new StringBuilder();
 			while (parser.hasNext()) {
 				Node[] triple = parser.next();
-				mentionPossibility(triple[0], triple[1], triple[2]);
+				if (triple.length == 3) {
+					mentionPossibility(triple[0], triple[1], triple[2]);
+				} else {
+					sb.setLength(0);
+					for (Node n : triple) {
+						sb.append(n.toString());
+					}
+					getLogger().warn("Weird triple length(" + triple.length + "): " + sb.toString());
+				}
 			}
 		}
 
@@ -299,7 +327,7 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor 
 	 */
 	private void addPossibility(final HashMap<String, Set<String>> map, String word, String source) {
 		word = word.toLowerCase();
-		source = source.toLowerCase();
+		source = source;// .toLowerCase();
 		if (!passesRequirements(word))
 			return;
 		Set<String> s;

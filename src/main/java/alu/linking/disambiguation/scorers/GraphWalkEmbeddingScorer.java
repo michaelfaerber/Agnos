@@ -46,9 +46,9 @@ public class GraphWalkEmbeddingScorer<N> implements PostScorer<PossibleAssignmen
 					helperMap = (Map<String, List<Number>>) ois.readObject();
 				}
 			} catch (EOFException eof) {
-				System.out.println("Exception!");
+				getLogger().error("Exception!", eof);
 			} finally {
-				System.out.println("HelperMap: " + helperMap);
+				getLogger().info("HelperMap: " + helperMap);
 				this.entityEmbeddingsMap = helperMap;
 			}
 		} else {

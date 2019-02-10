@@ -95,7 +95,8 @@ public class ScorerGraph {
 				final Number weight = EmbeddingsUtils.cosineSimilarity(embeddings.get(this.nodeName),
 						embeddings.get(next.nodeName));
 				if (weight == null || weight.doubleValue() < 0 || weight.doubleValue() > 1) {
-					throw new RuntimeException("Invalid weight");
+					throw new RuntimeException("Invalid weight(" + weight + "):" + this.nodeName + "("
+							+ embeddings.get(next.nodeName) + ")");
 				}
 
 				// Adds weight and successor
