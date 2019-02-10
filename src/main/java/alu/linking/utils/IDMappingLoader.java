@@ -3,9 +3,11 @@ package alu.linking.utils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.Map;
 
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.log4j.Logger;
@@ -18,6 +20,28 @@ public class IDMappingLoader<V> {
 	private DualHashBidiMap<String, V> mappingRaw = null;
 	private final DualHashBidiMap<String, String> mappingHuman = new DualHashBidiMap<String, String>();
 	private final String tokenSeparator;
+
+	public void translate(final IDMappingLoader<V> to, final File inputFile, final File outputFile) throws FileNotFoundException, IOException {
+
+		if (mappingRaw != null && mappingRaw.size() > 0) {
+			try (final BufferedReader br = new BufferedReader(new FileReader(inputFile)))
+			{
+				String line = null;
+				while ((line=br.readLine())!=null)
+				{
+					line.split(tokenSeparator);
+				}
+			}
+			for (Map.Entry<String, V> e : this.mappingRaw.entrySet()) {
+				final String key = e.getKey();
+				final V uri = e.getValue();
+				final String otherKey = to.getKey(uri);
+			}
+		} else if (mappingHuman != null && mappingHuman.size() > 0) {
+
+		}
+
+	}
 
 	public IDMappingLoader() {
 		this(Strings.ID_MAPPING_SEPARATOR.val);
@@ -108,7 +132,7 @@ public class IDMappingLoader<V> {
 	 */
 	public String getMapping(final String key) {
 		String ret = null;
-		if (this.mappingRaw != null) {
+		if (this.mappingRaw != null && this.mappingRaw.size() > 0) {
 			final V tempRet = getMappingRaw(key);
 			if (tempRet != null) {
 				ret = tempRet.toString();
@@ -122,4 +146,25 @@ public class IDMappingLoader<V> {
 		}
 		return ret;
 	}
+
+	public String getKey(final V uri) {
+		String ret = null;
+		if (this.mappingRaw != null && this.mappingRaw.size() > 0) {
+			final String tempRet = this.mappingRaw.getKey(uri);
+			if (tempRet != null) {
+				ret = tempRet;
+			}
+		}
+		if (ret != null) {
+			return ret;
+		}
+		if (this.mappingHuman != null && this.mappingHuman.size() > 0) {
+			final String tempRet = this.mappingHuman.getKey(uri);
+			if (tempRet != null) {
+				ret = tempRet;
+			}
+		}
+		return ret;
+	}
+
 }

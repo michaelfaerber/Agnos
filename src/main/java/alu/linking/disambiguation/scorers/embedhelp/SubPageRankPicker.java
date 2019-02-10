@@ -42,7 +42,7 @@ public class SubPageRankPicker<S> implements ClusterItemPicker<S> {
 			retList.add((S) e.getValue().left);
 		}
 		for (String s : scorerGraph.notFoundIRIs) {
-			System.out.println("Could not find (" + scorerGraph.notFoundIRIs.size() + "): " + s);
+			getLogger().info("Could not find (" + scorerGraph.notFoundIRIs.size() + "): " + s);
 		}
 		return retList;
 	}

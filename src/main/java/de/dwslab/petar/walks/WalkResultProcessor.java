@@ -48,7 +48,7 @@ public abstract class WalkResultProcessor {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		if (processedWalks % 1_000_000 == 0) {
+		if (processedWalks % 100_000 == 0) {
 			System.out.println("TOTAL NUMBER OF PATHS(" + this.depth + " =?= "
 					+ ((this.processedEntities / this.entityAmt) + 1) + " ; "
 					+ (this.processedEntities % this.entityAmt) + " / " + this.entityAmt + ") : " + processedWalks);

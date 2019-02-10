@@ -10,7 +10,7 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', filename
 # containing the sentences we want for our Word2Vec model
 pathsLocator = "./sentencesPaths.txt"
 outputPath = "./entity_embeddings.txt"
-to_load = 'DB2Vec_sg_500_5_5_15_2_500'
+to_load = 'RDF2Vec_sg1_size200_mincount1_window5_neg15_iter20'
 
 
 #What is the newline character on the machine
@@ -51,6 +51,8 @@ entity_embeddings_dict = {}
 
 print("Compute entity embeddings (through combination of word embeddings)...")
 counter = 0
+
+'''
 for sentence in sentences:
     entity = sentence[0]
     entity_embedding = None
@@ -68,6 +70,22 @@ for sentence in sentences:
         print("Combined word embeddings: ",counter)
         print("Last one completed: ",entity)
     counter+=1
+'''
+for sentence in sentences:
+    # idea is that the entity is in the document, so we check what it is like and 
+    # since every entity has 'the same' treatment, that we can determine their probabilities based on that
+    entity = sentence[0]
+    entity_embedding = None
+    dict_val = entity_embeddings_dict.get(entity, None)
+    if (dict_val is None):
+        entity_embedding = model.wv[entity]
+        entity_embeddings_dict[entity] = entity_embedding
+    if (counter % 1000000 == 0):
+        print("Combined word embeddings: ",counter)
+        print("Last one completed: ",entity)
+    counter+=1
+
+
 print("Done w/ combining embeddings")
 print("Output computed entity embeddings!")
 for (entity, entity_embedding) in entity_embeddings_dict.items():
