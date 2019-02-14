@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -25,6 +26,8 @@ import org.semanticweb.yars.nx.parser.NxParser;
 import org.semanticweb.yars.nx.util.NxUtil;
 
 import alu.linking.config.constants.Strings;
+import alu.linking.config.kg.EnumModelType;
+import alu.linking.mentiondetection.StopwordsLoader;
 import alu.linking.structure.Loggable;
 import alu.linking.structure.MentionPossibilityProcessor;
 import alu.linking.structure.RDFLineProcessor;
@@ -42,9 +45,24 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 	private final int DEFAULT_MAX_LENGTH_THRESHOLD = 50;// 0 pretty much means 'no threshold'
 	private int lengthMinThreshold = DEFAULT_MIN_LENGTH_THRESHOLD;
 	private int lengthMaxThreshold = DEFAULT_MAX_LENGTH_THRESHOLD;
-	private final HashSet<String> blackList = new HashSet<String>();
+	private final Set<String> blackList;
 	private final HashMap<String, Set<String>> mentionPossibilities = new HashMap<String, Set<String>>();
 	private final String delim = Strings.ENTITY_SURFACE_FORM_LINKING_DELIM.val;
+
+	public MentionPossibilityExtractor(final EnumModelType KG) {
+		Set<String> stopwords = null;
+		try {
+			stopwords = new StopwordsLoader(KG).getStopwords();
+		} catch (IOException e) {
+			stopwords = null;
+		}
+		if (stopwords == null) {
+			this.blackList = new HashSet<String>();
+		} else {
+			this.blackList = stopwords;
+		}
+
+	}
 
 	public void populateBlacklist(final File inFile) throws IOException {
 		try (BufferedReader brIn = Files.newBufferedReader(Paths.get(inFile.getPath()))) {
@@ -62,7 +80,10 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 				bwOut.newLine();
 			}
 		}
+	}
 
+	public void blacklist(final Collection<String> stopwords) {
+		this.blackList.addAll(stopwords);
 	}
 
 	public void blacklist(final String word) {
@@ -345,11 +366,8 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 	 * @return whether it passes threshold and blacklist requirements
 	 */
 	private boolean passesRequirements(String word) {
-		boolean ret = (word != null && word.length() > lengthMinThreshold && !blackList.contains(word));
-		if (word.length() > lengthMaxThreshold) {
-//			System.out.println("Too long(" + word.length() + "): " + word.substring(0, 40));
-			ret = false;
-		}
+		boolean ret = ((word != null) && (word.length() > lengthMinThreshold) && (word.length() < lengthMaxThreshold)
+				&& (!blackList.contains(word)));
 		return ret;
 	}
 
