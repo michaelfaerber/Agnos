@@ -31,7 +31,7 @@ public class MentionPossibilityLoader implements Executable {
 
 	@Override
 	public void init() {
-		this.mpe = new MentionPossibilityExtractor();
+		this.mpe = new MentionPossibilityExtractor(this.KG);
 	}
 
 	@Override
