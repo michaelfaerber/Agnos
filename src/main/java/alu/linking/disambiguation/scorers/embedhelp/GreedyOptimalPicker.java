@@ -24,7 +24,7 @@ public class GreedyOptimalPicker<S> implements ClusterItemPicker<S>, Loggable {
 	public List<S> combine() {
 		// Compute clusters based on assignments
 		List<List<String>> clusters = Lists.newArrayList();
-		final Map<String, List<String>> clusterMap = computeCluster(context);
+		final Map<String, List<String>> clusterMap = computeClusters(context);
 
 		// Add the detected clusters to an encompassing list
 		for (Map.Entry<String, List<String>> e : clusterMap.entrySet()) {

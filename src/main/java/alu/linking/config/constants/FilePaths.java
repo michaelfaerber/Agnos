@@ -69,6 +69,8 @@ public enum FilePaths {
 	// ##################################
 	// FILES for src/main
 	// ##################################
+	FILE_STOPWORDS(DIR_DATA.path + "stopwords.txt"),//
+	
 	FILE_CRUNCHBASE_ENTITIES(DIR_DATA.path + "crunchbase_entities.nt"), //
 	FILE_CRUNCHBASE_ENTITIES_TYPED_LITERAL_STRING(DIR_DATA.path + "crunchbase_entities_typed_literal_string.nt"), //
 	FILE_CRUNCHBASE_ENTITIES_NOUN_PHRASES(DIR_DATA.path + "crunchbase_sf_noun_phrases.nt"), //
