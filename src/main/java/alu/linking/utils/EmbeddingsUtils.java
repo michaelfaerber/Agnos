@@ -306,7 +306,8 @@ public class EmbeddingsUtils {
 
 		final Number den = (denLeft.doubleValue() * denRight.doubleValue());
 
-		return num.doubleValue() / den.doubleValue();
+		// return ((num.doubleValue() / den.doubleValue()) + 1d) / 2d;
+		return Math.abs((num.doubleValue() / den.doubleValue()));
 	}
 
 	/**

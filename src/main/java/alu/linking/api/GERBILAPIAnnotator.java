@@ -50,6 +50,7 @@ public class GERBILAPIAnnotator implements Executable {
 		final List<Marking> retList = Lists.newArrayList();
 		// new ScoredNamedEntity(startPosition, length, uris, confidence);
 		// new Mention()... transform mention into a scored named entity
+
 		return null;
 	}
 

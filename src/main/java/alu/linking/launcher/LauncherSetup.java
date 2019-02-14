@@ -1,8 +1,9 @@
 package alu.linking.launcher;
 
+import org.apache.log4j.Logger;
+
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.executable.Pipeline;
-import alu.linking.executable.preprocessing.deprecated.PageRankComputer;
 import alu.linking.executable.preprocessing.setup.MentionDetectionSetup;
 
 public class LauncherSetup {
@@ -12,6 +13,7 @@ public class LauncherSetup {
 		final EnumModelType KG = EnumModelType.DBPEDIA_FULL;
 		try {
 			final Pipeline pipeline = new Pipeline();
+			Logger.getLogger(LauncherSetup.class).info("Setting up precomputation structures");
 			// pipeline.setOutput(true);
 			// Download all the tagtog files
 			// pipeline.queue(new TagtogDataDownloader(), null);

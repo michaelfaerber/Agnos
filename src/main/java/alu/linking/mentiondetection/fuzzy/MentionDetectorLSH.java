@@ -175,7 +175,7 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	 * appropriately (followed by backup()) before this method can be called:<br>
 	 * 1) changing buckets<br>
 	 * 2) bands(bins) <br>
-	 * 3) underlying knowledge base<br>
+	 * 3) underlying knowledge base's surface forms<br>
 	 * 
 	 * @throws Exception
 	 */

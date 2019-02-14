@@ -38,7 +38,7 @@ import alu.linking.structure.RDFLineProcessor;
  *
  */
 public class MentionPossibilityExtractor implements MentionPossibilityProcessor, Loggable {
-	private final int DEFAULT_MIN_LENGTH_THRESHOLD = 0;// 0 pretty much means 'no threshold'
+	private final int DEFAULT_MIN_LENGTH_THRESHOLD = 1;// 0 pretty much means 'no threshold'
 	private final int DEFAULT_MAX_LENGTH_THRESHOLD = 50;// 0 pretty much means 'no threshold'
 	private int lengthMinThreshold = DEFAULT_MIN_LENGTH_THRESHOLD;
 	private int lengthMaxThreshold = DEFAULT_MAX_LENGTH_THRESHOLD;

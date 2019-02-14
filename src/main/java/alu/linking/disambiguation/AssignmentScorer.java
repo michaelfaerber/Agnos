@@ -1,10 +1,11 @@
 package alu.linking.disambiguation;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -16,10 +17,12 @@ import org.apache.log4j.Logger;
 
 import alu.linking.candidategeneration.PossibleAssignment;
 import alu.linking.candidategeneration.Scorable;
+import alu.linking.config.constants.FilePaths;
 import alu.linking.config.constants.Numbers;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.scorers.GraphWalkEmbeddingScorer;
 import alu.linking.disambiguation.scorers.PageRankScorer;
+import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 
@@ -33,7 +36,6 @@ public class AssignmentScorer<N> implements Loggable {
 	private static Logger logger = Logger.getLogger(AssignmentScorer.class);
 	private final HashSet<Mention<N>> context = new HashSet<>();
 
-
 	public AssignmentScorer(final EnumModelType KG) throws FileNotFoundException, ClassNotFoundException, IOException {
 		// Determines how everything is scored!
 		PossibleAssignment.setScoreCombiner(new ScoreCombiner<PossibleAssignment>());
@@ -43,8 +45,19 @@ public class AssignmentScorer<N> implements Loggable {
 
 		// Post-scoring
 		// PossibleAssignment.addPostScorer(new VicinityScorer());
-
-		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(KG));
+		final Map<String, List<Number>> entityEmbeddingsMap = GraphWalkEmbeddingScorer.humanload(
+				FilePaths.FILE_GRAPH_WALK_ID_MAPPING_ENTITY_HUMAN.getPath(KG),
+				FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG));
+		final EntitySimilarityService similarityService = new EntitySimilarityService(entityEmbeddingsMap);
+		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
+		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
+		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
+		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
+		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
+		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
+		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
+		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
+		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
 		// PossibleAssignment.addPostScorer(new SSPEmbeddingScorer(KG));
 
 		for (PostScorer postScorer : PossibleAssignment.getPostScorers()) {
@@ -55,8 +68,9 @@ public class AssignmentScorer<N> implements Loggable {
 	}
 
 	/**
-	 * Scores all the assignments (possible sources for a particular mention) in
-	 * order to detect which source a particular mention should be attributed to<br>
+	 * Scores all the assignments (possible sources for a particular mention /
+	 * surface form) in order to detect which source / entity a particular mention
+	 * should be attributed to<br>
 	 * Applies pre-scoring & post-scoring
 	 * 
 	 * @return
@@ -86,7 +100,7 @@ public class AssignmentScorer<N> implements Loggable {
 			// No need for await termination as this is pretty much it already...
 			Thread.sleep(100);
 			sleepCounter += 100l;
-			if ((sleepCounter > 5_000) && ((sleepCounter % 5000) == 0)) {
+			if ((sleepCounter > 5_000) && ((sleepCounter % 5000) <= 100)) {
 				getLogger().debug(
 						"Score Computation - In progress [" + doneCounter.get() + " / " + assSize + "] documents.");
 			}

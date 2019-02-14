@@ -81,7 +81,7 @@ public class Mention<N> implements Loggable {
 					: ((m.getOriginalMention() == null || getOriginalMention() == null) ? false
 							: this.getOriginalMention().equals(m.getOriginalMention()));
 			ret &= (m.getDetectionConfidence() == this.getDetectionConfidence());
-
+			ret &= (this.hashCode() == obj.hashCode());
 			return ret;
 		}
 		return super.equals(obj);
@@ -129,8 +129,7 @@ public class Mention<N> implements Loggable {
 	 * to the same detected word, then this should be changed or scores will not
 	 * reflect the ideas properly.
 	 * 
-	 * @param fromMention
-	 *            mention from which to copy
+	 * @param fromMention mention from which to copy
 	 */
 	public void copyResults(Mention<N> fromMention) {
 		// Make sure it's the same mention word

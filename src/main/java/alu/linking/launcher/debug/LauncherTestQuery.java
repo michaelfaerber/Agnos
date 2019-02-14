@@ -2,7 +2,6 @@ package alu.linking.launcher.debug;
 
 import java.util.Iterator;
 
-import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -10,10 +9,8 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.tdb.TDBFactory;
 
 import alu.linking.config.constants.EnumConnection;
-import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import virtuoso.jena.driver.VirtGraph;
 import virtuoso.jena.driver.VirtuosoQueryExecution;
@@ -24,8 +21,9 @@ public class LauncherTestQuery {
 	public static void main(String[] args) {
 		final EnumModelType KG = EnumModelType.DBPEDIA_FULL;
 		System.out.println("Testing query for: " + KG.name());
-		//final Dataset dataset = TDBFactory.createDataset(FilePaths.DATASET.getPath(KG));
-		//final Model model = dataset.getDefaultModel();
+		// final Dataset dataset =
+		// TDBFactory.createDataset(FilePaths.DATASET.getPath(KG));
+		// final Model model = dataset.getDefaultModel();
 //		final String queryStr = "select distinct ?s (CONCAT(CONCAT(?fname, \" \"), ?lname) AS ?o) where {\r\n"
 //				+ "?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://ontologycentral.com/2010/05/cb/vocab#Person> .\r\n"
 //				+ "?s <http://ontologycentral.com/2010/05/cb/vocab#last_name> ?lname .\r\n"
@@ -70,7 +68,7 @@ public class LauncherTestQuery {
 					// <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>
 					// <http://www.w3.org/2002/07/owl#Thing> . ?s <http://xmlns.com/foaf/0.1/name>
 					// ?o }"
-					"SELECT DISTINCT ?p STR(?obj) AS ?o WHERE { <http://dbpedia.org/resource/David_Beckham> ?p ?obj . FILTER( isLiteral(?obj) ) . FILTER( STRLEN(?obj) > 1 }";
+					"SELECT DISTINCT ?p STR(?obj) AS ?o WHERE { <http://dbpedia.org/resource/David_Beckham> ?p ?obj . FILTER( isLiteral(?obj) ) . FILTER( STRLEN(STR(?obj)) > 1 ) }";
 			final VirtGraph virtGraph = new VirtGraph(graphName, url,
 					new String(connShetland.userAcc.getBytesUsername()),
 					new String(connShetland.userAcc.getBytesPassword()));
