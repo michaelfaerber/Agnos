@@ -93,36 +93,32 @@ public class RDF2VecWalkGenerator implements Executable {
 		) {
 			// Generate walks into wanted output file
 			final WalkGenerator wg;
-			final boolean JENA_VS_VIRTUOSO = false;
 			final boolean ALL_VS_RANDOM = false;
 			final WalkResultProcessor resultProcessor;
 			if (ALL_VS_RANDOM) {
 				resultProcessor = new WalkResultProcessorAll(entityMapper, predicateMapper);
 			} else {
 				resultProcessor = new WalkResultprocessorRandomDecreasingDepth(new float[] { 0.1f, 0.05f, 0.01f })
-						.entityMapper(entityMapper).predicateMapper(predicateMapper).minWalks(20).maxWalks(500);
+						.entityMapper(entityMapper).predicateMapper(predicateMapper).minWalks(20).maxWalks(1_000);
 			}
 
-			if (JENA_VS_VIRTUOSO) {
-				wg = new WalkGeneratorJena(FilePaths.DATASET.getPath(kg), uniqueBlacklist, kg.query.query,
+			// Whether to use Jena or Virtuoso is defined in the EnumModelType
+			if (kg.useVirtuoso()) {
+				getLogger().info("Executing graph walks through [VIRTUOSO]");
+				// Use virtuoso for graph walks
+				final EnumConnection connVirtuoso = kg.virtuosoConn;
+				final VirtGraph virtGraph = new VirtGraph(kg.virtuosoGraphname, connVirtuoso.baseURL,
+						new String(connVirtuoso.userAcc.getBytesUsername()),
+						new String(connVirtuoso.userAcc.getBytesPassword()));
+
+				wg = new WalkGeneratorVirtuoso(virtGraph, uniqueBlacklist, kg.query.query,
 						FilePaths.FILE_GRAPH_WALK_LOG_ENTITY.getPath(kg), resultProcessor);
 			} else {
-				final String graphName = "http://dbpedia.org";
-				// "select distinct ?bPred where { \n" + "?aSubj ?bPred ?cObj . \n" + "} LIMIT
-				// 100";
-//				final EnumConnection connSeeland = EnumConnection.SEELAND_VIRTUOSO;
-//				final VirtGraph virtGraphSeeland = new VirtGraph(graphName, connSeeland.baseURL,
-//						new String(connSeeland.userAcc.getBytesUsername()),
-//						new String(connSeeland.userAcc.getBytesPassword()));
-				final EnumConnection connShetland = EnumConnection.SHETLAND_VIRTUOSO;
-				final VirtGraph virtGraphShetland = new VirtGraph(graphName, connShetland.baseURL,
-						new String(connShetland.userAcc.getBytesUsername()),
-						new String(connShetland.userAcc.getBytesPassword()));
-
-				wg = new WalkGeneratorVirtuoso(virtGraphShetland, uniqueBlacklist, kg.query.query,
+				// Use Jena for graph walks
+				getLogger().info("Executing graph walks through [JENA]");
+				wg = new WalkGeneratorJena(FilePaths.DATASET.getPath(kg), uniqueBlacklist, kg.query.query,
 						FilePaths.FILE_GRAPH_WALK_LOG_ENTITY.getPath(kg), resultProcessor);
 			}
-
 			// Load the entities from the walk generator - assuming there is enough space
 			// for all entities in RAM
 			if (allEntities.size() == 0) {
@@ -148,7 +144,7 @@ public class RDF2VecWalkGenerator implements Executable {
 
 	private void executeWalks(WalkGenerator wg, final String walkOutput, final Collection<String> uniqueEntities,
 			final int offset, final int limit) throws IOException {
-		try (final BufferedWriter wrtWalkOutput = new BufferedWriter(new FileWriter(walkOutput), 8192*20)) {
+		try (final BufferedWriter wrtWalkOutput = new BufferedWriter(new FileWriter(walkOutput), 8192 * 20)) {
 			for (int depth = Math.max(minWalkDepth, 1); depth <= this.maxWalkDepth; ++depth) {
 				System.out.println("Doing depth(" + depth + ")");
 				// Chunk it into separate files

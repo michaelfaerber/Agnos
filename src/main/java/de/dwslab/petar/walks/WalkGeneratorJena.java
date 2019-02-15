@@ -14,7 +14,8 @@ import org.apache.jena.tdb.TDBFactory;
 
 public class WalkGeneratorJena extends WalkGenerator {
 
-	public WalkGeneratorJena(final String repoLocation, List<String> predicateBlacklist, String entityQueryStr, WalkResultProcessor resultProcessor) {
+	public WalkGeneratorJena(final String repoLocation, List<String> predicateBlacklist, String entityQueryStr,
+			WalkResultProcessor resultProcessor) {
 		this(repoLocation, predicateBlacklist, entityQueryStr, null, resultProcessor);
 	}
 
@@ -35,7 +36,6 @@ public class WalkGeneratorJena extends WalkGenerator {
 	@Override
 	protected QueryExecution queryCreate(String queryString) {
 		// TODO Auto-generated method stub
-		dataset.begin(ReadWrite.READ);
 		final Query query = QueryFactory.create(queryString);
 		final QueryExecution qe = QueryExecutionFactory.create(query, model);
 		return qe;
