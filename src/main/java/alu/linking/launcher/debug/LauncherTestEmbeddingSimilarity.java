@@ -34,7 +34,7 @@ public class LauncherTestEmbeddingSimilarity {
 			getLogger().info("Testing embedding similarity");
 			final EnumModelType KG = EnumModelType.DBPEDIA_FULL;
 			System.out.println("Loading mention possibilities...");
-			final Map<String, Set<String>> map = LauncherContinuousMentionDetector.loadSurfaceForms(KG);
+			final Map<String, Set<String>> map = LauncherContinuousMentionDetector.loadSurfaceForms(KG, null);
 			// ########################################################
 			// Mention Detection
 			// ########################################################

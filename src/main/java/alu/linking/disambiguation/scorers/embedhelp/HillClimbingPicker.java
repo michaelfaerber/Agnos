@@ -244,16 +244,16 @@ public class HillClimbingPicker<S> implements ClusterItemPicker<S> {
 				currBestSim = entitySim;
 				bestFromEntity = fromEntity;
 				bestTarget = entitySimPair;
-				Logger.getLogger(getClass().getName()).info("[" + Stopwatch.endDiffStart("topSimilarity") + " ms] "
-						+ "FROM(" + bestFromEntity + ") - BEST TARGET(" + bestTarget + ") ");
+//				Logger.getLogger(getClass().getName()).info("[" + Stopwatch.endDiffStart("topSimilarity") + " ms] "
+//						+ "FROM(" + bestFromEntity + ") - BEST TARGET(" + bestTarget + ") ");
 			}
 		}
 		// The target of the last cluster's entity will be the first one
 		final String finalTarget = bestFromEntity;
 
-		Logger.getLogger(getClass().getName())
-				.info("Finished (hardcore topsimilarity - FROM(" + fromEntities.size() + ")xTO(" + toEntities.size()
-						+ ")) doing the two first entities in " + Stopwatch.endDiff(getClass().getName()) + " ms!");
+//		Logger.getLogger(getClass().getName())
+//				.info("Finished (hardcore topsimilarity - FROM(" + fromEntities.size() + ")xTO(" + toEntities.size()
+//						+ ")) doing the two first entities in " + Stopwatch.endDiff(getClass().getName()) + " ms!");
 
 		// Put choice into the map for tracking
 		// Note: the 'target' of a similarity KEEPS THE SIMILARITY
@@ -291,9 +291,9 @@ public class HillClimbingPicker<S> implements ClusterItemPicker<S> {
 					.topSimilarity(chosenClusterEntityMap.get(fromClusterName).getLeft(), clusters.get(toClusterName));
 			chosenClusterEntityMap.put(toClusterName, entitySimPair);
 			similaritySum += entitySimPair.getRight();
-			Logger.getLogger(getClass().getName())
-					.info("Cluster[" + toClusterName + "]: Found a top-similar item(" + entitySimPair.getLeft() + ", "
-							+ entitySimPair.getRight() + ") in " + Stopwatch.endDiffStart("topSimilarity") + " ms!");
+//			Logger.getLogger(getClass().getName())
+//					.info("Cluster[" + toClusterName + "]: Found a top-similar item(" + entitySimPair.getLeft() + ", "
+//							+ entitySimPair.getRight() + ") in " + Stopwatch.endDiffStart("topSimilarity") + " ms!");
 		}
 
 		// # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

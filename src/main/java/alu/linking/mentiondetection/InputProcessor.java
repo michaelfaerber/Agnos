@@ -1,6 +1,7 @@
 package alu.linking.mentiondetection;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,8 +18,24 @@ import com.google.common.collect.Lists;
  *
  */
 public class InputProcessor {
+
 	public static String[] process(final String input) {
-		return input.replaceAll("\\p{Punct}", "").toLowerCase().split("\\p{Space}");// POSIX class
+		return process(input, null);
+	}
+
+	public static String[] process(final String input, final Collection<String> blacklist) {
+		final String[] inputArr = input.replaceAll("\\p{Punct}", "").toLowerCase().split("\\p{Space}");// POSIX class
+		if (blacklist != null) {
+			final List<String> ret = Lists.newArrayList();
+			for (String str : inputArr) {
+				if (!blacklist.contains(str)) {
+					ret.add(str);
+				}
+			}
+			return ret.toArray(new String[ret.size()]);
+		} else {
+			return inputArr;
+		}
 	}
 
 	public static String combineProcessedInput(final String[] inputTokens) {

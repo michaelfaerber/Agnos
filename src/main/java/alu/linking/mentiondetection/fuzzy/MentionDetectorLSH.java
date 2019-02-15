@@ -31,6 +31,7 @@ import alu.linking.config.constants.FilePaths;
 import alu.linking.config.constants.Numbers;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.mentiondetection.EnumDetectionType;
+import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
 import alu.linking.structure.Loggable;
@@ -265,7 +266,7 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 			// backup all data
 			// backup();
 			load();
-			final String[] words = input.replaceAll("\\p{Punct}", "").split("\\p{Space}");// POSIX class
+			final String[] words = InputProcessor.process(input);
 			// Synchronized list
 			final List<Mention<Node>> mentions = Lists.newArrayList();
 

@@ -28,6 +28,7 @@ import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
 import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
+import alu.linking.mentiondetection.StopwordsLoader;
 import alu.linking.mentiondetection.fuzzy.MentionDetectorLSH;
 import alu.linking.utils.Stopwatch;
 
@@ -64,7 +65,9 @@ public class LauncherContinuousMentionDetector {
 		try {
 			Stopwatch.start(getClass().getName());
 			System.out.println("Loading mention possibilities...");
-			final Map<String, Set<String>> map = loadSurfaceForms(this.KG);
+			final StopwordsLoader stopwordsLoader = new StopwordsLoader(KG);
+			final Set<String> stopwords = stopwordsLoader.getStopwords();
+			final Map<String, Set<String>> map = loadSurfaceForms(this.KG, stopwordsLoader);
 			// ########################################################
 			// Mention Detection
 			// ########################################################
@@ -93,7 +96,8 @@ public class LauncherContinuousMentionDetector {
 					inputLine = sc.nextLine();
 					Stopwatch.start(iterationWatch);
 					Stopwatch.start(detectionWatch);
-					mentions = md.detect(InputProcessor.combineProcessedInput(InputProcessor.process(inputLine)));
+					mentions = md
+							.detect(InputProcessor.combineProcessedInput(InputProcessor.process(inputLine, stopwords)));
 					System.out.println("Detected [" + mentions.size() + "] mentions.");
 					System.out.println("Detection duration: " + Stopwatch.endDiffStart(detectionWatch) + " ms.");
 
@@ -177,8 +181,9 @@ public class LauncherContinuousMentionDetector {
 		}
 	}
 
-	public static Map<String, Set<String>> loadSurfaceForms(final EnumModelType KG) throws IOException {
-		final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG);
+	public static Map<String, Set<String>> loadSurfaceForms(final EnumModelType KG,
+			final StopwordsLoader stopwordsLoader) throws IOException {
+		final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG, stopwordsLoader);
 		Map<String, Set<String>> map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
 		return map;
 	}

@@ -49,15 +49,10 @@ public class AssignmentScorer<N> implements Loggable {
 				FilePaths.FILE_GRAPH_WALK_ID_MAPPING_ENTITY_HUMAN.getPath(KG),
 				FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG));
 		final EntitySimilarityService similarityService = new EntitySimilarityService(entityEmbeddingsMap);
-		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
-		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
-		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
-		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
-		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
-		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
-		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
-		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
-		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
+		final int EMBEDDING_SCORER_COUNT = 40;
+		for (int i = 0; i < EMBEDDING_SCORER_COUNT; ++i) {
+			PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(entityEmbeddingsMap, similarityService));
+		}
 		// PossibleAssignment.addPostScorer(new SSPEmbeddingScorer(KG));
 
 		for (PostScorer postScorer : PossibleAssignment.getPostScorers()) {

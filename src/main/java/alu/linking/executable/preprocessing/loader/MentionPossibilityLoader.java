@@ -8,6 +8,7 @@ import java.util.Set;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.mentiondetection.InputProcessor;
+import alu.linking.mentiondetection.StopwordsLoader;
 import alu.linking.preprocessing.surfaceform.MentionPossibilityExtractor;
 import alu.linking.structure.Executable;
 
@@ -20,18 +21,33 @@ import alu.linking.structure.Executable;
  *
  */
 public class MentionPossibilityLoader implements Executable {
-	private MentionPossibilityExtractor mpe;
-
+	private MentionPossibilityExtractor mpe = null;
+	private StopwordsLoader stopwordsLoader = null;
 	final EnumModelType KG;
 
 	public MentionPossibilityLoader(final EnumModelType KG) {
+		this(KG, null);
+	}
+
+	public MentionPossibilityLoader(final EnumModelType KG, final StopwordsLoader stopwordsLoader) {
 		this.KG = KG;
+		this.stopwordsLoader = stopwordsLoader;
 		init();
 	}
 
 	@Override
 	public void init() {
-		this.mpe = new MentionPossibilityExtractor(this.KG);
+		if (this.stopwordsLoader != null) {
+			try {
+				this.mpe = new MentionPossibilityExtractor(this.stopwordsLoader);
+			} catch (IOException e) {
+				getLogger()
+						.error("Could not instantiate MPExtractor w/ StopwordsLoader. Instantiating with KG instead.");
+				this.mpe = new MentionPossibilityExtractor(this.KG);
+			}
+		} else {
+			this.mpe = new MentionPossibilityExtractor(this.KG);
+		}
 	}
 
 	@Override
