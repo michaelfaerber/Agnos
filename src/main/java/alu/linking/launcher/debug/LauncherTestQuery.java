@@ -68,7 +68,7 @@ public class LauncherTestQuery {
 					// <http://www.w3.org/1999/02/22-rdf-syntax-ns#type>
 					// <http://www.w3.org/2002/07/owl#Thing> . ?s <http://xmlns.com/foaf/0.1/name>
 					// ?o }"
-					"SELECT DISTINCT ?p STR(?obj) AS ?o WHERE { <http://dbpedia.org/resource/David_Beckham> ?p ?obj . FILTER( isLiteral(?obj) ) . FILTER( STRLEN(STR(?obj)) > 1 ) }";
+					"SELECT DISTINCT ?p STR(?obj) AS ?o WHERE { <http://dbpedia.org/resource/Tiger_Woods> ?p ?obj . FILTER( isLiteral(?obj) ) . FILTER( STRLEN(STR(?obj)) > 1 ) }";
 			final VirtGraph virtGraph = new VirtGraph(graphName, url,
 					new String(connShetland.userAcc.getBytesUsername()),
 					new String(connShetland.userAcc.getBytesPassword()));

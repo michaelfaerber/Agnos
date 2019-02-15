@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -107,8 +106,8 @@ public class HillClimbingPicker<S> implements ClusterItemPicker<S> {
 			similaritySum += chooseClosestToFirst(clusters, clusterNames, chosenClusterEntityMap);
 
 		}
-		Logger.getLogger(getClass().getName())
-				.info("Initial path choice done in " + Stopwatch.endDiffStart(getClass().getName()) + " ms!");
+//		Logger.getLogger(getClass().getName())
+//				.info("Initial path choice done in " + Stopwatch.endDiffStart(getClass().getName()) + " ms!");
 		// ##############################
 		// Initial path choice - END
 		// ##############################
@@ -140,8 +139,8 @@ public class HillClimbingPicker<S> implements ClusterItemPicker<S> {
 			}
 		} while (!equals(previousChoices, currentChoices));
 
-		Logger.getLogger(getClass().getName()).info("Finished picking iterations(" + iterCounter + ") in "
-				+ Stopwatch.endDiffStart(getClass().getName()) + " ms!");
+//		Logger.getLogger(getClass().getName()).info("Finished picking iterations(" + iterCounter + ") in "
+//				+ Stopwatch.endDiffStart(getClass().getName()) + " ms!");
 
 		// ##############################
 		// Randomized best-choice - END
