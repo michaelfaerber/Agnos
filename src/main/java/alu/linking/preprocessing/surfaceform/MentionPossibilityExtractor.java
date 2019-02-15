@@ -61,7 +61,14 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 		} else {
 			this.blackList = stopwords;
 		}
+	}
 
+	public MentionPossibilityExtractor(final StopwordsLoader stopwordsLoader) throws IOException {
+		this.blackList = stopwordsLoader.getStopwords();
+	}
+
+	public MentionPossibilityExtractor(final Set<String> stopwords) {
+		this.blackList = stopwords;
 	}
 
 	public void populateBlacklist(final File inFile) throws IOException {
