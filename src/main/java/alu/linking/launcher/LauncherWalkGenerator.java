@@ -10,7 +10,7 @@ public class LauncherWalkGenerator implements Loggable {
 		// DBPEDIA_FULL
 				MINI_MAG;
 		try {
-			new RDF2VecWalkGenerator(KG, 1, 2, 50, null).exec();
+			new RDF2VecWalkGenerator(KG, 1, 10, 50, null).exec();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

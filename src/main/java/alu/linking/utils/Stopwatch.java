@@ -2,6 +2,7 @@ package alu.linking.utils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 
@@ -35,8 +36,8 @@ public class Stopwatch {
 	}
 
 	/**
-	 * Computes the difference of time between start and end times of the
-	 * default timer
+	 * Computes the difference of time between start and end times of the default
+	 * timer
 	 * 
 	 * @author Kris Noullet (kn65)
 	 * @return time difference
@@ -91,8 +92,7 @@ public class Stopwatch {
 	 * Starts timer for given watch
 	 * 
 	 * @author Kris Noullet (kn65)
-	 * @param watch
-	 *            String parameter used to store/retrieve this particular watch
+	 * @param watch String parameter used to store/retrieve this particular watch
 	 */
 	public static void start(final String watch) {
 		MutablePair<Long, Long> p = null;
@@ -107,8 +107,7 @@ public class Stopwatch {
 	 * Ends timer for given watch
 	 * 
 	 * @author Kris Noullet (kn65)
-	 * @param watch
-	 *            String parameter used to store/retrieve this particular watch
+	 * @param watch String parameter used to store/retrieve this particular watch
 	 */
 	public static void end(final String watch) {
 		MutablePair<Long, Long> p = null;
@@ -126,8 +125,7 @@ public class Stopwatch {
 	 * Gets time difference for given watch
 	 * 
 	 * @author Kris Noullet (kn65)
-	 * @param watch
-	 *            String parameter used to store/retrieve this particular watch
+	 * @param watch String parameter used to store/retrieve this particular watch
 	 * @return difference between this watch's start and end
 	 */
 	public static long diff(final String watch) {
@@ -139,8 +137,7 @@ public class Stopwatch {
 	 * Updates end time for given watch and returns time difference
 	 * 
 	 * @author Kris Noullet (kn65)
-	 * @param watch
-	 *            String parameter used to store/retrieve this particular watch
+	 * @param watch String parameter used to store/retrieve this particular watch
 	 * @return time difference
 	 */
 	public static long endDiff(final String watch) {
@@ -149,12 +146,11 @@ public class Stopwatch {
 	}
 
 	/**
-	 * Updates end time for given watch and returns time difference after which
-	 * it starts the new watch
+	 * Updates end time for given watch and returns time difference after which it
+	 * starts the new watch
 	 * 
 	 * @author Kris Noullet (kn65)
-	 * @param watch
-	 *            String parameter used to store/retrieve this particular watch
+	 * @param watch String parameter used to store/retrieve this particular watch
 	 * @return time difference
 	 */
 	public static long endDiffStart(final String watch) {
@@ -168,14 +164,13 @@ public class Stopwatch {
 	 * Ends watch timer and outputs the difference
 	 * 
 	 * @author Kris Noullet (kn65)
-	 * @param watch
-	 *            String parameter used to store/retrieve this particular watch
+	 * @param watch String parameter used to store/retrieve this particular watch
 	 * @return time difference
 	 */
 	public static long endOutput(final String watch) {
 		end(watch);
 		long diff = diff(watch);
-		System.out.println("[" + watch + "] Executed in " + diff + " ms.");
+		getLogger().info("[" + watch + "] Executed in " + diff + " ms.");
 		return diff;
 	}
 
@@ -183,15 +178,18 @@ public class Stopwatch {
 	 * Ends watch timer, outputs the difference and starts it anew
 	 * 
 	 * @author Kris Noullet (kn65)
-	 * @param watch
-	 *            String parameter used to store/retrieve this particular watch
+	 * @param watch String parameter used to store/retrieve this particular watch
 	 * @return time difference
 	 */
 	public static long endOutputStart(final String watch) {
 		end(watch);
 		long diff = diff(watch);
-		System.out.println("[" + watch + "] Executed in " + diff + " ms.");
+		getLogger().info("[" + watch + "] Executed in " + diff + " ms.");
 		start(watch);
 		return diff;
+	}
+
+	public static Logger getLogger() {
+		return Logger.getLogger(Stopwatch.class.getName());
 	}
 }

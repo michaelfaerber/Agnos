@@ -69,8 +69,8 @@ public enum FilePaths {
 	// ##################################
 	// FILES for src/main
 	// ##################################
-	FILE_STOPWORDS(DIR_DATA.path + "stopwords.txt"),//
-	
+	FILE_STOPWORDS(DIR_DATA.path + "stopwords.txt"), //
+
 	FILE_CRUNCHBASE_ENTITIES(DIR_DATA.path + "crunchbase_entities.nt"), //
 	FILE_CRUNCHBASE_ENTITIES_TYPED_LITERAL_STRING(DIR_DATA.path + "crunchbase_entities_typed_literal_string.nt"), //
 	FILE_CRUNCHBASE_ENTITIES_NOUN_PHRASES(DIR_DATA.path + "crunchbase_sf_noun_phrases.nt"), //
@@ -156,6 +156,9 @@ public enum FilePaths {
 	FILE_EMBEDDINGS_SSP_ENTITY_EMBEDDINGS_RAWMAP(DIR_SSP.path + "ssp_entity_embeddings_map.raw",
 			"RAW dump of the used hashmap (should be faster for loading rather than using line-by-line logic)"), //
 	FILE_SSP_QUERY_OUT_COMBINED_OUTPUT(DIR_QUERY_OUT.path + "query_output_combined.txt"), //
+	FILE_DATASET_NORMALIZATION_MAPPING_SUBJECT(DIR_DATASETS.path + "normalized_subjects.txt"), //
+	FILE_DATASET_NORMALIZATION_MAPPING_PREDICATE(DIR_DATASETS.path + "normalized_predicates.txt"), //
+	FILE_DATASET_NORMALIZATION_MAPPING_OBJECT(DIR_DATASETS.path + "normalized_objects.txt"), //
 
 	// ##################################
 	// LOG FILES

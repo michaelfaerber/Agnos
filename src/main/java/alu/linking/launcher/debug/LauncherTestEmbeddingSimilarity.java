@@ -19,6 +19,7 @@ import alu.linking.launcher.LauncherContinuousMentionDetector;
 import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
+import alu.linking.utils.DetectionUtils;
 import alu.linking.utils.EmbeddingsUtils;
 import alu.linking.utils.IDMappingLoader;
 import alu.linking.utils.Stopwatch;
@@ -34,11 +35,11 @@ public class LauncherTestEmbeddingSimilarity {
 			getLogger().info("Testing embedding similarity");
 			final EnumModelType KG = EnumModelType.DBPEDIA_FULL;
 			System.out.println("Loading mention possibilities...");
-			final Map<String, Set<String>> map = LauncherContinuousMentionDetector.loadSurfaceForms(KG, null);
+			final Map<String, Set<String>> map = DetectionUtils.loadSurfaceForms(KG, null);
 			// ########################################################
 			// Mention Detection
 			// ########################################################
-			final MentionDetector md = LauncherContinuousMentionDetector.setupMentionDetection(KG, map);
+			final MentionDetector md = DetectionUtils.setupMentionDetection(KG, map);
 
 			// ########################################################
 			// Candidate Generator
