@@ -1,0 +1,101 @@
+package alu.linking.utils;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.log4j.Logger;
+import org.semanticweb.yars.nx.Node;
+
+import alu.linking.config.constants.FilePaths;
+import alu.linking.config.kg.EnumModelType;
+import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
+import alu.linking.launcher.LauncherContinuousMentionDetector;
+import alu.linking.mentiondetection.Mention;
+import alu.linking.mentiondetection.MentionDetector;
+import alu.linking.mentiondetection.StopwordsLoader;
+import alu.linking.mentiondetection.fuzzy.MentionDetectorLSH;
+
+public class DetectionUtils {
+	public static Map<String, Set<String>> loadSurfaceForms(final EnumModelType KG,
+			final StopwordsLoader stopwordsLoader) throws IOException {
+		final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG, stopwordsLoader);
+		Map<String, Set<String>> map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
+		return map;
+	}
+
+	public static MentionDetector setupMentionDetection(final EnumModelType KG, final Map<String, Set<String>> map)
+			throws Exception {
+		Stopwatch.endOutputStart(LauncherContinuousMentionDetector.class.getName());
+		System.out.println("Number of entries (aka. different surface forms): " + map.size());
+		// return new MentionDetectorMap(map);//
+		final MentionDetector md = new MentionDetectorLSH(KG, 0.9);
+		md.init();
+		return md;
+	}
+
+	public static void displayMentions(final Logger logger, Collection<Mention<Node>> mentions,
+			final boolean detailed) {
+		final TreeMap<String, Mention<Node>> alphabeticalSortedMentions = new TreeMap<String, Mention<Node>>();
+		// Sort them by key for visibility
+		for (Mention<Node> m : mentions) {
+			alphabeticalSortedMentions.put(m.getMention() + "_" + m.getOriginalMention(), m);
+		}
+
+		for (Map.Entry<String, Mention<Node>> e : alphabeticalSortedMentions.entrySet()) {
+			final Mention<Node> m = e.getValue();
+			if (detailed) {
+				logger.info("Mention[" + m.getMention() + "; " + m.getDetectionConfidence() + "] " + m.getSource());
+				logger.info("Original Text:" + m.getOriginalMention());
+				logger.info("Possible assignments: "
+						+ (m.getPossibleAssignments() != null ? m.getPossibleAssignments().size() : "None"));
+				logger.info("Found assignment: " + m.getAssignment());
+				logger.info("Found Assignment's Score: " + m.getAssignment().getScore());
+				logger.info("--------------------------------------------------");
+			} else {
+				logger.info(
+						m.getOriginalMention() + "(" + m.getMention() + "; " + m.getDetectionConfidence() + ")\t\t-> "
+								+ m.getAssignment().getScore() + ":" + m.getAssignment().getAssignment().toString());
+			}
+		}
+		// Displaying them as ordered...
+		// for (Mention<Node> m : mentions) {
+		// logger.info("Mention(" + m.getOffset() + "): " +
+		// m.getOriginalMention());
+		// }
+
+	}
+
+	public static String makeURL(final Mention<Node> m, final AtomicInteger currIndex, final String resultLine) {
+		final StringBuilder hyperlinkMention = new StringBuilder(" <a href=");
+		hyperlinkMention.append(m.getAssignment().getAssignment().toString());
+		hyperlinkMention.append(">");
+		hyperlinkMention.append(m.getMention());
+		hyperlinkMention.append("</a> ");
+
+		final StringBuilder hyperlinkMentionOriginal = new StringBuilder(" <a href=");
+		hyperlinkMentionOriginal.append(m.getAssignment().getAssignment().toString());
+		hyperlinkMentionOriginal.append(">");
+		hyperlinkMentionOriginal.append(m.getOriginalMention());
+		hyperlinkMentionOriginal.append("</a> ");
+
+		final String search = m.getOriginalMention();
+		int foundIndex = resultLine.indexOf(search, currIndex.get());
+		String retLine = null;
+		try {
+			retLine = resultLine.substring(0, foundIndex) + hyperlinkMentionOriginal
+					+ resultLine.substring(foundIndex + search.length());
+		} catch (StringIndexOutOfBoundsException siooe) {
+			Logger.getLogger(DetectionUtils.class).error(currIndex + " - Out of bounds for: " + search);
+			Logger.getLogger(DetectionUtils.class).error("Mention:" + m.getMention() + " - " + m.getOffset());
+		}
+		currIndex.set(foundIndex + search.length());
+
+		return retLine;
+	}
+
+}

@@ -33,23 +33,26 @@ public class LauncherSetupTDB implements Loggable {
 
 		// Load the crunchbase graph into the crunchbase dataset
 		final EnumModelType KG = EnumModelType.
-		 MINI_MAG;
+		// MINI_MAG;
 		// DBLP;
-		//		DBPEDIA;
-		// CRUNCHBASE2;
+		// DBPEDIA;
+				CRUNCHBASE2;
 		// CRUNCHBASE;
 		// DBPEDIA_FULL;
 		System.out.println("Setting up TDB for: " + KG.name());
 		final String KGpath =
-				// "/vol1/cb/crunchbase-201510/dumps/crunchbase-dump-201510.nt";//CB1
-				// "/vol1/cb/crunchbase-201806/dumps/crunchbase-dump-2018-06.nt";//CB2
-				// "/vol1/dblp/dumps/dblp_2018-11-02_unique.nt";//DBLP
-				 "/vol1/mag/data/2018-07-19/MAGFieldsOfStudyKG/MAGFieldsOfStudyKG.nt";//Mini MAG
-				// "./crunchbase-dump-2018-06_normalized.nt";// normalized CB2
-				// "./dblp_2018-11-02_unique_normalized.nt";// normalized DBLP
-				// "/vol1/data_faerberm/kris/data_dbpedia_extracted";// DBpedia
-				//"/home/noulletk/prog/bmw/dbpedia/resources/data/datasets/extracted/";// DBpedia
-				//"/home/noulletk/prog/bmw/input_dbpedia/";// DBpedia
+				// "/vol2/cb/crunchbase-201510/dumps/crunchbase-dump-201510.nt";//CB1
+				//"/vol2/cb/crunchbase-201806/dumps/crunchbase-dump-2018-06.nt";// CB2
+				"./cb2018-06/crunchbase-dump-2018-06.nt";//NORMALIZED_CB2
+		// "/vol2/dblp/dumps/dblp_2018-11-02_unique.nt";//DBLP
+		// "./dblp_kg/dblp_2018-11-02_unique.nt";//NORMALIZED_DBLP
+		// "/vol1/mag/data/2018-07-19/MAGFieldsOfStudyKG/MAGFieldsOfStudyKG.nt";//Mini-MAG
+		// "./crunchbase-dump-2018-06_normalized.nt";// normalized CB2
+		// "./dblp_2018-11-02_unique_normalized.nt";// normalized DBLP
+		// "/vol1/data_faerberm/kris/data_dbpedia_extracted";// DBpedia
+		// "/home/noulletk/prog/bmw/dbpedia/resources/data/datasets/extracted/";//
+		// DBpedia
+		// "/home/noulletk/prog/bmw/input_dbpedia/";// DBpedia
 		// Handle appropriately both for input file (just load it)
 		// and input directory (get all files within it, aka. ignore subdirectories)
 		final File inFile = new File(KGpath);

@@ -138,7 +138,8 @@ public class RDF2VecWalkGenerator implements Executable {
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
-		new ExtSortGrouper().exec(walkOutput, sentencesOut);
+
+		// new ExtSortGrouper().exec(walkOutput, sentencesOut);
 		return null;
 	}
 
@@ -146,7 +147,7 @@ public class RDF2VecWalkGenerator implements Executable {
 			final int offset, final int limit) throws IOException {
 		try (final BufferedWriter wrtWalkOutput = new BufferedWriter(new FileWriter(walkOutput), 8192 * 20)) {
 			for (int depth = Math.max(minWalkDepth, 1); depth <= this.maxWalkDepth; ++depth) {
-				System.out.println("Doing depth(" + depth + ")");
+				getLogger().info("Doing depth(" + depth + ")");
 				// Chunk it into separate files
 				// Generate the walks
 				wg.generateWalks(wrtWalkOutput, uniqueEntities, 0, depth, this.threadCount, offset, limit);
@@ -155,6 +156,7 @@ public class RDF2VecWalkGenerator implements Executable {
 	}
 
 	/**
+	 * WARNING: This method is NOT finished. Use at own risk.<br>
 	 * Chunks the entities we want to compute for into smaller bits (in case of low
 	 * storage space interrupt, we then would more easily be able to see how
 	 * many/which entities were done and which weren't)

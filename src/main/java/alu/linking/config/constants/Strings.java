@@ -33,6 +33,7 @@ public enum Strings {
 	// Query-related settings
 	ENTITY_SURFACE_FORM_LINKING_DELIM(" %%%%% "), // " %%%%% "//"\t"
 	QUERY_RESULT_DELIMITER("\t;\t"), //
+	IRI_NORMALIZATION_MAPPING_SEPARATOR("\t%%%%%\t"),//
 
 	// Embeddings- and Walks-related settings
 	EMBEDDINGS_SENTENCES_DELIM("\t", "Delimiter used for outputting sentences to the appropriate files"), //
