@@ -21,6 +21,18 @@ import alu.linking.mentiondetection.StopwordsLoader;
 import alu.linking.mentiondetection.fuzzy.MentionDetectorLSH;
 
 public class DetectionUtils {
+
+	/**
+	 * Loads the surface forms for a specified KG along with a StopwordsLoader
+	 * instance (which loads the stopwords for the surface forms)
+	 * 
+	 * @param KG              Knowledge Graph for which to load its associated
+	 *                        surface forms
+	 * @param stopwordsLoader loads the stopwords which filter out unwanted surface
+	 *                        forms
+	 * @return
+	 * @throws IOException
+	 */
 	public static Map<String, Set<String>> loadSurfaceForms(final EnumModelType KG,
 			final StopwordsLoader stopwordsLoader) throws IOException {
 		final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG, stopwordsLoader);
@@ -31,7 +43,7 @@ public class DetectionUtils {
 	public static MentionDetector setupMentionDetection(final EnumModelType KG, final Map<String, Set<String>> map)
 			throws Exception {
 		Stopwatch.endOutputStart(LauncherContinuousMentionDetector.class.getName());
-		System.out.println("Number of entries (aka. different surface forms): " + map.size());
+		Logger.getLogger(DetectionUtils.class).info("Number of entries (aka. different surface forms): " + map.size());
 		// return new MentionDetectorMap(map);//
 		final MentionDetector md = new MentionDetectorLSH(KG, 0.9);
 		md.init();
@@ -51,6 +63,7 @@ public class DetectionUtils {
 			if (detailed) {
 				logger.info("Mention[" + m.getMention() + "; " + m.getDetectionConfidence() + "] " + m.getSource());
 				logger.info("Original Text:" + m.getOriginalMention());
+				logger.info("Offset: " + m.getOffset());
 				logger.info("Possible assignments: "
 						+ (m.getPossibleAssignments() != null ? m.getPossibleAssignments().size() : "None"));
 				logger.info("Found assignment: " + m.getAssignment());

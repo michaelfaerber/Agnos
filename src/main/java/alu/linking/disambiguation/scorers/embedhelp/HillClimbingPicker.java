@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
@@ -20,18 +21,24 @@ import alu.linking.utils.Stopwatch;
 
 public class HillClimbingPicker<S> implements ClusterItemPicker<S> {
 	private Collection<Mention<S>> context;
-	private Map<String, List<Number>> entityEmbeddingsMap;
 	private final EntitySimilarityService similarityService;
-	final boolean RANDOM_FIRST_CHOICE = true;
+	private final boolean RANDOM_FIRST_CHOICE = true;
+	private final int REPEAT;
+	private static final int DEFAULT_REPEAT = 20;
+	private static final int MIN_REPEAT = 1;
 
 	public HillClimbingPicker(final Map<String, List<Number>> entityEmbeddingsMap) {
-		this(entityEmbeddingsMap, new EntitySimilarityService(entityEmbeddingsMap));
+		this(new EntitySimilarityService(entityEmbeddingsMap), DEFAULT_REPEAT);
 	}
 
-	public HillClimbingPicker(final Map<String, List<Number>> entityEmbeddingsMap,
-			final EntitySimilarityService similarityService) {
-		this.entityEmbeddingsMap = entityEmbeddingsMap;
+	public HillClimbingPicker(final EntitySimilarityService similarityService) {
+		this(similarityService, DEFAULT_REPEAT);
+	}
+
+	public HillClimbingPicker(final EntitySimilarityService similarityService, final int repeat) {
 		this.similarityService = similarityService;
+		// How many times to repeat hillclimbing
+		this.REPEAT = Math.max(MIN_REPEAT, repeat);
 	}
 
 	@Override
@@ -51,108 +58,187 @@ public class HillClimbingPicker<S> implements ClusterItemPicker<S> {
 		// Try making it with a chain-like minimal distance logic
 		// "Get smallest for one of current chains"
 
+		// Map to keep the final choices in our eye
+		// Map<SurfaceForm, List<Pair<Entity, SimilaritySum>>>
+		final Map<String, List<Pair<String, Double>>> allResultsMap = new HashMap<>();
+
 		final Comparator<Mention<S>> offsetComparator = new Comparator<Mention<S>>() {
 			@Override
 			public int compare(Mention<S> o1, Mention<S> o2) {
 				return o1.getOffset() - o2.getOffset();
 			}
 		};
-		// Order list by natural occurring order of words (enforces intuition of words
-		// close to each other being about the same stuff)
-		final List<Mention<S>> contextList = Lists.newArrayList(this.context);
-		Collections.sort(contextList, offsetComparator);
 
-		// Compute clusters with the strings for simplicity of calls
-		final Map<String, List<String>> clusters = computeClusters(contextList);
-		// Use clusterNames as the shuffling mechanism
-		final List<String> clusterNames = Lists.newArrayList();
-		// Adds to contextList with the initial order
-		contextList.stream().forEach(mention -> clusterNames.add(mention.getMention()));
+		// Execute hillclimbing multiple times
+		for (int hillClimbExec = 0; hillClimbExec < REPEAT; ++hillClimbExec) {
+			// Order list by natural occurring order of words (enforces intuition of words
+			// close to each other being about the same stuff)
+			final List<Mention<S>> contextList = Lists.newArrayList(this.context);
+			Collections.sort(contextList, offsetComparator);
 
-		// Start with the written ordering (for initial bias), then shuffle
+			// Compute clusters with the strings for simplicity of calls
+			final Map<String, List<String>> clusters = computeClusters(contextList);
+			// Use clusterNames as the shuffling mechanism
+			final List<String> clusterNames = Lists.newArrayList();
+			// Adds to contextList with the initial order
+			contextList.stream().forEach(mention -> clusterNames.add(mention.getMention()));
 
-		// ##############################
-		// Initial path choice - START
-		// ##############################
-		Stopwatch.start(getClass().getName());
-		// First initialise by getting the optimal similarity
-		final Map<String, Pair<String, Double>> chosenClusterEntityMap = new HashMap<>(clusters.size());
-		Double similaritySum = 0D;
-		if (clusterNames.size() > 1) {
-			final String finalTarget;
+			// Start with the written ordering (for initial bias), then shuffle
 
-			if (!RANDOM_FIRST_CHOICE) {
-				// First CHECK ALL THE BEST connections between the first two, then just check
-				// best
-				// target
-				chooseOptimalStart(clusterNames.get(0), clusterNames.get(1), chosenClusterEntityMap, clusters);
-			} else {
-				final String fromClusterName = clusterNames.get(0);
-				final String toClusterName = clusterNames.get(1);
-				final List<String> fromEntities = clusters.get(fromClusterName);
-				final List<String> toEntities = clusters.get(toClusterName);
-				final Random r = new Random(System.currentTimeMillis());
-				final int firstItemIndex = r.nextInt(fromEntities.size());
-				final int secondItemIndex = r.nextInt(toEntities.size());
-				final String sourceEntity = fromEntities.get(firstItemIndex);
-				final String targetEntity = toEntities.get(secondItemIndex);
-				chosenClusterEntityMap.put(fromClusterName,
-						new ImmutablePair<String, Double>(sourceEntity, Double.MIN_VALUE));
-				chosenClusterEntityMap.put(toClusterName, new ImmutablePair<String, Double>(targetEntity,
-						this.similarityService.similarity(sourceEntity, targetEntity).doubleValue()));
+			// ##############################
+			// Initial path choice - START
+			// ##############################
+			Stopwatch.start(getClass().getName());
+			// First initialise by getting the optimal similarity
+			final Map<String, Pair<String, Double>> chosenClusterEntityMap = new HashMap<>(clusters.size());
+			Double similaritySum = 0D;
+			if (clusterNames.size() > 1) {
+				final String finalTarget;
+
+				if (!RANDOM_FIRST_CHOICE) {
+					// First CHECK ALL THE BEST connections between the first two, then just check
+					// best
+					// target
+					chooseOptimalStart(clusterNames.get(0), clusterNames.get(1), chosenClusterEntityMap, clusters);
+				} else {
+					final String fromClusterName = clusterNames.get(0);
+					final String toClusterName = clusterNames.get(1);
+					final List<String> fromEntities = clusters.get(fromClusterName);
+					final List<String> toEntities = clusters.get(toClusterName);
+					final Random r = new Random(System.currentTimeMillis());
+					final int firstItemIndex = r.nextInt(fromEntities.size());
+					final int secondItemIndex = r.nextInt(toEntities.size());
+					final String sourceEntity = fromEntities.get(firstItemIndex);
+					final String targetEntity = toEntities.get(secondItemIndex);
+					chosenClusterEntityMap.put(fromClusterName,
+							new ImmutablePair<String, Double>(sourceEntity, Double.MIN_VALUE));
+					chosenClusterEntityMap.put(toClusterName, new ImmutablePair<String, Double>(targetEntity,
+							this.similarityService.similarity(sourceEntity, targetEntity).doubleValue()));
+
+				}
+
+				similaritySum += chooseClosestToFirst(clusters, clusterNames, chosenClusterEntityMap);
 
 			}
+			// Logger.getLogger(getClass().getName()).info("Initial path choice done in " +
+			// Stopwatch.endDiffStart(getClass().getName()) + " ms!");
+			// ##############################
+			// Initial path choice - END
+			// ##############################
 
-			similaritySum += chooseClosestToFirst(clusters, clusterNames, chosenClusterEntityMap);
-
-		}
-//		Logger.getLogger(getClass().getName())
-//				.info("Initial path choice done in " + Stopwatch.endDiffStart(getClass().getName()) + " ms!");
-		// ##############################
-		// Initial path choice - END
-		// ##############################
-
-		// ##############################
-		// Randomized best-choice - START
-		// ##############################
-		final int iterations = 5;
-		Set<String> previousChoices = null;
-		Set<String> currentChoices = null;
-		final int maxIterations = 100;
-		int iterCounter = 0;
-		do {
-			previousChoices = currentChoices;
-			for (int i = 0; i < iterations; ++i) {
-				// Shuffle the cluster names randomly
-				Collections.shuffle(clusterNames);
-				// This is the hillclimbing part of it which takes the best local choice in
-				// order to maximize the reward of the overall similarity sum
-				iterativelyPickLocalBest(clusters, chosenClusterEntityMap, clusterNames);
-			}
-			currentChoices = mapToValueSet(chosenClusterEntityMap);
-			iterCounter += iterations;
-			if (iterCounter > maxIterations) {
-				getLogger().warn("Been iterating(" + iterCounter + ") for a while now...");
-				getLogger().warn("Previous choices:" + previousChoices);
-				getLogger().warn("Current choices:" + currentChoices);
-				break;
-			}
-		} while (!equals(previousChoices, currentChoices));
+			// ##############################
+			// Randomized best-choice - START
+			// ##############################
+			final int iterations = 20;
+			Set<String> previousChoices = null;
+			Set<String> currentChoices = null;
+			final int maxIterations = 200;
+			int iterCounter = 0;
+			do {
+				previousChoices = currentChoices;
+				for (int i = 0; i < iterations; ++i) {
+					// Shuffle the cluster names randomly
+					Collections.shuffle(clusterNames);
+					// This is the hillclimbing part of it which takes the best local choice in
+					// order to maximize the reward of the overall similarity sum
+					iterativelyPickLocalBest(clusters, chosenClusterEntityMap, clusterNames);
+				}
+				currentChoices = mapToValueSet(chosenClusterEntityMap);
+				iterCounter += iterations;
+				if (iterCounter > maxIterations) {
+					getLogger().warn("Been iterating(" + iterCounter + ") for a while now...");
+					getLogger().warn("Previous choices:" + previousChoices);
+					getLogger().warn("Current choices:" + currentChoices);
+					break;
+				}
+			} while (!equals(previousChoices, currentChoices));
 
 //		Logger.getLogger(getClass().getName()).info("Finished picking iterations(" + iterCounter + ") in "
 //				+ Stopwatch.endDiffStart(getClass().getName()) + " ms!");
 
-		// ##############################
-		// Randomized best-choice - END
-		// ##############################
+			// ##############################
+			// Randomized best-choice - END
+			// ##############################
 
-		// Add all choices to a list that will be returned
-		List<S> retList = Lists.newArrayList();
-		for (Map.Entry<String, Pair<String, Double>> e : chosenClusterEntityMap.entrySet()) {
-			retList.add((S) (e.getValue().getKey()));
+			// Add this execution's results to the all-encompassing results map for further
+			// analysis
+			for (Map.Entry<String, Pair<String, Double>> e : chosenClusterEntityMap.entrySet()) {
+				// Entities aggregated over executions for this particular SF
+				List<Pair<String, Double>> sfEntities;
+				if ((sfEntities = allResultsMap.get(e.getKey())) == null) {
+					sfEntities = Lists.newArrayList();
+					allResultsMap.put(e.getKey(), sfEntities);
+				}
+				sfEntities.add(e.getValue());
+			}
 		}
 
+		// -------------------------------------------
+		// HillClimbing Disambigation - END
+		// -------------------------------------------
+
+		// Now that it has been executed as many times as we want it to, we should group
+		// the similar entities and possibly do something with the similaritySum values
+		// (e.g. disambiguate over them?), OTHERWISE: just take the number of times they
+		// each appeared and take the most-appearing one
+
+		// <Key,Value>: <SurfaceForm, ChosenEntity>
+		final Map<String, String> finalChoiceMap = new HashMap<>();
+
+		for (Map.Entry<String, List<Pair<String, Double>>> e : allResultsMap.entrySet()) {
+			final String surfaceForm = e.getKey();
+			final Map<String, Double> groupMap = new HashMap<>();
+			// Group all pairs for this specific surface form
+			for (Pair<String, Double> pair : e.getValue()) {
+				Double existingPairValue;
+				if ((existingPairValue = groupMap.get(pair.getLeft())) == null) {
+					existingPairValue = 0d;
+				}
+				// Sums up over the stuffz
+				groupMap.put(pair.getLeft(), applyOperation(existingPairValue, pair.getRight()));
+			}
+			displayAllResultsMap(allResultsMap);
+			displayScoredChoices(surfaceForm, groupMap);
+
+			// Pairs have been summed up together, so let's rank them
+			Double prevSim = Double.MIN_VALUE;
+			for (Entry<String, Double> pairEntry : groupMap.entrySet()) {
+				// For this surface form, choose the best candidate
+				if (pairEntry.getValue() > prevSim) {
+					finalChoiceMap.put(surfaceForm, pairEntry.getKey());
+				}
+			}
+		}
+
+		// Add all choices to a list that will be returned
+//		List<S> choices = Lists.newArrayList();
+//		for (Map.Entry<String, Pair<String, Double>> e : chosenClusterEntityMap.entrySet()) {
+//			choices.add((S) (e.getValue().getKey()));
+//		}
+
+		List<S> retList = (List<S>) Lists.newArrayList(finalChoiceMap.values());
+		getLogger().info("FINAL CHOICES: " + retList);
 		return retList;
+	}
+
+	private void displayAllResultsMap(Map<String, List<Pair<String, Double>>> allResultsMap) {
+		getLogger().info("ALL RESULTS MAP - START");
+		for (Entry<String, List<Pair<String, Double>>> e : allResultsMap.entrySet()) {
+			getLogger().info("[" + e.getKey() + "] " + e.getValue());
+		}
+		getLogger().info("ALL RESULTS MAP - END");
+	}
+
+	private void displayScoredChoices(final String sf, final Map<String, Double> groupMap) {
+		for (Entry<String, Double> e : groupMap.entrySet()) {
+			getLogger().info("[" + sf + "] " + e.getKey() + " -> " + e.getValue());
+		}
+	}
+
+	private Double applyOperation(Double previousValue, Double pairSimilaritySum) {
+		// Either sum them or just add +1
+		return previousValue + 1;
+		// return previousValue + pairSimilaritySum;
 	}
 
 	private Set<String> mapToValueSet(Map<String, Pair<String, Double>> chosenClusterEntityMap) {

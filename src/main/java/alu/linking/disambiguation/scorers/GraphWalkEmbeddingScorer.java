@@ -27,39 +27,35 @@ import alu.linking.utils.IDMappingLoader;
 import alu.linking.utils.Stopwatch;
 
 public class GraphWalkEmbeddingScorer<N> implements PostScorer<PossibleAssignment<N>, Mention<N>>, Loggable {
-	private final Map<String, List<Number>> entityEmbeddingsMap;
 	private boolean hasChanged = true;
 	private final Set<N> bestCombination = new HashSet<>();
 	private final String changedLock = "hasChangedLock";
 	private final ClusterItemPicker<N> clusterHelper;
+	private final EntitySimilarityService similarityService;
 
-	public GraphWalkEmbeddingScorer(final Map<String, List<Number>> entityEmbeddingsMap,
-			final EntitySimilarityService similarityService) {
-		this.entityEmbeddingsMap = entityEmbeddingsMap;
-		if (similarityService != null) {
-			this.clusterHelper = new HillClimbingPicker(this.entityEmbeddingsMap, similarityService);
-		} else {
-			this.clusterHelper = new HillClimbingPicker(this.entityEmbeddingsMap);
-		}
-
+	public GraphWalkEmbeddingScorer(final EntitySimilarityService similarityService) {
+		this.similarityService = similarityService;
+		// this.clusterHelper = new SubPageRankPicker<>(similarityService);
+		this.clusterHelper = new HillClimbingPicker(similarityService);
 	}
 
 	public GraphWalkEmbeddingScorer(final EnumModelType KG)
 			throws FileNotFoundException, IOException, ClassNotFoundException {
+		final Map<String, List<Number>> entityEmbeddingsMap;
 		// Whether to load it from a raw object-dump or a line-separated entity
 		// embeddings output
 		final boolean RAW_LOAD = false;
 		if (RAW_LOAD) {
-			this.entityEmbeddingsMap = rawload(
-					FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS_RAWMAP.getPath(KG));
+			entityEmbeddingsMap = rawload(FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS_RAWMAP.getPath(KG));
 		} else {
-			this.entityEmbeddingsMap = humanload(FilePaths.FILE_GRAPH_WALK_ID_MAPPING_ENTITY_HUMAN.getPath(KG),
+			entityEmbeddingsMap = humanload(FilePaths.FILE_GRAPH_WALK_ID_MAPPING_ENTITY_HUMAN.getPath(KG),
 					FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG));
 		}
 
 		// clusterHelper = new GreedyOptimalPicker<N>(this.entityEmbeddingsMap);
 		// clusterHelper = new SubPageRankPicker<N>(this.entityEmbeddingsMap);
-		this.clusterHelper = new HillClimbingPicker(this.entityEmbeddingsMap);
+		this.similarityService = new EntitySimilarityService(entityEmbeddingsMap);
+		this.clusterHelper = new HillClimbingPicker(this.similarityService);
 	}
 
 	/**

@@ -98,7 +98,7 @@ public class RDF2VecWalkGenerator implements Executable {
 			if (ALL_VS_RANDOM) {
 				resultProcessor = new WalkResultProcessorAll(entityMapper, predicateMapper);
 			} else {
-				resultProcessor = new WalkResultprocessorRandomDecreasingDepth(new float[] { 0.1f, 0.05f, 0.01f })
+				resultProcessor = new WalkResultprocessorRandomDecreasingDepth(new float[] { 1.0f, 0.1f, 0.05f, 0.01f })
 						.entityMapper(entityMapper).predicateMapper(predicateMapper).minWalks(20).maxWalks(1_000);
 			}
 

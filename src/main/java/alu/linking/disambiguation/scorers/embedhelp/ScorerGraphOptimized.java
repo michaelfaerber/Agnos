@@ -14,12 +14,12 @@ public class ScorerGraphOptimized {
 	private int iter = 5;
 	private Double defaultValue = 1.0d;
 
-	private final EntitySimilarityService distanceService;
+	private final EntitySimilarityService similarityService;
 	private final String separatorSFEntity = "//__//";
 	private HashMap<String, Number> iterMap = null;
 
-	ScorerGraphOptimized(final Map<String, List<Number>> embeddings) {
-		this.distanceService = new EntitySimilarityService(embeddings);
+	ScorerGraphOptimized(final EntitySimilarityService similarityService) {
+		this.similarityService = similarityService;
 	}
 
 	public ScorerGraphOptimized clusters(final Map<String, List<String>> clusters) {
@@ -92,7 +92,7 @@ public class ScorerGraphOptimized {
 					for (String toNode : entryToCluster.getValue()) {
 						double predecessorPRSum = 0d;
 						for (String fromNode : entryFromCluster.getValue()) {
-							final Number weight = this.distanceService.similarity(fromNode, toNode);
+							final Number weight = this.similarityService.similarity(fromNode, toNode);
 							final Number prevNodePR = iterMap.getOrDefault(iterKey(entryFromCluster.getKey(), fromNode),
 									this.defaultValue);
 							// This only works due to N-to-N connectivity (excluding own cluster's entities)
@@ -120,7 +120,7 @@ public class ScorerGraphOptimized {
 	}
 
 	public Set<String> getNotFoundIRIs() {
-		return this.distanceService.notFoundIRIs;
+		return this.similarityService.notFoundIRIs;
 	}
 
 }

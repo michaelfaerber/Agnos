@@ -19,6 +19,7 @@ import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.log4j.Logger;
 import org.semanticweb.yars.nx.Node;
 
+import alu.linking.api.GERBILAPIAnnotator;
 import alu.linking.candidategeneration.CandidateGenerator;
 import alu.linking.candidategeneration.CandidateGeneratorMap;
 import alu.linking.config.constants.FilePaths;

@@ -35,7 +35,7 @@ public class TurtleNIFParser extends AbstractNIFParser {
 	@Override
 	protected Model parseNIFModel(InputStream is, Model nifModel) {
 		// RDFReaderRIOT rdfReader = new RDFReaderRIOT_TTL();
-		RDFReaderRIOT rdfReader = new RDFReaderRIOT();
+		RDFReaderRIOT rdfReader = new RDFReaderRIOT("TTL");
 		rdfReader.read(nifModel, is, "");
 		return nifModel;
 	}
@@ -43,7 +43,7 @@ public class TurtleNIFParser extends AbstractNIFParser {
 	@Override
 	protected Model parseNIFModel(Reader reader, Model nifModel) {
 		// RDFReaderRIOT rdfReader = new RDFReaderRIOT_TTL();
-		RDFReaderRIOT rdfReader = new RDFReaderRIOT();
+		RDFReaderRIOT rdfReader = new RDFReaderRIOT("TTL");
 		rdfReader.read(nifModel, reader, "");
 		return nifModel;
 	}

@@ -6,8 +6,8 @@ public enum EnumModelType {
 	DBPEDIA("./dbpedia/", EntityQuery.DEFAULT), //
 	DBPEDIA_FULL("./dbpedia_full/", EntityQuery.DEFAULT, EnumConnection.SHETLAND_VIRTUOSO, true, "http://dbpedia.org"), //
 	FREEBASE("./freebase/", EntityQuery.DEFAULT), //
-	CRUNCHBASE("./crunchbase/", EntityQuery.DEFAULT), //
-	CRUNCHBASE2("./crunchbase2/", EntityQuery.DEFAULT), //
+	CRUNCHBASE("./crunchbase/", EntityQuery.CRUNCHBASE2), //
+	CRUNCHBASE2("./crunchbase2/", EntityQuery.CRUNCHBASE2), //
 	MINI_MAG("./mini_mag/", EntityQuery.MAG), //
 	MAG("./mag/", EntityQuery.MAG), //
 	DBLP("./dblp/", EntityQuery.DBLP), //
@@ -45,7 +45,7 @@ public enum EnumModelType {
 	public boolean useVirtuoso() {
 		return this.useVirtuoso && this.virtuosoConn != null;
 	}
-	
+
 	@Override
 	public String toString() {
 		return name();
