@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -26,6 +27,7 @@ public class HillClimbingPicker<S> implements ClusterItemPicker<S> {
 	private final int REPEAT;
 	private static final int DEFAULT_REPEAT = 20;
 	private static final int MIN_REPEAT = 1;
+	private static final double MIN_SCORE_RATIO = 0.5;
 
 	public HillClimbingPicker(final Map<String, List<Number>> entityEmbeddingsMap) {
 		this(new EntitySimilarityService(entityEmbeddingsMap), DEFAULT_REPEAT);
@@ -183,7 +185,7 @@ public class HillClimbingPicker<S> implements ClusterItemPicker<S> {
 		// each appeared and take the most-appearing one
 
 		// <Key,Value>: <SurfaceForm, ChosenEntity>
-		final Map<String, String> finalChoiceMap = new HashMap<>();
+		final Map<String, Pair<String, Double>> finalChoiceMap = new HashMap<>();
 
 		for (Map.Entry<String, List<Pair<String, Double>>> e : allResultsMap.entrySet()) {
 			final String surfaceForm = e.getKey();
@@ -205,8 +207,19 @@ public class HillClimbingPicker<S> implements ClusterItemPicker<S> {
 			for (Entry<String, Double> pairEntry : groupMap.entrySet()) {
 				// For this surface form, choose the best candidate
 				if (pairEntry.getValue() > prevSim) {
-					finalChoiceMap.put(surfaceForm, pairEntry.getKey());
+					finalChoiceMap.put(surfaceForm, new ImmutablePair<>(pairEntry.getKey(), pairEntry.getValue()));
 				}
+			}
+		}
+
+		final Iterator<Entry<String, Pair<String, Double>>> finalChoicesIterator = finalChoiceMap.entrySet().iterator();
+		final Double MIN_SCORE = computeMinScore();
+		getLogger().debug("Min score:" + MIN_SCORE);
+		while (finalChoicesIterator.hasNext()) {
+			final Entry<String, Pair<String, Double>> entry = finalChoicesIterator.next();
+			if (entry.getValue().getRight() < MIN_SCORE) {
+				getLogger().debug("Removing:" + entry.getKey() + " - " + entry.getValue());
+				finalChoicesIterator.remove();
 			}
 		}
 
@@ -221,6 +234,33 @@ public class HillClimbingPicker<S> implements ClusterItemPicker<S> {
 		return retList;
 	}
 
+	/**
+	 * Made a method out of it since the minimal score should be dependent on the
+	 * operation applied (on whether it is based on summed SIMILARITIES or on
+	 * OCCURRENCE)
+	 * 
+	 * @return minimum score threshold
+	 */
+	private Double computeMinScore() {
+		return ((double) REPEAT) * MIN_SCORE_RATIO;
+	}
+
+	/**
+	 * Method executing the wanted operation for grouping of entities for the
+	 * specified surface forms
+	 * 
+	 * @param previousValue     previous value within map
+	 * @param pairSimilaritySum the cosine similarity that might want to be summed
+	 * @return value resulting of the operation
+	 */
+	private Double applyOperation(Double previousValue, Double pairSimilaritySum) {
+		// Either sum them or just add +1
+		// occurrence
+		return previousValue + 1;
+		// summed similarity
+		// return previousValue + pairSimilaritySum;
+	}
+
 	private void displayAllResultsMap(Map<String, List<Pair<String, Double>>> allResultsMap) {
 		getLogger().info("ALL RESULTS MAP - START");
 		for (Entry<String, List<Pair<String, Double>>> e : allResultsMap.entrySet()) {
@@ -233,12 +273,6 @@ public class HillClimbingPicker<S> implements ClusterItemPicker<S> {
 		for (Entry<String, Double> e : groupMap.entrySet()) {
 			getLogger().info("[" + sf + "] " + e.getKey() + " -> " + e.getValue());
 		}
-	}
-
-	private Double applyOperation(Double previousValue, Double pairSimilaritySum) {
-		// Either sum them or just add +1
-		return previousValue + 1;
-		// return previousValue + pairSimilaritySum;
 	}
 
 	private Set<String> mapToValueSet(Map<String, Pair<String, Double>> chosenClusterEntityMap) {
