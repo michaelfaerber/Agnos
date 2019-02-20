@@ -2,6 +2,7 @@ package alu.linking.launcher.debug;
 
 import java.util.Iterator;
 
+import org.apache.jena.query.Dataset;
 import org.apache.jena.query.Query;
 import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QueryExecutionFactory;
@@ -9,8 +10,10 @@ import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.tdb.TDBFactory;
 
 import alu.linking.config.constants.EnumConnection;
+import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import virtuoso.jena.driver.VirtGraph;
 import virtuoso.jena.driver.VirtuosoQueryExecution;
@@ -19,21 +22,21 @@ import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
 public class LauncherTestQuery {
 
 	public static void main(String[] args) {
-		final EnumModelType KG = EnumModelType.DBPEDIA_FULL;
+		final EnumModelType KG = EnumModelType.CRUNCHBASE2;
 		System.out.println("Testing query for: " + KG.name());
-		// final Dataset dataset =
-		// TDBFactory.createDataset(FilePaths.DATASET.getPath(KG));
-		// final Model model = dataset.getDefaultModel();
+		 final Dataset dataset =
+		 TDBFactory.createDataset(FilePaths.DATASET.getPath(KG));
+		 final Model model = dataset.getDefaultModel();
 //		final String queryStr = "select distinct ?s (CONCAT(CONCAT(?fname, \" \"), ?lname) AS ?o) where {\r\n"
 //				+ "?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://ontologycentral.com/2010/05/cb/vocab#Person> .\r\n"
 //				+ "?s <http://ontologycentral.com/2010/05/cb/vocab#last_name> ?lname .\r\n"
 //				+ "?s <http://ontologycentral.com/2010/05/cb/vocab#first_name> ?fname .\r\n" + "}";
 		System.out.println("Executing query...");
-//		getABC(model);
-		// getPredicates(model);
-		// getTypes(model);
+		// getABC(model);
+		getPredicates(model);
+		getTypes(model);
 		// getRandom(model);
-		testVirtuoso();
+		//testVirtuoso();
 		// getDBLPAuthors(model);
 
 		// getPredicatesAndTypes(model);

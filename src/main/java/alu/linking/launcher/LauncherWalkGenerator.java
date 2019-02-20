@@ -8,9 +8,10 @@ public class LauncherWalkGenerator implements Loggable {
 	public static void main(String[] args) {
 		final EnumModelType KG = EnumModelType.
 		// DBPEDIA_FULL
-				MINI_MAG;
+		// MINI_MAG
+				CRUNCHBASE2;
 		try {
-			new RDF2VecWalkGenerator(KG, 1, 10, 50, null).exec();
+			new RDF2VecWalkGenerator(KG, 1, 6, 50, null).exec();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

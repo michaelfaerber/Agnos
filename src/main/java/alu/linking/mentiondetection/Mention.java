@@ -13,7 +13,7 @@ public class Mention<N> implements Loggable {
 	private final String mention;
 	private final String source;
 	private PossibleAssignment<N> assignment = null;
-	private final int offset;
+	private int offset = -1;
 	private double detectionConfidence = -1;
 	private Collection<PossibleAssignment<N>> possibleAssignments = null;
 	private final String originalMention;
@@ -120,6 +120,10 @@ public class Mention<N> implements Loggable {
 
 	public String getOriginalMention() {
 		return this.originalMention;
+	}
+
+	public void updateOffset(int offset) {
+		this.offset = offset;
 	}
 
 	/**

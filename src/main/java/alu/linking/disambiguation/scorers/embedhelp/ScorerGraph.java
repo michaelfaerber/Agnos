@@ -13,12 +13,8 @@ import java.util.Set;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 
-import alu.linking.utils.EmbeddingsUtils;
-
 public class ScorerGraph {
-	public final Set<String> notFoundIRIs = new HashSet<>();
-	final Map<String, List<Number>> embeddings;
-	final Map<String, ScorerGraphNode> nodes = new HashMap<String, ScorerGraphNode>();
+	private final Map<String, ScorerGraphNode> nodes = new HashMap<String, ScorerGraphNode>();
 	public Double defaultValue = 1d;
 	// Whether neighbours should be unique, aka. node A and B are just connected to
 	// each other once (even if attempted to be added multiple times)
@@ -27,9 +23,14 @@ public class ScorerGraph {
 	private int iter = 5;
 	// Likelihood of following a link
 	private Number damping = 0.85d;
+	// Minimum similarity threshold required to set an "edge" between two entities
+	private final double minEdgeSimilarityThreshold;
+	private final EntitySimilarityService similarityService;
 
-	protected ScorerGraph(Map<String, List<Number>> embeddings) {
-		this.embeddings = embeddings;
+	protected ScorerGraph(final EntitySimilarityService similarityService,
+			final double minEdgeSimilarityThreshold) {
+		this.minEdgeSimilarityThreshold = minEdgeSimilarityThreshold;
+		this.similarityService = similarityService;
 	}
 
 	public void addNode(final String nodeName) {
@@ -91,25 +92,20 @@ public class ScorerGraph {
 				return;
 			}
 
-			try {
-				final Number weight = EmbeddingsUtils.cosineSimilarity(embeddings.get(this.nodeName),
-						embeddings.get(next.nodeName));
-				if (weight == null || weight.doubleValue() < 0 || weight.doubleValue() > 1) {
-					throw new RuntimeException("Invalid weight(" + weight + "):" + this.nodeName + "("
-							+ embeddings.get(next.nodeName) + ")");
-				}
+			final Number weight = similarityService.similarity(this.nodeName, next.nodeName);
+			if (weight == null || weight.doubleValue() < 0 || weight.doubleValue() > 1) {
+				throw new RuntimeException(
+						"Invalid weight(" + weight + "):" + this.nodeName + "(" + next.nodeName + ")");
+			}
 
+			// Only add a connection / weight if and only if the similarity is greater than
+			// the minimal threshold
+			if (weight.doubleValue() > minEdgeSimilarityThreshold) {
 				// Adds weight and successor
 				nextWeights.add(weight);
 				nexts.add(next);
-			} catch (NullPointerException npe) {
-				if (embeddings.get(this.nodeName) == null) {
-					notFoundIRIs.add(this.nodeName);
-				}
-				if (embeddings.get(next.nodeName) == null) {
-					notFoundIRIs.add(next.nodeName);
-				}
 			}
+
 		}
 	}
 
@@ -252,5 +248,4 @@ public class ScorerGraph {
 		}
 		return this;
 	}
-
 }

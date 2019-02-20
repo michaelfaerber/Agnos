@@ -142,8 +142,10 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 					final String[] tokens = line.split(delim);
 					if (tokens.length == 2) {
 						addPossibility(mentionPossibilities, tokens[1], tokens[0]);
+						addSpacedPossibilities(mentionPossibilities, tokens[1], tokens[0]);
 					} else if (tokens.length == 3) {
 						addPossibility(mentionPossibilities, tokens[2], tokens[0]);
+						addSpacedPossibilities(mentionPossibilities, tokens[2], tokens[0]);
 					} else if (tokens.length != 0) {
 						getLogger().error("Invalid line...: " + line);
 					}
@@ -300,6 +302,29 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 	}
 
 	/**
+	 * Splits the passed 'word' (line or some such) by white space characters in
+	 * hopes of helping to add surface forms that can be detected.<br>
+	 * Note: This helps in cases in which a surface form might be defined as "Brad
+	 * Pitt", but there not existing separate "Brad" and "Pitt" surface forms (e.g.
+	 * for incomplete graphs not adding :firstName / :lastName additionally to just
+	 * :name)
+	 * 
+	 * @param mentionPossibilities map containing surface forms along with their
+	 *                             respective possible entities
+	 * @param words                words/line
+	 * @param source               entity which points towards this surface form
+	 */
+	private void addSpacedPossibilities(HashMap<String, Set<String>> mentionPossibilities, String words,
+			String source) {
+		final String[] multiWordTokens = words.split("\\p{Space}");
+		if (multiWordTokens.length > 1) {
+			for (String word : multiWordTokens) {
+				addPossibility(mentionPossibilities, word, source);
+			}
+		}
+	}
+
+	/**
 	 * NTriples type of input file
 	 * 
 	 * @param brIn
@@ -355,7 +380,7 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 	 */
 	private void addPossibility(final HashMap<String, Set<String>> map, String word, String source) {
 		word = word.toLowerCase();
-		source = source;// .toLowerCase();
+		// source = source;// .toLowerCase();
 		if (!passesRequirements(word))
 			return;
 		Set<String> s;

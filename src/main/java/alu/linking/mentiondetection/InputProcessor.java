@@ -54,7 +54,7 @@ public class InputProcessor {
 	 * Treats the key as it would any other input and saves it to a new HashMap with
 	 * the associated previous key value (meant for use for [Keys=surfaceForm;
 	 * Values=entities]<br>
-	 * Note: Does not change passed Map instance
+	 * Note: Does not modify passed Map instance
 	 * 
 	 * @param map
 	 * @return
