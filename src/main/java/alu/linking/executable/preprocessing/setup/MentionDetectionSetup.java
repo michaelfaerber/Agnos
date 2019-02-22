@@ -8,6 +8,7 @@ import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
 import alu.linking.mentiondetection.InputProcessor;
+import alu.linking.mentiondetection.StopwordsLoader;
 import alu.linking.mentiondetection.fuzzy.MentionDetectorLSH;
 import alu.linking.structure.Executable;
 
@@ -33,12 +34,15 @@ public class MentionDetectionSetup implements Executable {
 		// Note: requires (surface form) dictionary to be ready
 		// Extract the possible mentions properly from the surface form
 		getLogger().debug("Setting up mention detection files");
-		final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG);
+		final StopwordsLoader stopwordsLoader = new StopwordsLoader(KG);
+		final Set<String> stopwords = stopwordsLoader.getStopwords();
+		final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG, stopwordsLoader);
 		// Map<String, Set<String>> map = mpe.exec(new
 		// File(FilePaths.FILE_EXTENDED_GRAPH.path));
 		Map<String, Set<String>> map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
 		System.out.println("Map size:" + map.size());
-		final MentionDetectorLSH md = new MentionDetectorLSH(KG);
+		final InputProcessor inputProcessor = new InputProcessor(stopwords);
+		final MentionDetectorLSH md = new MentionDetectorLSH(KG, inputProcessor);
 		md.setup(map);
 		getLogger().debug("Backing up computed files!");
 		md.backup();

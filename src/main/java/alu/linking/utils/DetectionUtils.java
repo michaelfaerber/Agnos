@@ -9,12 +9,12 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
-import org.semanticweb.yars.nx.Node;
 
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
 import alu.linking.launcher.LauncherContinuousMentionDetector;
+import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
 import alu.linking.mentiondetection.StopwordsLoader;
@@ -40,26 +40,25 @@ public class DetectionUtils {
 		return map;
 	}
 
-	public static MentionDetector setupMentionDetection(final EnumModelType KG, final Map<String, Set<String>> map)
-			throws Exception {
+	public static MentionDetector setupMentionDetection(final EnumModelType KG, final Map<String, Set<String>> map,
+			final InputProcessor inputProcessor) throws Exception {
 		Stopwatch.endOutputStart(LauncherContinuousMentionDetector.class.getName());
 		Logger.getLogger(DetectionUtils.class).info("Number of entries (aka. different surface forms): " + map.size());
 		// return new MentionDetectorMap(map);//
-		final MentionDetector md = new MentionDetectorLSH(KG, 0.9);
+		final MentionDetector md = new MentionDetectorLSH(KG, 0.9, inputProcessor);
 		md.init();
 		return md;
 	}
 
-	public static void displayMentions(final Logger logger, Collection<Mention<Node>> mentions,
-			final boolean detailed) {
-		final TreeMap<String, Mention<Node>> alphabeticalSortedMentions = new TreeMap<String, Mention<Node>>();
+	public static void displayMentions(final Logger logger, Collection<Mention> mentions, final boolean detailed) {
+		final TreeMap<String, Mention> alphabeticalSortedMentions = new TreeMap<String, Mention>();
 		// Sort them by key for visibility
-		for (Mention<Node> m : mentions) {
+		for (Mention m : mentions) {
 			alphabeticalSortedMentions.put(m.getMention() + "_" + m.getOriginalMention(), m);
 		}
 
-		for (Map.Entry<String, Mention<Node>> e : alphabeticalSortedMentions.entrySet()) {
-			final Mention<Node> m = e.getValue();
+		for (Map.Entry<String, Mention> e : alphabeticalSortedMentions.entrySet()) {
+			final Mention m = e.getValue();
 			if (detailed) {
 				logger.info("Mention[" + m.getMention() + "; " + m.getDetectionConfidence() + "] " + m.getSource());
 				logger.info("Original Text:" + m.getOriginalMention());
@@ -76,14 +75,14 @@ public class DetectionUtils {
 			}
 		}
 		// Displaying them as ordered...
-		// for (Mention<Node> m : mentions) {
+		// for (Mention m : mentions) {
 		// logger.info("Mention(" + m.getOffset() + "): " +
 		// m.getOriginalMention());
 		// }
 
 	}
 
-	public static String makeURL(final Mention<Node> m, final AtomicInteger currIndex, final String resultLine) {
+	public static String makeURL(final Mention m, final AtomicInteger currIndex, final String resultLine) {
 		final StringBuilder hyperlinkMention = new StringBuilder(" <a href=");
 		hyperlinkMention.append(m.getAssignment().getAssignment().toString());
 		hyperlinkMention.append(">");

@@ -12,19 +12,19 @@ import alu.linking.disambiguation.ContextBase;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 
-public interface ClusterItemPicker<S> extends ContextBase<Mention<S>>, Loggable {
-	public List<S> combine();
+public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
+	public List<String> combine();
 
-	default Map<String, List<String>> computeClusters(final Collection<Mention<S>> context) {
+	default Map<String, List<String>> computeClusters(final Collection<Mention> context) {
 		final Map<String, List<String>> clusterMap = new HashMap<>();
 
 		List<String> putList = Lists.newArrayList();
-		for (Mention<S> m : context) {
+		for (Mention m : context) {
 			final List<String> absent = clusterMap.putIfAbsent(m.getMention(), putList);
 			if (absent == null) {
 				// Everything OK
 				final List<String> cluster = clusterMap.get(m.getMention());
-				for (PossibleAssignment<S> ass : m.getPossibleAssignments()) {
+				for (PossibleAssignment ass : m.getPossibleAssignments()) {
 					cluster.add(ass.getAssignment().toString());
 				}
 				// Prepare the putList for the next one

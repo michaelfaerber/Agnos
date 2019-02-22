@@ -21,15 +21,15 @@ import alu.linking.mentiondetection.Mention;
  * 
  * @author Kwizzer
  *
- * @param <N>
+ * @param 
  */
-public class AssignmentChooser<N> {
+public class AssignmentChooser {
 	private static Logger logger = Logger.getLogger(AssignmentChooser.class);
-	private AssignmentScorer<N> scorer = null;
+	private AssignmentScorer scorer = null;
 
 	public AssignmentChooser(final EnumModelType KG)
 			throws ClassNotFoundException, IOException {
-		this.scorer = new AssignmentScorer<N>(KG);
+		this.scorer = new AssignmentScorer(KG);
 		// Graph.getInstance().readIn(FilePaths.FILE_HOPS_GRAPH_DUMP.getPath(KG),
 		// FilePaths.FILE_HOPS_GRAPH_DUMP_PATH_IDS.getPath(KG),
 		// FilePaths.FILE_HOPS_GRAPH_DUMP_EDGE_IDS.getPath(KG));
@@ -41,7 +41,7 @@ public class AssignmentChooser<N> {
 	 * @return
 	 * @throws InterruptedException
 	 */
-	private Collection<PossibleAssignment<N>> score(final Mention<N> mention) throws InterruptedException {
+	private Collection<PossibleAssignment> score(final Mention mention) throws InterruptedException {
 		// logger.debug(mention.getMention() + " / " + mention.getSource());
 		return scorer.score(mention);
 	}
@@ -52,7 +52,7 @@ public class AssignmentChooser<N> {
 	 * @param mentions
 	 * @throws InterruptedException
 	 */
-	public void choose(final List<Mention<N>> mentions) throws InterruptedException {
+	public void choose(final List<Mention> mentions) throws InterruptedException {
 		// Update context for post-scoring (does it for all linked post-scorers)
 		scorer.updatePostContext(mentions);
 		// Score the possible assignments for each detected mention
@@ -60,32 +60,32 @@ public class AssignmentChooser<N> {
 		// In order to avoid disambiguating multiple times for the same mention word, we
 		// split our mentions up and then just copy results from the ones that were
 		// computed
-		final Map<String, List<Mention<N>>> mentionMap = new HashMap<>();
+		final Map<String, List<Mention>> mentionMap = new HashMap<>();
 		// Split up the mentions by their keys
-		for (final Mention<N> mention : mentions) {
-			List<Mention<N>> val;
+		for (final Mention mention : mentions) {
+			List<Mention> val;
 			if ((val = mentionMap.get(mention.getMention())) == null) {
 				val = Lists.newArrayList();
 				mentionMap.put(mention.getMention(), val);
 			}
 			val.add(mention);
 		}
-		for (final Map.Entry<String, List<Mention<N>>> e : mentionMap.entrySet()) {
+		for (final Map.Entry<String, List<Mention>> e : mentionMap.entrySet()) {
 			// Just score the first one within the lists
-			final List<Mention<N>> sameWordMentions = e.getValue();
-			final Mention<N> mention = sameWordMentions.get(0);
+			final List<Mention> sameWordMentions = e.getValue();
+			final Mention mention = sameWordMentions.get(0);
 			score(mention);
 			// Assign the top-scored possible assignment to the mention
 			mention.assignBest();
 			// Copy into the other mentions
 			for (int i = 1; i < e.getValue().size(); ++i) {
 				// Skip the first one as it's just time lost...
-				final Mention<N> sameWordMention = sameWordMentions.get(i);
+				final Mention sameWordMention = sameWordMentions.get(i);
 				sameWordMention.copyResults(mention);
 			}
 		}
 		/*
-		 * for (Mention<N> m : mentions) { m.assignBest(); }
+		 * for (Mention m : mentions) { m.assignBest(); }
 		 */
 	}
 

@@ -16,6 +16,7 @@ import alu.linking.config.constants.EnumConnection;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
+import alu.linking.mentiondetection.StopwordsLoader;
 import alu.linking.structure.Executable;
 import alu.linking.utils.IDMappingGenerator;
 import alu.linking.utils.WalkUtils;
@@ -69,7 +70,7 @@ public class RDF2VecWalkGenerator implements Executable {
 		final String sentencesOut = FilePaths.FILE_GRAPH_WALK_OUTPUT_SENTENCES.getPath(kg);
 
 		final Map<String, Set<String>> map;
-		final MentionPossibilityLoader mpl = new MentionPossibilityLoader(kg);
+		final MentionPossibilityLoader mpl = new MentionPossibilityLoader(kg, new StopwordsLoader(kg));
 		map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(kg)));
 		final Set<String> allEntities = new HashSet<>();
 		for (Map.Entry<String, Set<String>> e : map.entrySet()) {

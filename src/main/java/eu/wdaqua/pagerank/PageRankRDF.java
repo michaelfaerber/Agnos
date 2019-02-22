@@ -15,11 +15,14 @@ import com.beust.jcommander.internal.Lists;
 
 public class PageRankRDF implements PageRank {
 
-	private double dampingFactor = 0.85D;
-	private double startValue = 0.1D;
-	private int numberOfIterations = 40;
+	public static Double DEFAULT_DAMPING = 0.85D;
+	public static Double DEFAULT_START_VALUE = 0.1D;
+	public static int DEFAULT_ITERATION = 40;
+	private double dampingFactor = DEFAULT_DAMPING;
+	private double startValue = DEFAULT_START_VALUE;
+	private int numberOfIterations = DEFAULT_ITERATION;
 	private Collection<String> dumps;
-	private HashMap<String, Double> pageRankScores = new HashMap();
+	private HashMap<String, Double> pageRankScores = new HashMap<>();
 	private boolean literals;
 
 	public PageRankRDF(String dump) {
@@ -56,6 +59,7 @@ public class PageRankRDF implements PageRank {
 		long time = System.currentTimeMillis();
 		final long initTime = time;
 		for (String dump : this.dumps) {
+			System.err.println("Processing " + dump);
 			PipedRDFIterator<Triple> iter = Parser.parse(dump);
 			while (iter.hasNext()) {
 				Triple t = iter.next();

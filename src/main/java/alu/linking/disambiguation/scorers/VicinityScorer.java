@@ -19,10 +19,10 @@ import alu.linking.disambiguation.hops.pathbuilding.ConcurrentPathBuilderBatch;
 import alu.linking.disambiguation.hops.pathbuilding.ConcurrentPathBuilderSingle;
 import alu.linking.mentiondetection.Mention;
 
-public class VicinityScorer<N> implements PostScorer<PossibleAssignment<N>, Mention<N>> {
+public class VicinityScorer implements PostScorer<PossibleAssignment, Mention> {
 	private Logger logger = Logger.getLogger(getClass());
 	private double sigma_ratio = Numbers.VICINITY_SCORING_WEIGHT_SIGMA.val.doubleValue();
-	private Collection<Mention<N>> context;
+	private Collection<Mention> context;
 	private final Graph<Integer> graph;
 	private final Set<Integer> goalNodesSet = new HashSet<>();
 
@@ -32,7 +32,7 @@ public class VicinityScorer<N> implements PostScorer<PossibleAssignment<N>, Ment
 	}
 
 	@Override
-	public Number computeScore(final PossibleAssignment<N> assignment) {
+	public Number computeScore(final PossibleAssignment assignment) {
 		double retScore = 0d;
 		// We have an assignment and we check the neighborhood through the graph
 		// Take the assignment's source as a source node
@@ -107,8 +107,8 @@ public class VicinityScorer<N> implements PostScorer<PossibleAssignment<N>, Ment
 	public void updateContext() {
 		goalNodesSet.clear();
 		// Update what nodes can be used as goal nodes
-		for (Mention<N> contextMention : context) {
-			for (PossibleAssignment<N> possibleAssignment : contextMention.getPossibleAssignments()) {
+		for (Mention contextMention : context) {
+			for (PossibleAssignment possibleAssignment : contextMention.getPossibleAssignments()) {
 				final String nodeURL = possibleAssignment.getAssignment().toString();
 				final Integer endNodeID = graph.getIDMapping().getKey(nodeURL);
 				if (endNodeID != null) {
@@ -119,7 +119,7 @@ public class VicinityScorer<N> implements PostScorer<PossibleAssignment<N>, Ment
 	}
 
 	@Override
-	public void linkContext(Collection<Mention<N>> context) {
+	public void linkContext(Collection<Mention> context) {
 		this.context = context;
 	}
 

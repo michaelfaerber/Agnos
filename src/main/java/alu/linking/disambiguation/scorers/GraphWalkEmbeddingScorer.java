@@ -26,11 +26,11 @@ import alu.linking.utils.EmbeddingsUtils;
 import alu.linking.utils.IDMappingLoader;
 import alu.linking.utils.Stopwatch;
 
-public class GraphWalkEmbeddingScorer<N> implements PostScorer<PossibleAssignment<N>, Mention<N>>, Loggable {
+public class GraphWalkEmbeddingScorer implements PostScorer<PossibleAssignment, Mention>, Loggable {
 	private boolean hasChanged = true;
-	private final Set<N> bestCombination = new HashSet<>();
+	private final Set<String> bestCombination = new HashSet<>();
 	private final String changedLock = "hasChangedLock";
-	private final ClusterItemPicker<N> clusterHelper;
+	private final ClusterItemPicker clusterHelper;
 	private final EntitySimilarityService similarityService;
 
 	public GraphWalkEmbeddingScorer(final EntitySimilarityService similarityService) {
@@ -110,7 +110,7 @@ public class GraphWalkEmbeddingScorer<N> implements PostScorer<PossibleAssignmen
 	}
 
 	@Override
-	public Number computeScore(PossibleAssignment<N> assignment) {
+	public Number computeScore(PossibleAssignment assignment) {
 		synchronized (changedLock) {
 			if (hasChanged) {
 				recomputeOptimum();
@@ -151,7 +151,7 @@ public class GraphWalkEmbeddingScorer<N> implements PostScorer<PossibleAssignmen
 	}
 
 	@Override
-	public void linkContext(Collection<Mention<N>> context) {
+	public void linkContext(Collection<Mention> context) {
 		clusterHelper.linkContext(context);
 	}
 

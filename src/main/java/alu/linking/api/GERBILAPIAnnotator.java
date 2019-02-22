@@ -1,6 +1,9 @@
 package alu.linking.api;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -40,26 +43,30 @@ public class GERBILAPIAnnotator implements Executable {
 	private final boolean REMOVE_OVERLAP = true;
 	private static final boolean detailed = false;
 	private Boolean init = false;
-	private final Comparator<Mention<Node>> offsetComparator = new Comparator<Mention<Node>>() {
+	private final Comparator<Mention> offsetComparator = new Comparator<Mention>() {
 		@Override
-		public int compare(Mention<Node> o1, Mention<Node> o2) {
+		public int compare(Mention o1, Mention o2) {
 			// Made so it accepts the smallest match as the used one
 			final int diffLength = (o1.getOriginalMention().length() - o2.getOriginalMention().length());
 			return (o1.getOffset() == o2.getOffset()) ? diffLength : ((o1.getOffset() > o2.getOffset()) ? 1 : -1);
 		}
 	};
 
-	private AssignmentChooser<Node> chooser = null;
+	private AssignmentChooser chooser = null;
 	private Set<String> stopwords = null;
 	private MentionDetector md = null;
-	private CandidateGenerator<Node> candidateGenerator;
+	private CandidateGenerator candidateGenerator;
 
 	public GERBILAPIAnnotator(final EnumModelType KG) {
 		this.KG = KG;
 	}
 
 	@Override
+	@SuppressWarnings("unused")
 	public void init() {
+		if (false) {
+			return;
+		}
 		synchronized (this.init) {
 			if (this.init)
 				return;
@@ -72,10 +79,11 @@ public class GERBILAPIAnnotator implements Executable {
 			final StopwordsLoader stopwordsLoader = new StopwordsLoader(KG);
 			stopwords = stopwordsLoader.getStopwords();
 			final Map<String, Set<String>> map = DetectionUtils.loadSurfaceForms(this.KG, stopwordsLoader);
+			final InputProcessor inputProcessor = new InputProcessor(stopwords);
 			// ########################################################
 			// Mention Detection
 			// ########################################################
-			md = DetectionUtils.setupMentionDetection(KG, map);
+			md = DetectionUtils.setupMentionDetection(KG, map, inputProcessor);
 
 			// ########################################################
 			// Candidate Generator
@@ -87,15 +95,30 @@ public class GERBILAPIAnnotator implements Executable {
 			// or whether it will 'always' be this approx. speed for this case
 			// Initialise AssignmentChooser
 			Stopwatch.start(chooserWatch);
-			chooser = new AssignmentChooser<Node>(this.KG);
+			chooser = new AssignmentChooser(this.KG);
 			Stopwatch.endOutput(chooserWatch);
 			init = true;
 		} catch (Exception exc) {
-			throw new RuntimeException(exc);
+			getLogger().error("Exception during init", exc);
 		}
 	}
 
+	@SuppressWarnings("unused")
 	public String annotate(final InputStream inputStream) {
+		if (false) {
+			try (final BufferedReader brIn = new BufferedReader(new InputStreamReader(inputStream))) {
+				String line = null;
+				getLogger().error("Input from GERBIL - START:");
+				while ((line = brIn.readLine()) != null) {
+					getLogger().error(line);
+				}
+				getLogger().error("Input from GERBIL - END");
+			} catch (IOException e) {
+				getLogger().error("IOException", e);
+			}
+			return "";
+		}
+
 		// 1. Generate a Reader, an InputStream or a simple String that contains the NIF
 		// sent by GERBIL
 		// 2. Parse the NIF using a Parser (currently, we use only Turtle)
@@ -149,27 +172,27 @@ public class GERBILAPIAnnotator implements Executable {
 		// new ScoredNamedEntity(startPosition, length, uris, confidence);
 		// new Mention()... transform mention into a scored named entity
 
-		final List<Mention<Node>> mentions = linking(text);
+		final List<Mention> mentions = linking(text);
 
 		// Transform mentions into GERBIL's wanted markings
-		for (Mention<Node> mention : mentions) {
+		for (Mention mention : mentions) {
 			retList.add(new ScoredNamedEntity(mention.getOffset(), mention.getOriginalMention().length(),
 					mention.getAssignment().toString(), mention.getAssignment().getScore().doubleValue()));
 		}
 		return retList;
 	}
 
-	private List<Mention<Node>> linking(String text) throws InterruptedException {
-		List<Mention<Node>> mentions = null;
+	private List<Mention> linking(String text) throws InterruptedException {
+		List<Mention> mentions = null;
 
 		Stopwatch.start(iterationWatch);
 		Stopwatch.start(detectionWatch);
-		mentions = md.detect(InputProcessor.combineProcessedInput(InputProcessor.process(text, stopwords)));
+		mentions = md.detect(InputProcessor.combineProcessedInput(InputProcessor.processAndRemoveStopwords(text, stopwords)));
 		// ------------------------------------------------------------------------------
 		// Change the offsets due to stopword-removal applied through InputProcessor
 		// modifying the actual input, therewith distorting it greatly
 		// ------------------------------------------------------------------------------
-		fixMentionOffsets(text, mentions);
+		// fixMentionOffsets(text, mentions);
 
 		System.out.println("Detected [" + mentions.size() + "] mentions.");
 		System.out.println("Detection duration: " + Stopwatch.endDiffStart(detectionWatch) + " ms.");
@@ -178,7 +201,7 @@ public class GERBILAPIAnnotator implements Executable {
 		// Candidate Generation (update for mentions)
 		// ########################################################
 		Collections.sort(mentions, offsetComparator);
-		for (Mention<Node> m : mentions) {
+		for (Mention m : mentions) {
 			// Update possible assignments w/ possible candidates
 			m.updatePossibleAssignments(candidateGenerator.generate(m));
 		}
@@ -208,10 +231,10 @@ public class GERBILAPIAnnotator implements Executable {
 	 * @param text     input text
 	 * @param mentions detected mentions
 	 */
-	private void fixMentionOffsets(final String text, final List<Mention<Node>> mentions) {
+	private void fixMentionOffsets(final String text, final List<Mention> mentions) {
 		Map<String, List<Integer>> multipleMentions = new HashMap<>();
 		final String textLowercase = text.toLowerCase();
-		for (Mention<Node> mention : mentions) {
+		for (Mention mention : mentions) {
 			// If there's multiple, let the earlier offset be the earlier indexOf
 			final String surfaceForm = mention.getOriginalMention().toLowerCase();
 			final int index = textLowercase.indexOf(surfaceForm);
@@ -229,25 +252,31 @@ public class GERBILAPIAnnotator implements Executable {
 			}
 		}
 		// Now go through the map for the multiple mentions
-		for (Mention<Node> mention : mentions) {
+		for (Mention mention : mentions) {
 			final String surfaceForm = mention.getOriginalMention().toLowerCase();
 			final List<Integer> indices;
+			if (surfaceForm.length() == 0) {
+				continue;
+			}
+
 			if ((indices = multipleMentions.get(surfaceForm)) == null) {
 				continue;
 			}
 			// Sorts it redundantly quite a few times... but myah, honestly, it's just a few
 			// values
 			Collections.sort(indices);
+
 			final int rank = indices.indexOf(mention.getOffset());
 			if (rank < 0) {
-				throw new RuntimeException("Failed logic on the offset rank");
+				getLogger().error("Failed logic on the offset rank[" + rank + "] for indices[" + indices + "]: mention["
+						+ mention.getOriginalMention() + "]");
 			}
 			int currIndex = -1;
 			for (int i = 0; i < rank;) {
 				currIndex = textLowercase.indexOf(surfaceForm, currIndex + 1);
 			}
 			if (currIndex < 0) {
-				throw new RuntimeException("Failed logic on the mentions' offset updating");
+				getLogger().error("Failed logic on the mentions' offset updating");
 			}
 			mention.updateOffset(currIndex);
 		}
@@ -258,15 +287,15 @@ public class GERBILAPIAnnotator implements Executable {
 	 * 
 	 * @param mentions list of mentions
 	 */
-	private void removeOverlapping(List<Mention<Node>> mentions) {
+	private void removeOverlapping(List<Mention> mentions) {
 		// #####################################################################
 		// Remove smallest conflicting mentions keeping just the longest ones
 		// #####################################################################
-		List<Mention<Node>> toRemoveMentions = Lists.newArrayList();
+		List<Mention> toRemoveMentions = Lists.newArrayList();
 		for (int i = 0; i < mentions.size(); ++i) {
 			for (int j = i + 1; j < mentions.size(); ++j) {
-				final Mention<Node> leftMention = mentions.get(i);
-				final Mention<Node> rightMention = mentions.get(j);
+				final Mention leftMention = mentions.get(i);
+				final Mention rightMention = mentions.get(j);
 				// If they conflict, add the shorter one to a list to be removed
 				if (leftMention.getMention().contains(rightMention.getMention())) {
 					toRemoveMentions.add(rightMention);
@@ -275,7 +304,7 @@ public class GERBILAPIAnnotator implements Executable {
 				}
 			}
 		}
-		for (Mention<Node> toRemove : toRemoveMentions) {
+		for (Mention toRemove : toRemoveMentions) {
 			getLogger().info("Removing mention for:'" + toRemove.getMention() + "'");
 			mentions.remove(toRemove);
 		}

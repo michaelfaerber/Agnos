@@ -13,9 +13,9 @@ import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 import alu.linking.utils.Stopwatch;
 
-public class SubPageRankPicker<S> implements ClusterItemPicker<S>, Loggable {
+public class SubPageRankPicker implements ClusterItemPicker, Loggable {
 
-	private Collection<Mention<S>> context;
+	private Collection<Mention> context;
 	private final EntitySimilarityService similarityService;
 
 	public SubPageRankPicker(final EntitySimilarityService similarityService) {
@@ -27,7 +27,7 @@ public class SubPageRankPicker<S> implements ClusterItemPicker<S>, Loggable {
 	}
 
 	@Override
-	public void linkContext(Collection<Mention<S>> context) {
+	public void linkContext(Collection<Mention> context) {
 		this.context = context;
 	}
 
@@ -37,9 +37,9 @@ public class SubPageRankPicker<S> implements ClusterItemPicker<S>, Loggable {
 	}
 
 	@Override
-	public List<S> combine() {
+	public List<String> combine() {
 		final boolean OLD = true;
-		final List<S> retList = Lists.newArrayList();
+		final List<String> retList = Lists.newArrayList();
 		Stopwatch.start(getClass().getName());
 		getLogger().info("Computing cluster...");
 		final Map<String, List<String>> clusters = computeClusters(context);
@@ -56,14 +56,14 @@ public class SubPageRankPicker<S> implements ClusterItemPicker<S>, Loggable {
 			Map<Integer, ImmutablePair<String, Double>> groupedMap = scorerGraph.topByGroup();
 			for (Map.Entry<Integer, ImmutablePair<String, Double>> e : groupedMap.entrySet()) {
 				System.out.println("Value / Score: " + e.getValue().left + " - " + e.getValue().right);
-				retList.add((S) e.getValue().left);
+				retList.add(e.getValue().left);
 			}
 			notFoundIRIs = this.similarityService.notFoundIRIs;
 		} else {
 			final ScorerGraphOptimized sgo = new ScorerGraphOptimized(this.similarityService).dampingFactor(0.85)
 					.iterations(5).startValue(1d).clusters(clusters);
 			sgo.pagerank();
-			retList.addAll((Collection<S>) sgo.getTop());
+			retList.addAll(sgo.getTop());
 			System.out.println("Top values found: ");
 			System.out.println(retList);
 			notFoundIRIs = sgo.getNotFoundIRIs();

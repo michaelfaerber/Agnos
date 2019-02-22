@@ -11,17 +11,17 @@ import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 import alu.linking.utils.EmbeddingsUtils;
 
-public class GreedyOptimalPicker<S> implements ClusterItemPicker<S>, Loggable {
+public class GreedyOptimalPicker implements ClusterItemPicker, Loggable {
 
 	private Map<String, List<Number>> entityEmbeddingsMap;
-	private Collection<Mention<S>> context;
+	private Collection<Mention> context;
 
 	public GreedyOptimalPicker(Map<String, List<Number>> entityEmbeddingMap) {
 		this.entityEmbeddingsMap = entityEmbeddingMap;
 	}
 
 	@Override
-	public List<S> combine() {
+	public List<String> combine() {
 		// Compute clusters based on assignments
 		List<List<String>> clusters = Lists.newArrayList();
 		final Map<String, List<String>> clusterMap = computeClusters(context);
@@ -62,11 +62,11 @@ public class GreedyOptimalPicker<S> implements ClusterItemPicker<S>, Loggable {
 				optPermutationIndex = clusterIndex;
 			}
 		}
-		return (List<S>) clusterPermutations.get(optPermutationIndex);
+		return clusterPermutations.get(optPermutationIndex);
 	}
 
 	@Override
-	public void linkContext(Collection<Mention<S>> context) {
+	public void linkContext(Collection<Mention> context) {
 		this.context = context;
 	}
 

@@ -19,6 +19,7 @@ import alu.linking.launcher.LauncherContinuousMentionDetector;
 import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
+import alu.linking.mentiondetection.StopwordsLoader;
 import alu.linking.utils.DetectionUtils;
 import alu.linking.utils.EmbeddingsUtils;
 import alu.linking.utils.IDMappingLoader;
@@ -36,15 +37,18 @@ public class LauncherTestEmbeddingSimilarity {
 			final EnumModelType KG = EnumModelType.DBPEDIA_FULL;
 			System.out.println("Loading mention possibilities...");
 			final Map<String, Set<String>> map = DetectionUtils.loadSurfaceForms(KG, null);
+			final StopwordsLoader stopwordsLoader = new StopwordsLoader(KG);
+			final Set<String> stopwords = stopwordsLoader.getStopwords();
+			final InputProcessor inputProcessor = new InputProcessor(stopwords);
 			// ########################################################
 			// Mention Detection
 			// ########################################################
-			final MentionDetector md = DetectionUtils.setupMentionDetection(KG, map);
+			final MentionDetector md = DetectionUtils.setupMentionDetection(KG, map, inputProcessor);
 
 			// ########################################################
 			// Candidate Generator
 			// ########################################################
-			final CandidateGenerator<Node> candidateGenerator = new CandidateGeneratorMap(map);
+			final CandidateGenerator candidateGenerator = new CandidateGeneratorMap(map);
 
 			final IDMappingLoader<String> entityMapping = new IDMappingLoader<String>()
 					.loadHumanFile(new File(FilePaths.FILE_GRAPH_WALK_ID_MAPPING_ENTITY_HUMAN.getPath(KG)));
@@ -56,8 +60,8 @@ public class LauncherTestEmbeddingSimilarity {
 			getLogger().info("Finished(" + Stopwatch.endOutput(LauncherContinuousMentionDetector.class.getName())
 					+ " ms.) loading embeddings from: " + embedFile.getAbsolutePath());
 
-			List<Mention<Node>> mentionsLeft = null;
-			List<Mention<Node>> mentionsRight = null;
+			List<Mention> mentionsLeft = null;
+			List<Mention> mentionsRight = null;
 
 			String inputLine = null;
 			try (final Scanner sc = new Scanner(System.in)) {
@@ -70,7 +74,7 @@ public class LauncherTestEmbeddingSimilarity {
 					inputLine = "Victoria Beckham";
 					mentionsLeft = md.detect(InputProcessor.combineProcessedInput(InputProcessor.process(inputLine)));
 					System.out.println("Detected [" + mentionsLeft.size() + "] mentions.");
-					for (Mention<Node> mention : mentionsLeft) {
+					for (Mention mention : mentionsLeft) {
 						mention.updatePossibleAssignments(candidateGenerator.generate(mention));
 					}
 
@@ -78,7 +82,7 @@ public class LauncherTestEmbeddingSimilarity {
 					inputLine = "David Beckham";
 					mentionsRight = md.detect(InputProcessor.combineProcessedInput(InputProcessor.process(inputLine)));
 					System.out.println("Detected [" + mentionsRight.size() + "] mentions.");
-					for (Mention<Node> mention : mentionsRight) {
+					for (Mention mention : mentionsRight) {
 						mention.updatePossibleAssignments(candidateGenerator.generate(mention));
 					}
 
@@ -86,12 +90,12 @@ public class LauncherTestEmbeddingSimilarity {
 						System.out.print("i(" + i + ") ");
 						for (int j = i + 1; j < mentionsRight.size(); ++j) {
 							System.out.print("j(" + j + ") ");
-							final Collection<PossibleAssignment<Node>> assignmentsLeft = mentionsLeft.get(i)
+							final Collection<PossibleAssignment> assignmentsLeft = mentionsLeft.get(i)
 									.getPossibleAssignments();
-							final Collection<PossibleAssignment<Node>> assignmentsRight = mentionsRight.get(j)
+							final Collection<PossibleAssignment> assignmentsRight = mentionsRight.get(j)
 									.getPossibleAssignments();
-							for (PossibleAssignment<Node> possAssLeft : assignmentsLeft) {
-								for (PossibleAssignment<Node> possAssRight : assignmentsRight) {
+							for (PossibleAssignment possAssLeft : assignmentsLeft) {
+								for (PossibleAssignment possAssRight : assignmentsRight) {
 									final String leftEntity = possAssLeft.getAssignment().toString();
 									final String rightEntity = possAssRight.getAssignment().toString();
 									final List<Number> left = entityEmbeddingsMap.get(leftEntity);

@@ -18,14 +18,14 @@ public class MentionUtils {
 	 * @return formatted string output
 	 * @throws IOException
 	 */
-	public static String formatMentionsXML(List<Mention<Node>> mentions, final String inputLine) throws IOException {
+	public static String formatMentionsXML(List<Mention> mentions, final String inputLine) throws IOException {
 		// mention\tstartoffset\tendoffset\tentityURI\tconfscore\n
 		final StringWriter sw = new StringWriter();
 		try (BufferedWriter bwResults = new BufferedWriter(sw)) {
 			bwResults.write("<mentions>");
 			// for (Map.Entry<String, Mention<Node>> e : sortedMentions.entrySet()) {
 			int currIndex = -1;
-			for (Mention<Node> m : mentions) {
+			for (Mention m : mentions) {
 				final String search = m.getOriginalMention();
 				int foundIndex = inputLine.indexOf(search, currIndex);
 				final String mention_text = "<mention><source>" + m.getMention() + "</source><original>"
@@ -49,7 +49,7 @@ public class MentionUtils {
 	 * @return formatted string output
 	 * @throws IOException
 	 */
-	public static String formatMentionsTabbedLines(List<Mention<Node>> mentions, final String inputLine)
+	public static String formatMentionsTabbedLines(List<Mention> mentions, final String inputLine)
 			throws IOException {
 		// mention\tstartoffset\tendoffset\tentityURI\tconfscore\n
 		final String delim = "\t";
@@ -57,7 +57,7 @@ public class MentionUtils {
 		final StringWriter sw = new StringWriter();
 		try (BufferedWriter bwResults = new BufferedWriter(sw)) {
 			int currIndex = -1;
-			for (Mention<Node> m : mentions) {
+			for (Mention m : mentions) {
 				final String search = m.getOriginalMention();
 				int foundIndex = inputLine.indexOf(search, currIndex);
 				final String mention_text = m.getMention() + delim + m.getOriginalMention() + delim + foundIndex + delim + (foundIndex + (m.getOriginalMention().length())) + delim
