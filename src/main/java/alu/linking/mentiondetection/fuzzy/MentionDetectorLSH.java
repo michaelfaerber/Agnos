@@ -21,8 +21,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import org.semanticweb.yars.nx.Node;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 
@@ -39,7 +38,8 @@ import alu.linking.utils.FuzzyUtils;
 import alu.linking.utils.Stopwatch;
 import info.debatty.java.lsh.LSHMinHash;
 
-public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
+public class MentionDetectorLSH implements MentionDetector, Loggable {
+	private final InputProcessor inputProcessor;
 	private boolean setup = false;
 	private final AtomicInteger collisionCounter = new AtomicInteger(0);
 	// Trigrams of all possible surface forms
@@ -79,8 +79,8 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	// #################################
 	// ########## CONSTRUCTOR ##########
 	// #################################
-	public MentionDetectorLSH(final EnumModelType KG) {
-		this(KG, 0.7);
+	public MentionDetectorLSH(final EnumModelType KG, final InputProcessor inputProcessor) {
+		this(KG, 0.7, inputProcessor);
 	}
 
 	/**
@@ -88,8 +88,8 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	 * threshold and the bands and buckets default values
 	 * 
 	 */
-	public MentionDetectorLSH(final EnumModelType KG, final double threshold) {
-		this(KG, threshold, bandsDefaultValue, bucketsDefaultValue);
+	public MentionDetectorLSH(final EnumModelType KG, final double threshold, final InputProcessor inputProcessor) {
+		this(KG, threshold, bandsDefaultValue, bucketsDefaultValue, inputProcessor);
 	}
 
 	/**
@@ -104,8 +104,8 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	 *                       number of bands
 	 */
 	public MentionDetectorLSH(final EnumModelType KG, final double threshold, final int value,
-			final boolean bucketsVsBands) {
-		this(KG, threshold, bucketsVsBands ? bandsDefaultValue : value, bucketsVsBands ? value : bandsDefaultValue);
+			final boolean bucketsVsBands, final InputProcessor inputProcessor) {
+		this(KG, threshold, bucketsVsBands ? bandsDefaultValue : value, bucketsVsBands ? value : bandsDefaultValue, inputProcessor);
 	}
 
 	/**
@@ -117,8 +117,8 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	 * @param bands     how many bands LSH should be computed with
 	 * @param buckets   how many buckets LSH should be computed with
 	 */
-	public MentionDetectorLSH(final EnumModelType KG, final double threshold, final int bands, final int buckets) {
-		this(KG, threshold, bands, buckets, EnumDetectionType.BOUND_DYNAMIC_WINDOW);
+	public MentionDetectorLSH(final EnumModelType KG, final double threshold, final int bands, final int buckets, final InputProcessor inputProcessor) {
+		this(KG, threshold, bands, buckets, EnumDetectionType.BOUND_DYNAMIC_WINDOW, inputProcessor);
 	}
 
 	/**
@@ -134,7 +134,7 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	 *                      input text
 	 */
 	public MentionDetectorLSH(final EnumModelType KG, final double threshold, final int bands, final int buckets,
-			EnumDetectionType detectionType) {
+			EnumDetectionType detectionType, InputProcessor inputProcessor) {
 		this.detectionType = detectionType;
 		this.threshold = threshold;
 		this.bands = bands;
@@ -142,6 +142,7 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 		this.KG = KG;
 		this.outHashes = FilePaths.FILE_LSH_HASHES.getPath(KG);
 		this.outDocVectorsEntries = FilePaths.FILE_LSH_DOCUMENT_VECTORS_SPARSE.getPath(KG);
+		this.inputProcessor = inputProcessor;
 	}
 
 	/**
@@ -180,7 +181,7 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	 * 
 	 * @throws Exception
 	 */
-	public void load() throws Exception {
+	public synchronized void load() throws Exception {
 		if (loaded)
 			return;
 		Stopwatch.start(getClass().getName());
@@ -250,7 +251,7 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	 * @param input input text/corpus to detect mentions from
 	 */
 	@Override
-	public List<Mention<Node>> detect(String input) {
+	public List<Mention> detect(String input) {
 		return detect(input, null);
 	}
 
@@ -259,102 +260,19 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	 * @param source where this text comes from or what it is linked to
 	 */
 	@Override
-	public List<Mention<Node>> detect(final String input, final String source) {
+	public List<Mention> detect(final String input, final String source) {
 		try {
 			getCollisionCounter().set(0);
 			// this.hashes = setup();
 			// backup all data
 			// backup();
 			load();
-			final String[] words = InputProcessor.process(input);
-			// Synchronized list
-			final List<Mention<Node>> mentions = Lists.newArrayList();
-
 			final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors
 					.newFixedThreadPool(Numbers.MENTION_DETECTION_THREAD_AMT.val.intValue());
 			AtomicInteger doneCounter = new AtomicInteger(0);
-
-			final StringBuilder combinedWords = new StringBuilder();
-			int stringPos = 0;
-			switch (detectionType) {
-			case BOUND_DYNAMIC_WINDOW:
-				final int windowSize = Numbers.MENTION_DETECTION_WINDOW_SIZE.val.intValue();
-				combinedWords.setLength(0);
-				stringPos = 0;
-				for (int i = 0; i < words.length; ++i) {
-					int subPos = stringPos;// + i*tokenSeparator.length();//+i due to spaces;
-					for (int j = 0; j < windowSize; ++j) {
-						if (i + j > words.length - 1) {
-							break;
-						}
-						// final int index = Math.min(words.length - 1, i + j);
-						final int index = i + j;
-						if (j != 0) {
-							combinedWords.append(tokenSeparator);
-							subPos += tokenSeparator.length();
-						}
-						combinedWords.append(words[index]);
-						execFind(executor, mentions, doneCounter, combinedWords.toString(), source, threshold, subPos);
-						subPos += words[index].length();
-					}
-					combinedWords.setLength(0);
-					stringPos += words[i].length() + tokenSeparator.length();
-				}
-				break;
-			case SINGLE_WORD:
-				// Just Single words
-				stringPos = 0;
-				for (String token : words) {
-					execFind(executor, mentions, doneCounter, token, source, threshold, stringPos);
-					stringPos += token.length();
-				}
-				break;
-			case UNBOUND_DYNAMIC_WINDOW:
-				/*
-				 * Example: Input: I have a cat Processed as: I I have I have a I have a cat
-				 * have have a have a cat ...
-				 */
-				// Just Single words
-				stringPos = 0;
-				for (String token : words) {
-					execFind(executor, mentions, doneCounter, token, source, threshold, stringPos);
-					stringPos += token.length();
-				}
-				// Multi-words (excluding single words)
-				combinedWords.setLength(0);
-				stringPos = 0;
-				for (int i = 0; i < words.length; ++i) {
-					combinedWords.append(words[i]);
-					int subPos = stringPos;
-					for (int j = i + 1; j < words.length; ++j) {
-						combinedWords.append(tokenSeparator + words[j]);
-						execFind(executor, mentions, doneCounter, combinedWords.toString(), source, threshold,
-								stringPos);
-						subPos += tokenSeparator.length() + words[j].length();
-					}
-					stringPos += words[i].length();
-					combinedWords.setLength(0);
-				}
-				break;
-			case UNBOUND_DYNAMIC_WINDOW_STRICT_MULTI_WORD:
-				// Multi-words (excluding single words)
-				combinedWords.setLength(0);
-				stringPos = 0;
-				for (int i = 0; i < words.length; ++i) {
-					combinedWords.append(words[i]);
-					int subPos = stringPos;
-					for (int j = i + 1; j < words.length; ++j) {
-						combinedWords.append(tokenSeparator + words[j]);
-						execFind(executor, mentions, doneCounter, combinedWords.toString(), source, threshold,
-								stringPos);
-						subPos = tokenSeparator.length() + words[j].length();
-					}
-					stringPos += words[i].length();
-					combinedWords.setLength(0);
-				}
-				break;
-			default:
-				break;
+			final List<Mention> mentions = inputProcessor.createMentions(input, source, detectionType);
+			for (Mention mention : mentions) {
+				execFind(executor, mention, doneCounter, threshold);
 			}
 
 			// No more tasks will be added
@@ -372,7 +290,8 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 			if (!terminated) {
 				getLogger().error("Executor has not finished terminating");
 			}
-			return mentions;
+			// Removes all Mention objects that have no associated mention
+			return mentions.stream().filter(mention -> mention.getMention() != null).collect(Collectors.toList());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -392,18 +311,15 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	 * @param source
 	 * @param threshold
 	 */
-	private void execFind(final ThreadPoolExecutor executor, final List<Mention<Node>> mentions,
-			final AtomicInteger doneCounter, final String string, final String source, final double threshold,
-			final int indexPos) {
+	private void execFind(final ThreadPoolExecutor executor, final Mention mention, final AtomicInteger doneCounter,
+			final double threshold) {
 		executor.submit(new Callable<Integer>() {
 			@Override
 			public Integer call() throws Exception {
-				final Mention<Node> mention = find(string, source, threshold, indexPos);
-				if (mention != null) {
-					synchronized (mentionLock) {
-						mentions.add(mention);
-					}
-				}
+
+				final MinHashObject minhashResult = find(mention.getOriginalWithoutStopwords(), threshold);
+				mention.setMention(minhashResult.word);
+				mention.setDetectionConfidence(minhashResult.confidence);
 				return doneCounter.incrementAndGet();
 			}
 		});
@@ -414,30 +330,24 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	 * 
 	 * @param input     token or word
 	 * @param source    what entity this word is linked to
-	 * 
 	 * @param threshold minimum similarity threshold for it to be accepted
+	 * @param offset    offset at which this string starts in the original text
 	 * @return mention with the closest possible mate
 	 * 
 	 */
-	public Mention<Node> find(final String input, final String source, final double threshold, final int offset) {
-		final Object[] resMinHash = minhash(input, threshold);
+	public MinHashObject find(final String input, final double threshold) {
+		final MinHashObject resMinHash = minhash(input, threshold);
 		if (resMinHash == null) {
 			return null;
 		}
-		final String word = (String) resMinHash[0];
-		final double findConfidence = (double) resMinHash[1];
+		final String word = resMinHash.word;
+		final double findConfidence = resMinHash.confidence;
 		if (word == null) {
 			// No mention found within our knowledge base... which would match threshold
 			// criterion, at least
 			return null;
 		}
-		// getLogger().debug("Best Found word(" + input + "): " + word + " [" +
-		// findConfidence + "] " + "; Duration: "
-		// + Stopwatch.endDiff(watchName) + "ms.");
-
-		// Create a mention with the best-found word
-		final Mention<Node> mention = new Mention<Node>(word, source, null, offset, findConfidence, input);
-		return mention;
+		return resMinHash;
 	}
 
 	/**
@@ -559,7 +469,7 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 	 * @param threshold minimum threshold for Jaccard similarity to accept a word
 	 * @return most similar word to passed one or null if threshold is not met
 	 */
-	private Object[] minhash(final String query, final double threshold) {
+	private MinHashObject minhash(final String query, final double threshold) {
 		try {
 			final TreeMap<String, Integer> dictionary = this.ngrams;
 			// Size of dictionary
@@ -592,18 +502,8 @@ public class MentionDetectorLSH implements MentionDetector<Node>, Loggable {
 					maxVal = e.getValue();
 				}
 			}
-			// final Map<Integer, Double> sortedMap =
-			// AnalysisUtils.sortByValue(similarDocs);
-			// for (Map.Entry<Integer, Double> e : sortedMap.entrySet()) {
-			// System.out.println(retrievalList.get(e.getKey()) + " - " + e.getValue());
-			// }
-
-			// for (Map.Entry<Integer, Double> e : sortedMap.entrySet()) {
-			// Just return the best word
-			// return new Object[] { retrievalList.get(e.getKey()), e.getValue() };
-			// }
 			String retrievedWord = retrievalList.get(maxValIndex);
-			return new Object[] { retrievedWord, maxVal };
+			return new MinHashObject(retrievedWord, maxVal);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

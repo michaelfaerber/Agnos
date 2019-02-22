@@ -67,7 +67,7 @@ public class LauncherTarekFile {
 						}
 					}
 					// One-time linking
-					final List<Mention<Node>> mentions = linking.run(sb.toString());
+					final List<Mention> mentions = linking.run(sb.toString());
 					final String formattedOutput = MentionUtils.formatMentionsTabbedLines(mentions, sb.toString());
 					final File f_out = inputFile.isDirectory()
 							? new File(outputFile.getAbsolutePath() + "/" + f.getName())

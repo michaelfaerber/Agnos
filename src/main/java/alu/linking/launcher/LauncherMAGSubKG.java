@@ -25,8 +25,10 @@ import alu.linking.disambiguation.hops.graph.EdgeBlacklisting;
 import alu.linking.disambiguation.hops.graph.Graph;
 import alu.linking.disambiguation.hops.graph.NodeBlacklisting;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
+import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
+import alu.linking.mentiondetection.StopwordsLoader;
 import alu.linking.mentiondetection.fuzzy.MentionDetectorLSH;
 import alu.linking.utils.Stopwatch;
 
@@ -52,13 +54,16 @@ public class LauncherMAGSubKG {
 			map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
 			// FILE_EXTENDED_GRAPH
 			Stopwatch.endOutputStart(getClass().getName());
+			final StopwordsLoader stopwordsLoader = new StopwordsLoader(KG);
+			final Set<String> stopwords = stopwordsLoader.getStopwords();
+			final InputProcessor inputProcessor = new InputProcessor(stopwords);
 			System.out.println("Number of entries: " + map.size());
-			final MentionDetector md = new MentionDetectorLSH(KG, 0.8);
+			final MentionDetector md = new MentionDetectorLSH(KG, 0.8, inputProcessor);
 			Stopwatch.endOutputStart(getClass().getName());
 			// ########################################################
 			// Mention Detection
 			// ########################################################
-			List<Mention<Node>> mentions = null;
+			List<Mention> mentions = null;
 			System.out.println("Started detection!");
 			// In order to check if exec duration depends on one-time loading
 			// or whether it will 'always' be this approx. speed for this case
@@ -66,7 +71,7 @@ public class LauncherMAGSubKG {
 			final String chooserWatch = "chooser - init (loads graph)";
 			// Initialise AssignmentChooser
 			Stopwatch.start(chooserWatch);
-			final AssignmentChooser<Node> chooser = new AssignmentChooser<Node>(KG);
+			final AssignmentChooser chooser = new AssignmentChooser(KG);
 			Stopwatch.endOutput(chooserWatch);
 			// Blacklisting stuff from graph
 			Stopwatch.start("Blacklist");
@@ -103,13 +108,13 @@ public class LauncherMAGSubKG {
 					// ########################################################
 					// Candidate Generation (update for mentions)
 					// ########################################################
-					// final CandidateGenerator<Node> candidateGenerator = new
+					// final CandidateGenerator candidateGenerator = new
 					// CandidateGeneratorMap(map);
-					final CandidateGenerator<Node> candidateGenerator = new CandidateGeneratorMap(map);
+					final CandidateGenerator candidateGenerator = new CandidateGeneratorMap(map);
 					Stopwatch.start("mentions");
-					Collections.sort(mentions, new Comparator<Mention<Node>>() {
+					Collections.sort(mentions, new Comparator<Mention>() {
 						@Override
-						public int compare(Mention<Node> o1, Mention<Node> o2) {
+						public int compare(Mention o1, Mention o2) {
 							// Made so it accepts the smallest match as the used one
 							final int diffLength = (o1.getOriginalMention().length()
 									- o2.getOriginalMention().length());
@@ -117,7 +122,7 @@ public class LauncherMAGSubKG {
 									: ((o1.getOffset() > o2.getOffset()) ? 1 : -1);
 						}
 					});
-					for (Mention<Node> m : mentions) {
+					for (Mention m : mentions) {
 						// Update possible assignments
 						m.updatePossibleAssignments(candidateGenerator.generate(m));
 					}
@@ -133,15 +138,15 @@ public class LauncherMAGSubKG {
 					Stopwatch.endOutput(getClass().getName());
 					System.out.println("#######################################################");
 					System.out.println("Mention Details(" + mentions.size() + "):");
-					final TreeMap<String, Mention<Node>> alphabeticalSortedMentions = new TreeMap<String, Mention<Node>>();
+					final TreeMap<String, Mention> alphabeticalSortedMentions = new TreeMap<String, Mention>();
 					final boolean detailed = false;
 					// Sort them by key for visibility
-					for (Mention<Node> m : mentions) {
+					for (Mention m : mentions) {
 						alphabeticalSortedMentions.put(m.getMention() + "_" + m.getOriginalMention(), m);
 					}
 					// Display them
-					for (Map.Entry<String, Mention<Node>> e : alphabeticalSortedMentions.entrySet()) {
-						final Mention<Node> m = e.getValue();
+					for (Map.Entry<String, Mention> e : alphabeticalSortedMentions.entrySet()) {
+						final Mention m = e.getValue();
 						if (detailed) {
 							System.out.println("Mention[" + m.getMention() + "; " + m.getDetectionConfidence() + "] "
 									+ m.getSource());
@@ -163,9 +168,9 @@ public class LauncherMAGSubKG {
 					final File resultsFile = new File("./output.html").getCanonicalFile();
 					try (BufferedWriter bwResults = new BufferedWriter(new FileWriter(resultsFile))) {
 						String resultLine = inputLine;
-						// for (Map.Entry<String, Mention<Node>> e : sortedMentions.entrySet()) {
+						// for (Map.Entry<String, Mention> e : sortedMentions.entrySet()) {
 						int currIndex = -1;
-						for (Mention<Node> m : mentions) {
+						for (Mention m : mentions) {
 							final String hyperlinkMention = " <a href=" + m.getAssignment().getAssignment().toString()
 									+ ">" + m.getMention() + "</a> ";
 							final String hyperlinkMentionOriginal = " <a href="
@@ -183,7 +188,7 @@ public class LauncherMAGSubKG {
 							}
 							currIndex = foundIndex + search.length();
 
-							// Mention<Node> m = e.getValue();
+							// Mention m = e.getValue();
 							// resultLine = resultLine.replace(" " + m.getMention() + " ",
 							// hyperlinkMention);
 							// resultLine = resultLine.replace(" " + m.getOriginalMention() + " ",
@@ -198,7 +203,7 @@ public class LauncherMAGSubKG {
 						Desktop.getDesktop().browse(resultsFile.toURI());
 					}
 					// Displaying them as ordered...
-					// for (Mention<Node> m : mentions) {
+					// for (Mention m : mentions) {
 					// System.out.println("Mention(" + m.getOffset() + "): " +
 					// m.getOriginalMention());
 					// }

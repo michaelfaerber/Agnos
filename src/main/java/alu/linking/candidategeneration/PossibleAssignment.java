@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
-import org.semanticweb.yars.nx.Node;
 import org.semanticweb.yars.nx.Resource;
 
 import alu.linking.disambiguation.PostScorer;
@@ -13,10 +12,10 @@ import alu.linking.disambiguation.Scorer;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 
-public class PossibleAssignment<N> implements Scorable, Comparable<PossibleAssignment<N>>, Loggable {
+public class PossibleAssignment implements Scorable, Comparable<PossibleAssignment>, Loggable {
 	private static Logger logger = Logger.getLogger(PossibleAssignment.class);
 	private Number score = Float.valueOf(0f);
-	private final N assignment;
+	private final String assignment;
 	private final String mentionSource, mentionToken;
 	private boolean computedScore = false;
 	private boolean warned = false;
@@ -38,10 +37,10 @@ public class PossibleAssignment<N> implements Scorable, Comparable<PossibleAssig
 	@SuppressWarnings("rawtypes")
 	public static PossibleAssignment createNew(final String assignment, final String mentionSource,
 			final String mentionToken) {
-		return new PossibleAssignment<Node>(new Resource(assignment, false), mentionSource, mentionToken);
+		return new PossibleAssignment(new Resource(assignment, false).toN3(), mentionSource, mentionToken);
 	}
 
-	public PossibleAssignment(final N assignment, final String mentionSource, final String mentionToken) {
+	public PossibleAssignment(final String assignment, final String mentionSource, final String mentionToken) {
 		this.assignment = assignment;
 		this.mentionSource = mentionSource;
 		this.mentionToken = mentionToken;
@@ -67,11 +66,11 @@ public class PossibleAssignment<N> implements Scorable, Comparable<PossibleAssig
 	}
 
 	@Override
-	public int compareTo(final PossibleAssignment<N> o) {
+	public int compareTo(final PossibleAssignment o) {
 		return Double.compare(this.score.doubleValue(), o.score.doubleValue());
 	}
 
-	public N getAssignment() {
+	public String getAssignment() {
 		return assignment;
 	}
 

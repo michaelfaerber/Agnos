@@ -13,7 +13,7 @@ import alu.linking.disambiguation.Scorer;
 import alu.linking.disambiguation.pagerank.PageRankLoader;
 import alu.linking.utils.Stopwatch;
 
-public class PageRankScorer<K> implements Scorer<PossibleAssignment<K>> {
+public class PageRankScorer implements Scorer<PossibleAssignment> {
 	private static Logger logger = Logger.getLogger(PageRankScorer.class);
 	private static Map<String, Number> pageRankMap = null;
 	private final EnumModelType KG;

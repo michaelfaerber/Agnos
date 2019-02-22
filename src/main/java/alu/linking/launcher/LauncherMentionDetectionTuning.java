@@ -14,6 +14,7 @@ import com.beust.jcommander.internal.Lists;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
+import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.fuzzy.MentionDetectorLSH;
 import alu.linking.utils.Stopwatch;
@@ -57,15 +58,16 @@ public class LauncherMentionDetectionTuning {
 			bwTuning.newLine();
 			bwTuning.write("#New launch!");
 			bwTuning.newLine();
+			final InputProcessor inputProcessor = new InputProcessor(null);
 			for (int j = 0; j < bandsArr.length; ++j) {
 				final int bands = bandsArr[j];
 				for (int i = 0; i < bucketsArr.length; ++i) {
 					final int buckets = bucketsArr[i];
-					final MentionDetectorLSH md = new MentionDetectorLSH(KG, threshold, bands, buckets);
+					final MentionDetectorLSH md = new MentionDetectorLSH(KG, threshold, bands, buckets, inputProcessor);
 					md.setup(map);
 					md.backup();
 					Stopwatch.start(getClass().getName());
-					final List<Mention<Node>> mentions = md.detect(text, source);
+					final List<Mention> mentions = md.detect(text, source);
 					final long duration = Stopwatch.endDiffStart(getClass().getName());
 					durations.add(duration);
 					final int collisions = md.getCollisionCounter().get();

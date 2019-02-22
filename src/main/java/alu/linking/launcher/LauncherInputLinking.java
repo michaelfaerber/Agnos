@@ -22,6 +22,7 @@ import alu.linking.disambiguation.hops.graph.NodeBlacklisting;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
+import alu.linking.mentiondetection.StopwordsLoader;
 import alu.linking.mentiondetection.exact.HashMapCaseInsensitive;
 import alu.linking.mentiondetection.exact.MentionDetectorMap;
 import alu.linking.utils.Stopwatch;
@@ -30,8 +31,8 @@ public class LauncherInputLinking {
 	private static boolean init = false;
 
 	private static MentionDetector md;
-	private static AssignmentChooser<Node> chooser;
-	private static CandidateGenerator<Node> candidateGenerator;
+	private static AssignmentChooser chooser;
+	private static CandidateGenerator candidateGenerator;
 	private static Map<String, Set<String>> map;
 	private static EnumModelType KG;
 	private static Long timeCounter = 0l;
@@ -42,7 +43,8 @@ public class LauncherInputLinking {
 		if (init)
 			return;
 
-		final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG);
+		final StopwordsLoader stopwordsLoader = new StopwordsLoader(KG);
+		final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG, stopwordsLoader);
 		final Map<String, Set<String>> tmpMap = mpl
 				.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
 		map = new HashMapCaseInsensitive<Set<String>>();
@@ -57,7 +59,7 @@ public class LauncherInputLinking {
 		// ########################################################
 		// Mention Detection
 		// ########################################################
-		chooser = new AssignmentChooser<Node>(KG);
+		chooser = new AssignmentChooser(KG);
 		// Blacklisting stuff from graph
 		Stopwatch.start("Blacklist");
 		NodeBlacklisting nBlacklisting = new NodeBlacklisting(Graph.getInstance());
@@ -75,24 +77,24 @@ public class LauncherInputLinking {
 		init = true;
 	}
 
-	public static List<Mention<Node>> run(final String inputLine) {
+	public static List<Mention> run(final String inputLine) {
 		try {
 			init();
 			long startTime = System.currentTimeMillis();
-			final List<Mention<Node>> mentions = md.detect(inputLine);
+			final List<Mention> mentions = md.detect(inputLine);
 			// ########################################################
 			// Candidate Generation (update for mentions)
 			// ########################################################
-			Collections.sort(mentions, new Comparator<Mention<Node>>() {
+			Collections.sort(mentions, new Comparator<Mention>() {
 				@Override
-				public int compare(Mention<Node> o1, Mention<Node> o2) {
+				public int compare(Mention o1, Mention o2) {
 					// Made so it accepts the smallest match as the used one
 					final int diffLength = (o1.getOriginalMention().length() - o2.getOriginalMention().length());
 					return (o1.getOffset() == o2.getOffset()) ? diffLength
 							: ((o1.getOffset() > o2.getOffset()) ? 1 : -1);
 				}
 			});
-			for (Mention<Node> m : mentions) {
+			for (Mention m : mentions) {
 				// Update possible assignments
 				m.updatePossibleAssignments(candidateGenerator.generate(m));
 			}

@@ -10,8 +10,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.semanticweb.yars.nx.Node;
-
 import com.google.common.collect.Lists;
 
 import alu.linking.config.constants.Numbers;
@@ -21,7 +19,7 @@ import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
 import alu.linking.structure.Loggable;
 
-public class MentionDetectorMap implements MentionDetector<Node>, Loggable {
+public class MentionDetectorMap implements MentionDetector, Loggable {
 	private final Set<String> keys;
 	private final String tokenSeparator = " ";// space
 	private final EnumDetectionType detectionType = EnumDetectionType.BOUND_DYNAMIC_WINDOW;
@@ -43,7 +41,7 @@ public class MentionDetectorMap implements MentionDetector<Node>, Loggable {
 	 * @param input input text/corpus to detect mentions from
 	 */
 	@Override
-	public List<Mention<Node>> detect(String input) {
+	public List<Mention> detect(String input) {
 		return detect(input, null);
 	}
 
@@ -52,11 +50,11 @@ public class MentionDetectorMap implements MentionDetector<Node>, Loggable {
 	 * @param source where this text comes from or what it is linked to
 	 */
 	@Override
-	public List<Mention<Node>> detect(final String input, final String source) {
+	public List<Mention> detect(final String input, final String source) {
 		try {
 			final String[] words = InputProcessor.process(input);
 			// Synchronized list
-			final List<Mention<Node>> mentions = Lists.newArrayList();
+			final List<Mention> mentions = Lists.newArrayList();
 
 			final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors
 					.newFixedThreadPool(Numbers.MENTION_DETECTION_THREAD_AMT.val.intValue());
@@ -177,12 +175,12 @@ public class MentionDetectorMap implements MentionDetector<Node>, Loggable {
 	 * @param source
 	 * @param threshold
 	 */
-	private void execFind(final ThreadPoolExecutor executor, final List<Mention<Node>> mentions,
+	private void execFind(final ThreadPoolExecutor executor, final List<Mention> mentions,
 			final AtomicInteger doneCounter, final String wordCombination, final String source, final int indexPos) {
 		executor.submit(new Callable<Integer>() {
 			@Override
 			public Integer call() throws Exception {
-				final Mention<Node> mention = find(wordCombination, source, indexPos);
+				final Mention mention = find(wordCombination, source, indexPos);
 				if (mention != null) {
 					synchronized (mentionLock) {
 						mentions.add(mention);
@@ -203,7 +201,7 @@ public class MentionDetectorMap implements MentionDetector<Node>, Loggable {
 	 * @return mention with the closest possible mate
 	 * 
 	 */
-	public Mention<Node> find(final String input, final String source, final int offset) {
+	public Mention find(final String input, final String source, final int offset) {
 		if (!this.keys.contains(input.toLowerCase())) {
 			System.out.println("Could not match w/:" + input.toLowerCase());
 			final int showAmt = 100;
@@ -217,7 +215,7 @@ public class MentionDetectorMap implements MentionDetector<Node>, Loggable {
 			return null;
 		}
 		// Create a mention with the best-found word
-		final Mention<Node> mention = new Mention<Node>(input, source, null, offset, 1, input);
+		final Mention mention = new Mention(input, source, null, offset, 1, input, input);
 		return mention;
 	}
 

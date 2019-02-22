@@ -1,17 +1,19 @@
 package alu.linking.config.kg;
 
 import alu.linking.config.constants.EnumConnection;
+import alu.linking.config.constants.Strings;
 
 public enum EnumModelType {
-	DBPEDIA("./dbpedia/", EntityQuery.DEFAULT), //
-	DBPEDIA_FULL("./dbpedia_full/", EntityQuery.DEFAULT, EnumConnection.SHETLAND_VIRTUOSO, true, "http://dbpedia.org"), //
-	FREEBASE("./freebase/", EntityQuery.DEFAULT), //
-	CRUNCHBASE("./crunchbase/", EntityQuery.CRUNCHBASE2), //
-	CRUNCHBASE2("./crunchbase2/", EntityQuery.CRUNCHBASE2), //
-	MINI_MAG("./mini_mag/", EntityQuery.MAG), //
-	MAG("./mag/", EntityQuery.MAG), //
-	DBLP("./dblp/", EntityQuery.DBLP), //
-	DEFAULT("./", EntityQuery.DEFAULT) //
+	DBPEDIA(Strings.ROOTPATH.val + "dbpedia/", EntityQuery.DEFAULT), //
+	DBPEDIA_FULL(Strings.ROOTPATH.val + "dbpedia_full/", EntityQuery.DEFAULT, EnumConnection.SHETLAND_VIRTUOSO, true,
+			"http://dbpedia.org"), //
+	FREEBASE(Strings.ROOTPATH.val + "freebase/", EntityQuery.DEFAULT), //
+	CRUNCHBASE(Strings.ROOTPATH.val + "crunchbase/", EntityQuery.CRUNCHBASE2), //
+	CRUNCHBASE2(Strings.ROOTPATH.val + "crunchbase2/", EntityQuery.CRUNCHBASE2), //
+	MINI_MAG(Strings.ROOTPATH.val + "mini_mag/", EntityQuery.MAG), //
+	MAG(Strings.ROOTPATH.val + "mag/", EntityQuery.MAG), //
+	DBLP(Strings.ROOTPATH.val + "dblp/", EntityQuery.DBLP), //
+	DEFAULT(Strings.ROOTPATH.val, EntityQuery.DEFAULT) //
 	;
 	public final String root;
 	public final EntityQuery query;

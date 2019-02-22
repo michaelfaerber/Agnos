@@ -34,7 +34,7 @@ import alu.linking.structure.Loggable;
  */
 public class AssignmentScorer<N> implements Loggable {
 	private static Logger logger = Logger.getLogger(AssignmentScorer.class);
-	private final HashSet<Mention<N>> context = new HashSet<>();
+	private final HashSet<Mention> context = new HashSet<>();
 
 	public AssignmentScorer(final EnumModelType KG) throws FileNotFoundException, ClassNotFoundException, IOException {
 		// Determines how everything is scored!
@@ -68,10 +68,10 @@ public class AssignmentScorer<N> implements Loggable {
 	 * @return
 	 * @throws InterruptedException
 	 */
-	public Collection<PossibleAssignment<N>> score(final Mention<N> mention) throws InterruptedException {
+	public Collection<PossibleAssignment> score(final Mention mention) throws InterruptedException {
 		// Now score all of the assignments based on their own characteristics
 		// and on the contextual ones
-		Collection<PossibleAssignment<N>> possAssignments = mention.getPossibleAssignments();
+		Collection<PossibleAssignment> possAssignments = mention.getPossibleAssignments();
 		final int assSize = possAssignments.size();
 		final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors
 				.newFixedThreadPool(Numbers.SCORER_THREAD_AMT.val.intValue());
@@ -109,7 +109,7 @@ public class AssignmentScorer<N> implements Loggable {
 	 * 
 	 * @param mentions
 	 */
-	public void updatePostContext(Collection<Mention<N>> mentions) {
+	public void updatePostContext(Collection<Mention> mentions) {
 		this.context.clear();
 		this.context.addAll(mentions);
 		for (PostScorer postScorer : PossibleAssignment.getPostScorers()) {

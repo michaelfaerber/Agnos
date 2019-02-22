@@ -21,11 +21,11 @@ import alu.linking.disambiguation.PostScorer;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.utils.EmbeddingsUtils;
 
-public class SSPEmbeddingScorer<N> implements PostScorer<PossibleAssignment<N>, Mention<N>> {
+public class SSPEmbeddingScorer implements PostScorer<PossibleAssignment, Mention> {
 	private final EnumModelType KG;
 	private final Map<String, List<Number>> entityEmbeddingsMap;
 	private boolean hasChanged = true;
-	private Collection<Mention<N>> context;
+	private Collection<Mention> context;
 	private final Set<String> bestCombination = new HashSet<>();
 
 	public SSPEmbeddingScorer(final EnumModelType KG)
@@ -37,7 +37,7 @@ public class SSPEmbeddingScorer<N> implements PostScorer<PossibleAssignment<N>, 
 	}
 
 	@Override
-	public Number computeScore(PossibleAssignment<N> assignment) {
+	public Number computeScore(PossibleAssignment assignment) {
 		if (hasChanged) {
 			recomputeOptimum();
 			hasChanged = false;
@@ -57,7 +57,7 @@ public class SSPEmbeddingScorer<N> implements PostScorer<PossibleAssignment<N>, 
 		// Compute clusters based on assignments
 		final List<List<String>> clusters = Lists.newArrayList();
 		final Map<String, List<String>> clusterMap = new HashMap<>();
-		for (Mention<N> m : context) {
+		for (Mention m : context) {
 			clusterMap.putIfAbsent(m.getMention(), Lists.newArrayList());
 			List<String> cluster = clusterMap.get(m.getMention());
 			cluster.add(m.getAssignment().getAssignment().toString());
@@ -105,7 +105,7 @@ public class SSPEmbeddingScorer<N> implements PostScorer<PossibleAssignment<N>, 
 	}
 
 	@Override
-	public void linkContext(Collection<Mention<N>> context) {
+	public void linkContext(Collection<Mention> context) {
 		this.context = context;
 	}
 

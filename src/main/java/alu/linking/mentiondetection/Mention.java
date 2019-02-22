@@ -9,28 +9,30 @@ import java.util.List;
 import alu.linking.candidategeneration.PossibleAssignment;
 import alu.linking.structure.Loggable;
 
-public class Mention<N> implements Loggable {
-	private final String mention;
-	private final String source;
-	private PossibleAssignment<N> assignment = null;
+public class Mention implements Loggable {
+	private String mention = null;
+	private String source = null;
+	private PossibleAssignment assignment = null;
 	private int offset = -1;
 	private double detectionConfidence = -1;
-	private Collection<PossibleAssignment<N>> possibleAssignments = null;
+	private Collection<PossibleAssignment> possibleAssignments = null;
 	private final String originalMention;
+	private final String originalWithoutStopwords;
 
-	public Mention(final String word, final String source, final PossibleAssignment<N> assignment, final int offset,
-			final double detectionConfidence, final String originalMention) {
+	public Mention(final String word, final String source, final PossibleAssignment assignment, final int offset,
+			final double detectionConfidence, final String originalMention, final String originalWithoutStopwords) {
 		this.mention = word;
 		this.source = source;
 		this.assignment = assignment;
 		this.offset = offset;
 		this.detectionConfidence = detectionConfidence;
 		this.originalMention = originalMention;
+		this.originalWithoutStopwords = originalWithoutStopwords;
 	}
 
-	Mention(final String word, final String source, final PossibleAssignment<N> assignment, final int offset) {
+	Mention(final String word, final String source, final PossibleAssignment assignment, final int offset) {
 		// -1 being as 'not set'
-		this(word, source, assignment, offset, -1, word);
+		this(word, source, assignment, offset, -1, word, word);
 	}
 
 	@Override
@@ -43,7 +45,7 @@ public class Mention<N> implements Loggable {
 	 * 
 	 * @param assignment
 	 */
-	public void assignTo(final PossibleAssignment<N> assignment) {
+	public void assignTo(final PossibleAssignment assignment) {
 		this.assignment = assignment;
 	}
 
@@ -60,7 +62,7 @@ public class Mention<N> implements Loggable {
 		}
 	}
 
-	public PossibleAssignment<N> getAssignment() {
+	public PossibleAssignment getAssignment() {
 		return this.assignment;
 	}
 
@@ -106,11 +108,11 @@ public class Mention<N> implements Loggable {
 		return offset;
 	}
 
-	public void updatePossibleAssignments(Collection<PossibleAssignment<N>> possibleAssignments) {
+	public void updatePossibleAssignments(Collection<PossibleAssignment> possibleAssignments) {
 		this.possibleAssignments = possibleAssignments;
 	}
 
-	public Collection<PossibleAssignment<N>> getPossibleAssignments() {
+	public Collection<PossibleAssignment> getPossibleAssignments() {
 		return this.possibleAssignments;
 	}
 
@@ -135,7 +137,7 @@ public class Mention<N> implements Loggable {
 	 * 
 	 * @param fromMention mention from which to copy
 	 */
-	public void copyResults(Mention<N> fromMention) {
+	public void copyResults(Mention fromMention) {
 		// Make sure it's the same mention word
 		if (fromMention.getMention() == null || getMention() == null
 				|| !getMention().equals(fromMention.getMention())) {
@@ -145,4 +147,25 @@ public class Mention<N> implements Loggable {
 		updatePossibleAssignments(fromMention.getPossibleAssignments());
 		assignTo(fromMention.getAssignment());
 	}
+
+	public String getOriginalWithoutStopwords() {
+		return originalWithoutStopwords;
+	}
+
+	public void setMention(String mention) {
+		this.mention = mention;
+	}
+
+	public void setSource(String source) {
+		this.source = source;
+	}
+
+	public void setOffset(int offset) {
+		this.offset = offset;
+	}
+
+	public void setDetectionConfidence(double detectionConfidence) {
+		this.detectionConfidence = detectionConfidence;
+	}
+
 }

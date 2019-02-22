@@ -23,10 +23,11 @@ import alu.linking.structure.Executable;
 public class MentionPossibilityLoader implements Executable {
 	private MentionPossibilityExtractor mpe = null;
 	private StopwordsLoader stopwordsLoader = null;
+	private InputProcessor inputProcessor = null;
 	final EnumModelType KG;
 
 	public MentionPossibilityLoader(final EnumModelType KG) {
-		this(KG, null);
+		this(KG, new StopwordsLoader(KG));
 	}
 
 	public MentionPossibilityLoader(final EnumModelType KG, final StopwordsLoader stopwordsLoader) {
@@ -44,6 +45,11 @@ public class MentionPossibilityLoader implements Executable {
 				getLogger()
 						.error("Could not instantiate MPExtractor w/ StopwordsLoader. Instantiating with KG instead.");
 				this.mpe = new MentionPossibilityExtractor(this.KG);
+			}
+			try {
+				this.inputProcessor = new InputProcessor(this.stopwordsLoader.getStopwords());
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		} else {
 			this.mpe = new MentionPossibilityExtractor(this.KG);
@@ -67,11 +73,11 @@ public class MentionPossibilityLoader implements Executable {
 				// linked to
 				// Returned map is of the sort Map<O, Set<S>>
 				mpe.populateBlacklist((File) (o[0]));
-				ret = InputProcessor.processCollection(mpe.addPossibilities((File) (o[1])));
+				ret = InputProcessor.processCollection(mpe.addPossibilities((File) (o[1])), this.inputProcessor);
 			} else if (o.length == 1 && o[0] instanceof File) {
 				// Takes the blacklist from the default location
 				mpe.populateBlacklist(new File(FilePaths.FILE_MENTIONS_BLACKLIST.getPath(KG)));
-				ret = InputProcessor.processCollection(mpe.addPossibilities((File) (o[0])));
+				ret = InputProcessor.processCollection(mpe.addPossibilities((File) (o[0])), this.inputProcessor);
 			}
 		}
 
