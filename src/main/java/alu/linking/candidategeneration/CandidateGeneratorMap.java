@@ -4,13 +4,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.semanticweb.yars.nx.Node;
-
 import com.beust.jcommander.internal.Lists;
 
 import alu.linking.mentiondetection.Mention;
 
-public class CandidateGeneratorMap implements CandidateGenerator {
+public class CandidateGeneratorMap implements CandidateGenerator<String> {
 	private final Map<String, Set<String>> linking;
 
 	public CandidateGeneratorMap(Map<String, Set<String>> linking) {
@@ -32,7 +30,7 @@ public class CandidateGeneratorMap implements CandidateGenerator {
 		}
 		final List<PossibleAssignment> ret = Lists.newArrayList();
 		for (String entity : possibleEntities) {
-			ret.add(PossibleAssignment.createNew(entity, mention.getSource(), mention.getMention()));
+			ret.add(PossibleAssignment.createNew(entity, mention.getMention()));
 		}
 		return ret;
 	}

@@ -36,14 +36,17 @@ public class LauncherSetupTDB implements Loggable {
 		// MINI_MAG;
 		// DBLP;
 		// DBPEDIA;
-				CRUNCHBASE2;
+		// CRUNCHBASE2;
+				MAG
 		// CRUNCHBASE;
 		// DBPEDIA_FULL;
+		;
 		System.out.println("Setting up TDB for: " + KG.name());
 		final String KGpath =
 				// "/vol2/cb/crunchbase-201510/dumps/crunchbase-dump-201510.nt";//CB1
-				//"/vol2/cb/crunchbase-201806/dumps/crunchbase-dump-2018-06.nt";// CB2
-				"./cb2018-06/crunchbase-dump-2018-06.nt";//NORMALIZED_CB2
+				// "/vol2/cb/crunchbase-201806/dumps/crunchbase-dump-2018-06.nt";// CB2
+				// "./cb2018-06/crunchbase-dump-2018-06.nt";//NORMALIZED_CB2
+				"/home/faerberm/inRDF-URI-as-obj/";// MAG
 		// "/vol2/dblp/dumps/dblp_2018-11-02_unique.nt";//DBLP
 		// "./dblp_kg/dblp_2018-11-02_unique.nt";//NORMALIZED_DBLP
 		// "/vol1/mag/data/2018-07-19/MAGFieldsOfStudyKG/MAGFieldsOfStudyKG.nt";//Mini-MAG

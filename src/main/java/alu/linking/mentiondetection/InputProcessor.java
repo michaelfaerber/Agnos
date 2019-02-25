@@ -29,19 +29,28 @@ public class InputProcessor {
 	}
 
 	public static void main(String[] args) {
-		final String inString = "I have a cat that I like playing with!";
-		final EnumDetectionType detectionMode = EnumDetectionType.UNBOUND_DYNAMIC_WINDOW;
-		final List<Mention> mentions = new InputProcessor(null).createMentions(inString, null, detectionMode);
-		for (Mention m : mentions) {
-			System.out.println(m.getOriginalMention() + " - " + m.getOffset());
+		final String[] inStrings = new String[] { // "", " ", " I have ",
+				"I have   a cat that I like playing with" };
+		// final EnumDetectionType detectionMode =
+		// EnumDetectionType.BOUND_DYNAMIC_WINDOW;
+		for (String inString : inStrings) {
+			for (EnumDetectionType detectionMode : EnumDetectionType.values()) {
+				System.out.println(detectionMode.name());
+				final List<Mention> mentions = new InputProcessor(null).createMentions(inString, null, detectionMode);
+				for (Mention m : mentions) {
+					// System.out.println(m.getOriginalMention() + " - " + m.getOffset());
+					System.out.println("[" + m.getOriginalWithoutStopwords() + "]");
+				}
+			}
+			System.out.println("#################");
+			System.out.println("inString:");
+			System.out.println("[" + inString + "]");
+			System.out.println("#######END#######");
 		}
-		System.out.println("#################");
-		System.out.println("inString:");
-		System.out.println(inString);
 	}
 
 	private static final String tokenSeparator = " ";// space
-	private static final Pattern spacePattern = Pattern.compile("\\p{Space}");
+	private static final Pattern spacePattern = Pattern.compile("\\p{Space}+");
 
 	public List<Mention> createMentions(final String input, final String source,
 			final EnumDetectionType detectionMode) {
@@ -58,32 +67,55 @@ public class InputProcessor {
 	public static List<Mention> createMentions(final String input, final String source,
 			final EnumDetectionType detectionMode, final Collection<String> blacklist) {
 		final List<Mention> retList = Lists.newArrayList();
+		if (input == null || input.length() == 0) {
+			return retList;
+		}
 		final Matcher matcher = spacePattern.matcher(input);
 
 		final List<Integer> spacedIndices = Lists.newArrayList();
 		// Add initial index so substring starts from beginning of text
+		int counter = 0;
 		spacedIndices.add(0);
 		while (matcher.find()) {
 			spacedIndices.add(matcher.start() + matcher.group().length());
 		}
-		spacedIndices.add(input.length());
+		spacedIndices.add(input.length() + 1);
+
+//		System.out.println("Input:" + input);
+//		System.out.println("Indices:" + spacedIndices);
+//		System.out.println("Counter (same as indices.size()): " + counter);
 
 		switch (detectionMode) {
 		case BOUND_DYNAMIC_WINDOW:
 			final int windowSize = Numbers.MENTION_DETECTION_WINDOW_SIZE.val.intValue();
-
+			final StringBuilder sbConcat = new StringBuilder();
 			for (int i = 0; i < spacedIndices.size(); ++i) {
+				sbConcat.setLength(0);
+				int prevIndex = spacedIndices.get(i);
+				int startIndex = spacedIndices.get(i);
 				for (int j = 1; j <= windowSize && ((i + j) < spacedIndices.size()); ++j) {
-					final int startIndex = spacedIndices.get(i), endIndex = spacedIndices.get(i + j) - 1;
-					retList.add(createMention(input.substring(startIndex, endIndex), startIndex, source, blacklist));
+					final int subStartIndex = prevIndex, endIndex = spacedIndices.get(i + j) - 1;
+//					System.out.println("i(" + i + ")/j(" + j + "): START(" + startIndex + ")/END(" + endIndex + ")");
+					final String subStr = input.substring(subStartIndex, endIndex);
+					sbConcat.append(subStr);
+					retList.add(createMention(sbConcat.toString(), startIndex, blacklist));
+					prevIndex = endIndex;
 				}
 			}
+			sbConcat.setLength(0);
+//			for (int i = 0; i < spacedIndices.size(); ++i) {
+//				for (int j = 1; j <= windowSize && ((i + j) < spacedIndices.size()); ++j) {
+//					final int startIndex = spacedIndices.get(i), endIndex = spacedIndices.get(i + j) - 1;
+//					System.out.println("i(" + i + ")/j(" + j + "): START(" + startIndex + ")/END(" + endIndex + ")");
+//					retList.add(createMention(input.substring(startIndex, endIndex), startIndex, blacklist));
+//				}
+//			}
 			break;
 		case SINGLE_WORD:
 			// Just Single words
 			for (int i = 0; i < spacedIndices.size() - 1; ++i) {
 				final int startIndex = spacedIndices.get(i), endIndex = spacedIndices.get(i + 1) - 1;
-				retList.add(createMention(input.substring(startIndex, endIndex), startIndex, source, blacklist));
+				retList.add(createMention(input.substring(startIndex, endIndex), startIndex, blacklist));
 			}
 			break;
 		case UNBOUND_DYNAMIC_WINDOW:
@@ -94,7 +126,7 @@ public class InputProcessor {
 			for (int i = 0; i < spacedIndices.size(); ++i) {
 				for (int j = i + 1; j < spacedIndices.size(); ++j) {
 					final int startIndex = spacedIndices.get(i), endIndex = spacedIndices.get(j) - 1;
-					retList.add(createMention(input.substring(startIndex, endIndex), startIndex, source, blacklist));
+					retList.add(createMention(input.substring(startIndex, endIndex), startIndex, blacklist));
 				}
 			}
 			break;
@@ -123,20 +155,40 @@ public class InputProcessor {
 		return retList;
 	}
 
-	private static Mention createMention(String original, int startIndex, final String source,
-			Collection<String> blacklist) {
+	private static Mention createMention(String original, int startIndex, Collection<String> blacklist) {
 		final String processedInput = combineProcessedInput(processAndRemoveStopwords(original, blacklist));
-		return new Mention(null, source, null, startIndex, 0f, original, processedInput);
+		return new Mention(null, null, startIndex, 0f, original, processedInput);
 	}
 
+	/**
+	 * Centralised splitting method (without stopword removal)
+	 * 
+	 * @param input
+	 * @return
+	 */
 	public static String[] process(final String input) {
-		return input.replaceAll("\\p{Punct}", "").toLowerCase().split("\\p{Space}");// POSIX class
+		return input.replaceAll("\\p{Punct}", "").toLowerCase().split("\\p{Space}+");// POSIX class
 	}
 
+	/**
+	 * Centralised splitting method (with stopword removal, based on the
+	 * instance-defined blacklist)<br>
+	 * Note: Relies on {@link #process(String)}
+	 * 
+	 * @param input
+	 * @return split tokens excluding stopwords
+	 */
 	public String[] processAndRemoveStopwords(final String input) {
 		return processAndRemoveStopwords(input, blacklist);
 	}
 
+	/**
+	 * Centralised splitting and stopword removal method (with the passed blacklist)
+	 * 
+	 * @param input     input to be split and stopwords removal applied on
+	 * @param blacklist list of stopwords to (potentially) remove from input
+	 * @return split tokens excluding any defined stopwords
+	 */
 	public static String[] processAndRemoveStopwords(final String input, final Collection<String> blacklist) {
 		final String[] inputArr = process(input);// POSIX class
 		final List<String> ret = Lists.newArrayList();
@@ -151,6 +203,13 @@ public class InputProcessor {
 		return ret.toArray(new String[ret.size()]);
 	}
 
+	/**
+	 * Centralised way to combine split tokens into a single string (using a space
+	 * as a delimiter and StringBuilder for concatenation)
+	 * 
+	 * @param inputTokens tokens to be concatenated
+	 * @return concatenated tokens
+	 */
 	public static String combineProcessedInput(final String[] inputTokens) {
 		if (inputTokens == null || inputTokens.length == 0) {
 			return "";

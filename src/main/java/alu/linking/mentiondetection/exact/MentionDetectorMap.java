@@ -80,7 +80,7 @@ public class MentionDetectorMap implements MentionDetector, Loggable {
 							subPos += tokenSeparator.length();
 						}
 						combinedWords.append(words[index]);
-						execFind(executor, mentions, doneCounter, combinedWords.toString(), source, subPos);
+						execFind(executor, mentions, doneCounter, combinedWords.toString(), subPos);
 						subPos += words[index].length();
 					}
 					combinedWords.setLength(0);
@@ -91,7 +91,7 @@ public class MentionDetectorMap implements MentionDetector, Loggable {
 				// Just Single words
 				stringPos = 0;
 				for (String token : words) {
-					execFind(executor, mentions, doneCounter, token, source, stringPos);
+					execFind(executor, mentions, doneCounter, token, stringPos);
 					stringPos += token.length();
 				}
 				break;
@@ -103,7 +103,7 @@ public class MentionDetectorMap implements MentionDetector, Loggable {
 				// Just Single words
 				stringPos = 0;
 				for (String token : words) {
-					execFind(executor, mentions, doneCounter, token, source, stringPos);
+					execFind(executor, mentions, doneCounter, token, stringPos);
 					stringPos += token.length();
 				}
 				// Multi-words (excluding single words)
@@ -114,7 +114,7 @@ public class MentionDetectorMap implements MentionDetector, Loggable {
 					int subPos = stringPos;
 					for (int j = i + 1; j < words.length; ++j) {
 						combinedWords.append(tokenSeparator + words[j]);
-						execFind(executor, mentions, doneCounter, combinedWords.toString(), source, stringPos);
+						execFind(executor, mentions, doneCounter, combinedWords.toString(), stringPos);
 						subPos += tokenSeparator.length() + words[j].length();
 					}
 					stringPos += words[i].length();
@@ -130,7 +130,7 @@ public class MentionDetectorMap implements MentionDetector, Loggable {
 					int subPos = stringPos;
 					for (int j = i + 1; j < words.length; ++j) {
 						combinedWords.append(tokenSeparator + words[j]);
-						execFind(executor, mentions, doneCounter, combinedWords.toString(), source, stringPos);
+						execFind(executor, mentions, doneCounter, combinedWords.toString(), stringPos);
 						subPos = tokenSeparator.length() + words[j].length();
 					}
 					stringPos += words[i].length();
@@ -176,11 +176,11 @@ public class MentionDetectorMap implements MentionDetector, Loggable {
 	 * @param threshold
 	 */
 	private void execFind(final ThreadPoolExecutor executor, final List<Mention> mentions,
-			final AtomicInteger doneCounter, final String wordCombination, final String source, final int indexPos) {
+			final AtomicInteger doneCounter, final String wordCombination, final int indexPos) {
 		executor.submit(new Callable<Integer>() {
 			@Override
 			public Integer call() throws Exception {
-				final Mention mention = find(wordCombination, source, indexPos);
+				final Mention mention = find(wordCombination, indexPos);
 				if (mention != null) {
 					synchronized (mentionLock) {
 						mentions.add(mention);
@@ -201,7 +201,7 @@ public class MentionDetectorMap implements MentionDetector, Loggable {
 	 * @return mention with the closest possible mate
 	 * 
 	 */
-	public Mention find(final String input, final String source, final int offset) {
+	public Mention find(final String input, final int offset) {
 		if (!this.keys.contains(input.toLowerCase())) {
 			System.out.println("Could not match w/:" + input.toLowerCase());
 			final int showAmt = 100;
@@ -215,7 +215,7 @@ public class MentionDetectorMap implements MentionDetector, Loggable {
 			return null;
 		}
 		// Create a mention with the best-found word
-		final Mention mention = new Mention(input, source, null, offset, 1, input, input);
+		final Mention mention = new Mention(input, null, offset, 1, input, input);
 		return mention;
 	}
 

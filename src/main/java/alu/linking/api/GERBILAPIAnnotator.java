@@ -9,21 +9,23 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.aksw.gerbil.transfer.nif.Document;
 import org.aksw.gerbil.transfer.nif.Marking;
+import org.aksw.gerbil.transfer.nif.Span;
 import org.aksw.gerbil.transfer.nif.TurtleNIFDocumentCreator;
 import org.aksw.gerbil.transfer.nif.TurtleNIFDocumentParser;
 import org.aksw.gerbil.transfer.nif.data.ScoredNamedEntity;
-import org.semanticweb.yars.nx.Node;
 
 import com.beust.jcommander.internal.Lists;
 
 import alu.linking.candidategeneration.CandidateGenerator;
 import alu.linking.candidategeneration.CandidateGeneratorMap;
+import alu.linking.config.constants.Comparators;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.AssignmentChooser;
 import alu.linking.mentiondetection.InputProcessor;
@@ -37,25 +39,21 @@ import alu.linking.utils.Stopwatch;
 public class GERBILAPIAnnotator implements Executable {
 
 	private final EnumModelType KG;
-	private final String chooserWatch = "chooser - init (loads graph)";
+
+	private final String chooserWatch = "Scorer (Watch)";
 	private final String detectionWatch = MentionDetector.class.getName();
-	private final String iterationWatch = "iteration";
-	private final boolean REMOVE_OVERLAP = true;
+	private final String linking = "Linking (Watch)";
+	private final boolean REMOVE_OVERLAP = false;
+	private final boolean PROCESS_JUST_MARKINGS = true;
 	private static final boolean detailed = false;
+	// No touchy
 	private Boolean init = false;
-	private final Comparator<Mention> offsetComparator = new Comparator<Mention>() {
-		@Override
-		public int compare(Mention o1, Mention o2) {
-			// Made so it accepts the smallest match as the used one
-			final int diffLength = (o1.getOriginalMention().length() - o2.getOriginalMention().length());
-			return (o1.getOffset() == o2.getOffset()) ? diffLength : ((o1.getOffset() > o2.getOffset()) ? 1 : -1);
-		}
-	};
+	private final Comparator<Mention> offsetComparator = Comparators.mentionOffsetComp;
 
 	private AssignmentChooser chooser = null;
 	private Set<String> stopwords = null;
 	private MentionDetector md = null;
-	private CandidateGenerator candidateGenerator;
+	private CandidateGenerator<String> candidateGenerator;
 
 	public GERBILAPIAnnotator(final EnumModelType KG) {
 		this.KG = KG;
@@ -108,11 +106,11 @@ public class GERBILAPIAnnotator implements Executable {
 		if (false) {
 			try (final BufferedReader brIn = new BufferedReader(new InputStreamReader(inputStream))) {
 				String line = null;
-				getLogger().error("Input from GERBIL - START:");
+				getLogger().info("Input from GERBIL - START:");
 				while ((line = brIn.readLine()) != null) {
 					getLogger().error(line);
 				}
-				getLogger().error("Input from GERBIL - END");
+				getLogger().info("Input from GERBIL - END");
 			} catch (IOException e) {
 				getLogger().error("IOException", e);
 			}
@@ -148,14 +146,38 @@ public class GERBILAPIAnnotator implements Executable {
 	}
 
 	private String annotate(final Document document) {
-		// Just in case it hasn't been initialised yet
+		// In case it hasn't been initialised yet
 		init();
+
+		final String text;
+
+		// Whether to process just for the markings or all the entire document
+		if (PROCESS_JUST_MARKINGS) {
+			// Gets the markings - if there are any, it will annotate with them (making it a
+			// lot faster),
+			// otherwise it will fall back to processing the plain text (e.g. in the case
+			// GERBIL does not actually pass markings text)
+
+			// Sorts the markings by offset position
+			List<Marking> markings = getSortedMarkings(document);
+
+			if (markings != null && markings.size() > 0) {
+				text = markingsToText(document, markings);
+				System.out.println("Processing markings as text:" + text);
+			} else {
+				text = document.getText();
+			}
+		} else {
+			// Processes the entire input text
+			text = document.getText();
+		}
+
 		// 3. use the text and maybe some Markings sent by GERBIL to generate your
 		// Markings
 		// (a.k.a annotations) depending on the task you want to solve
 		// 4. Add your generated Markings to the document
 		try {
-			document.setMarkings(new ArrayList<Marking>(annotateSafely(document)));
+			document.setMarkings(new ArrayList<Marking>(annotateSafely(text)));
 		} catch (InterruptedException ie) {
 			getLogger().error("Exception while annotating.", ie);
 			return "";
@@ -166,9 +188,29 @@ public class GERBILAPIAnnotator implements Executable {
 		return nifDocument;
 	}
 
-	private Collection<? extends Marking> annotateSafely(Document document) throws InterruptedException {
-		final List<Marking> retList = Lists.newArrayList();
+	private String markingsToText(final Document document, final List<Marking> markings) {
 		final String text = document.getText();
+		final StringBuilder sbInText = new StringBuilder();
+		for (Marking mark : markings) {
+			if (mark instanceof Span) {
+				final Span span = ((Span) mark);
+				sbInText.append(text.substring(span.getStartPosition(), span.getStartPosition() + span.getLength()));
+				// Separate each by a space character
+				sbInText.append(" ");
+			}
+		}
+		return sbInText.toString();
+	}
+
+	private List<Marking> getSortedMarkings(Document document) {
+		// Copy the markings so we can sort them
+		List<Marking> markings = Lists.newArrayList(document.getMarkings());
+		Collections.sort(markings, Comparators.markingsOffsetComp);
+		return markings;
+	}
+
+	private Collection<? extends Marking> annotateSafely(final String text) throws InterruptedException {
+		final List<Marking> retList = Lists.newArrayList();
 		// new ScoredNamedEntity(startPosition, length, uris, confidence);
 		// new Mention()... transform mention into a scored named entity
 
@@ -185,17 +227,18 @@ public class GERBILAPIAnnotator implements Executable {
 	private List<Mention> linking(String text) throws InterruptedException {
 		List<Mention> mentions = null;
 
-		Stopwatch.start(iterationWatch);
+		Stopwatch.start(linking);
 		Stopwatch.start(detectionWatch);
-		mentions = md.detect(InputProcessor.combineProcessedInput(InputProcessor.processAndRemoveStopwords(text, stopwords)));
+		mentions = md.detect(text);
 		// ------------------------------------------------------------------------------
 		// Change the offsets due to stopword-removal applied through InputProcessor
 		// modifying the actual input, therewith distorting it greatly
 		// ------------------------------------------------------------------------------
 		// fixMentionOffsets(text, mentions);
 
-		System.out.println("Detected [" + mentions.size() + "] mentions.");
-		System.out.println("Detection duration: " + Stopwatch.endDiffStart(detectionWatch) + " ms.");
+		// getLogger().info("Detected [" + mentions.size() + "] mentions.");
+		// getLogger().info("Detection duration: " +
+		// Stopwatch.endDiffStart(detectionWatch) + " ms.");
 
 		// ########################################################
 		// Candidate Generation (update for mentions)
@@ -218,10 +261,9 @@ public class GERBILAPIAnnotator implements Executable {
 		getLogger().info("Disambiguation duration: " + Stopwatch.endDiff(chooserWatch) + " ms.");
 		Stopwatch.endOutput(getClass().getName());
 		getLogger().info("#######################################################");
-		getLogger().info("Mention Details(" + mentions.size() + "):");
 		// Display them
-		DetectionUtils.displayMentions(getLogger(), mentions, true);
-		Stopwatch.endOutput(iterationWatch);
+		// DetectionUtils.displayMentions(getLogger(), mentions, true);
+		Stopwatch.endOutput(linking);
 		return mentions;
 	}
 
@@ -291,23 +333,35 @@ public class GERBILAPIAnnotator implements Executable {
 		// #####################################################################
 		// Remove smallest conflicting mentions keeping just the longest ones
 		// #####################################################################
-		List<Mention> toRemoveMentions = Lists.newArrayList();
+		Set<Mention> toRemoveMentions = new HashSet<>();
 		for (int i = 0; i < mentions.size(); ++i) {
 			for (int j = i + 1; j < mentions.size(); ++j) {
 				final Mention leftMention = mentions.get(i);
 				final Mention rightMention = mentions.get(j);
 				// If they conflict, add the shorter one to a list to be removed
-				if (leftMention.getMention().contains(rightMention.getMention())) {
-					toRemoveMentions.add(rightMention);
-				} else if (rightMention.getMention().contains(leftMention.getMention())) {
-					toRemoveMentions.add(leftMention);
+				if (leftMention.overlaps(rightMention)) {
+					// Remove smaller one
+					final int mentionLenDiff = leftMention.getMention().length() - rightMention.getMention().length();
+					if (mentionLenDiff > 0) {
+						// Left is bigger, so remove right
+						toRemoveMentions.add(rightMention);
+					} else {
+						// Right is bigger or EQUAL to left; if equal, it doesn't matter which...
+						// -> remove left
+						toRemoveMentions.add(leftMention);
+					}
 				}
 			}
 		}
+		final Set<String> removed = new HashSet<>();
+		int counter = 0;
 		for (Mention toRemove : toRemoveMentions) {
-			getLogger().info("Removing mention for:'" + toRemove.getMention() + "'");
 			mentions.remove(toRemove);
+			removed.add(toRemove.getMention() + " - " + toRemove.getOriginalMention());
+			counter++;
 		}
+		getLogger().info("Removed [" + counter + "/" + mentions.size() + "] mentions:'" + removed + "'");
+
 	}
 
 	@Override

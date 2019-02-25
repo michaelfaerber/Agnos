@@ -11,7 +11,6 @@ import alu.linking.structure.Loggable;
 
 public class Mention implements Loggable {
 	private String mention = null;
-	private String source = null;
 	private PossibleAssignment assignment = null;
 	private int offset = -1;
 	private double detectionConfidence = -1;
@@ -19,10 +18,9 @@ public class Mention implements Loggable {
 	private final String originalMention;
 	private final String originalWithoutStopwords;
 
-	public Mention(final String word, final String source, final PossibleAssignment assignment, final int offset,
+	public Mention(final String word, final PossibleAssignment assignment, final int offset,
 			final double detectionConfidence, final String originalMention, final String originalWithoutStopwords) {
 		this.mention = word;
-		this.source = source;
 		this.assignment = assignment;
 		this.offset = offset;
 		this.detectionConfidence = detectionConfidence;
@@ -30,9 +28,9 @@ public class Mention implements Loggable {
 		this.originalWithoutStopwords = originalWithoutStopwords;
 	}
 
-	Mention(final String word, final String source, final PossibleAssignment assignment, final int offset) {
+	Mention(final String word, final PossibleAssignment assignment, final int offset) {
 		// -1 being as 'not set'
-		this(word, source, assignment, offset, -1, word, word);
+		this(word, assignment, offset, -1, word, word);
 	}
 
 	@Override
@@ -77,8 +75,9 @@ public class Mention implements Loggable {
 			ret &= (m.getMention() == null && this.getMention() == null) ? true
 					: ((m.getMention() == null || getMention() == null) ? false
 							: this.getMention().equals(m.getMention()));
-			ret &= (m.getSource() == null && this.getSource() == null) ? true
-					: ((m.getSource() == null || getSource() == null) ? false : this.getSource().equals(m.getSource()));
+			ret &= (m.getOriginalWithoutStopwords() == null && this.getOriginalWithoutStopwords() == null) ? true
+					: ((m.getOriginalWithoutStopwords() == null || getOriginalWithoutStopwords() == null) ? false
+							: this.getOriginalWithoutStopwords().equals(m.getOriginalWithoutStopwords()));
 			ret &= (m.getOriginalMention() == null && this.getOriginalMention() == null) ? true
 					: ((m.getOriginalMention() == null || getOriginalMention() == null) ? false
 							: this.getOriginalMention().equals(m.getOriginalMention()));
@@ -91,17 +90,19 @@ public class Mention implements Loggable {
 
 	@Override
 	public int hashCode() {
-		return ((this.assignment == null) ? 1337 : this.assignment.hashCode())
-				+ ((this.getMention() == null) ? 1241 : (this.getMention().hashCode()))
-				+ ((this.getSource() == null) ? 7832 : this.getSource().hashCode());
+		// If all constituents are null, make it a weird sum, so there is no collision
+		// with
+		// anything else
+		return ((this.assignment == null) ? 2 : this.assignment.hashCode())
+				+ ((this.getMention() == null) ? 4 : (this.getMention().hashCode()))
+				+ ((this.getOriginalMention() == null) ? 8 : this.getOriginalMention().hashCode())
+				+ ((this.getOriginalWithoutStopwords() == null) ? 16 : this.getOriginalWithoutStopwords().hashCode())
+				+ this.offset + (int) (10d * this.detectionConfidence)
+				+ (this.assignment == null ? 32 : this.assignment.hashCode());
 	}
 
 	public String getMention() {
 		return mention;
-	}
-
-	public String getSource() {
-		return source;
 	}
 
 	public int getOffset() {
@@ -156,16 +157,28 @@ public class Mention implements Loggable {
 		this.mention = mention;
 	}
 
-	public void setSource(String source) {
-		this.source = source;
-	}
-
 	public void setOffset(int offset) {
 		this.offset = offset;
 	}
 
 	public void setDetectionConfidence(double detectionConfidence) {
 		this.detectionConfidence = detectionConfidence;
+	}
+
+	/**
+	 * Whether this and the passed mentions overlap (based on offset and original
+	 * mention length)
+	 * 
+	 * @param otherMention other mention
+	 * @return true if overlapping, false otherwise
+	 */
+	public boolean overlaps(final Mention otherMention) {
+		final int rightOffset = getOffset();
+		final int leftOffset = otherMention.getOffset();
+		final int rightLength = getOriginalMention().length();
+		final int leftLength = otherMention.getOriginalMention().length();
+		return ((leftOffset <= rightOffset) && (rightOffset <= leftOffset + leftLength))
+				|| ((rightOffset <= leftOffset) && (leftOffset <= rightOffset + rightLength));
 	}
 
 }

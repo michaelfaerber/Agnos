@@ -32,7 +32,7 @@ public class HillClimbingPicker implements ClusterItemPicker {
 	private final EntitySimilarityService similarityService;
 	private final boolean RANDOM_FIRST_CHOICE = true;
 	private final int REPEAT;
-	private static final int DEFAULT_REPEAT = 200;
+	private static final int DEFAULT_REPEAT = 20;// was 200 before, but due to long texts...
 	private static final int MIN_REPEAT = 1;
 	private static final double MIN_SCORE_RATIO = 0.5;
 
@@ -69,11 +69,19 @@ public class HillClimbingPicker implements ClusterItemPicker {
 
 		// Map to keep the final choices in our eye
 		// Map<SurfaceForm, List<Pair<Entity, SimilaritySum>>>
-		Map<String, List<Pair<String, Double>>> disambiguationResultsMap = new HashMap<>();
+		final Map<String, List<Pair<String, Double>>> disambiguationResultsMap = new HashMap<>();
+
+		// Order list by natural occurring order of words (enforces intuition of words
+		// close to each other being about the same stuff)
+		final List<Mention> contextList = Lists.newArrayList(this.context);
+		Collections.sort(contextList, offsetComparator);
+
+		// Compute clusters with the strings for simplicity of calls
+		final Map<String, List<String>> clusters = computeClusters(contextList);
 
 		// Execute hillclimbing multiple times
 		for (int hillClimbExec = 0; hillClimbExec < REPEAT; ++hillClimbExec) {
-			hillClimb(disambiguationResultsMap);
+			hillClimb(disambiguationResultsMap, contextList, clusters);
 		}
 
 		// -------------------------------------------
@@ -107,7 +115,7 @@ public class HillClimbingPicker implements ClusterItemPicker {
 				groupMap.put(pair.getLeft(), applyOperation(existingPairValue, pair.getRight()));
 			}
 			// displayAllResultsMap(allResultsMap);
-			displayScoredChoices(surfaceForm, groupMap);
+			// displayScoredChoices(surfaceForm, groupMap);
 
 			// Pairs have been summed up together, so let's rank them
 			Double prevSim = Double.MIN_VALUE;
@@ -129,7 +137,7 @@ public class HillClimbingPicker implements ClusterItemPicker {
 		for (Pair<String, Double> pair : finalChoiceMap.values()) {
 			retList.add(pair.getKey());
 		}
-		getLogger().info("FINAL CHOICES: " + retList);
+		getLogger().info("FINAL CHOICES: " + retList.size());
 		return retList;
 	}
 
@@ -146,9 +154,9 @@ public class HillClimbingPicker implements ClusterItemPicker {
 		getLogger().info("PRUNING/ABSTAINING PROCEDURE - START");
 		while (finalChoicesIterator.hasNext()) {
 			final Entry<String, Pair<String, Double>> entry = finalChoicesIterator.next();
-			getLogger().info("Entry:" + entry.getKey() + " - " + entry.getValue());
+			// getLogger().info("Entry:" + entry.getKey() + " - " + entry.getValue());
 			if (entry.getValue().getRight() < MIN_SCORE) {
-				getLogger().info("->Removing:" + entry.getKey() + " - " + entry.getValue());
+				getLogger().info("->Pruning:" + entry.getKey() + " - " + entry.getValue());
 				finalChoicesIterator.remove();
 			}
 		}
@@ -157,19 +165,12 @@ public class HillClimbingPicker implements ClusterItemPicker {
 	}
 
 	private Map<String, List<Pair<String, Double>>> hillClimb(
-			final Map<String, List<Pair<String, Double>>> disambiguationResultsMap) {
-
-		// Order list by natural occurring order of words (enforces intuition of words
-		// close to each other being about the same stuff)
-		final List<Mention> contextList = Lists.newArrayList(this.context);
-		Collections.sort(contextList, offsetComparator);
-
-		// Compute clusters with the strings for simplicity of calls
-		final Map<String, List<String>> clusters = computeClusters(contextList);
+			final Map<String, List<Pair<String, Double>>> disambiguationResultsMap, final List<Mention> contextList,
+			final Map<String, List<String>> clusters) {
 		// Use clusterNames as the shuffling mechanism
-		final List<String> clusterNames = Lists.newArrayList();
-		// Adds to contextList with the initial order
-		contextList.stream().forEach(mention -> clusterNames.add(mention.getMention()));
+		final List<String> clusterNames = Lists.newArrayList(clusters.keySet());
+		// Adds to clusterNames with the initial order
+		// contextList.stream().forEach(mention -> clusterNames.add(mention.getMention()));
 
 		// Start with the written ordering (for initial bias), then shuffle
 
@@ -217,7 +218,8 @@ public class HillClimbingPicker implements ClusterItemPicker {
 		// ##############################
 		// Randomized best-choice - START
 		// ##############################
-		final int iterations = 20;
+		// final int iterations = 20;
+		final int iterations = Math.min(20, (int) (Math.sqrt(clusterNames.size())));
 		Set<String> previousChoices = null;
 		Set<String> currentChoices = null;
 		final int maxIterations = 200;
@@ -303,11 +305,21 @@ public class HillClimbingPicker implements ClusterItemPicker {
 		getLogger().info("displayScoredChoices - END");
 	}
 
+	/**
+	 * Takes the left part of the value's pair and adds it to a "value set" which it
+	 * then returns
+	 * 
+	 * @param chosenClusterEntityMap map containing the pairs to process
+	 * @return values (aka. left part of pair) combined as described
+	 */
 	private Set<String> mapToValueSet(Map<String, Pair<String, Double>> chosenClusterEntityMap) {
 		final Set<String> valueSet = new HashSet<String>();
-		for (Map.Entry<String, Pair<String, Double>> e : chosenClusterEntityMap.entrySet()) {
-			valueSet.add(e.getValue().getLeft());
-		}
+		// for (Map.Entry<String, Pair<String, Double>> e :
+		// chosenClusterEntityMap.entrySet()) {
+		// valueSet.add(e.getValue().getLeft());
+		// }
+
+		chosenClusterEntityMap.values().stream().forEach(pair -> valueSet.add(pair.getLeft()));
 		return valueSet;
 	}
 

@@ -129,8 +129,7 @@ public class LauncherEmbeddingLinking {
 					for (Map.Entry<String, Mention> e : alphabeticalSortedMentions.entrySet()) {
 						final Mention m = e.getValue();
 						if (detailed) {
-							System.out.println("Mention[" + m.getMention() + "; " + m.getDetectionConfidence() + "] "
-									+ m.getSource());
+							System.out.println("Mention[" + m.getMention() + "; " + m.getDetectionConfidence() + "] ");
 							System.out.println("Original Text:" + m.getOriginalMention());
 							System.out.println("Possible assignments: "
 									+ (m.getPossibleAssignments() != null ? m.getPossibleAssignments().size()
