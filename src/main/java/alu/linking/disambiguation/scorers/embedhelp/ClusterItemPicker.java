@@ -45,4 +45,6 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 		return clusterMap;
 
 	}
+	
+	public double getPickerWeight();
 }

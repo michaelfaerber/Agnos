@@ -17,13 +17,21 @@ public class SubPageRankPicker implements ClusterItemPicker, Loggable {
 
 	private Collection<Mention> context;
 	private final EntitySimilarityService similarityService;
-
-	public SubPageRankPicker(final EntitySimilarityService similarityService) {
-		this.similarityService = similarityService;
-	}
+	private final double minSimilarityThreshold;
+	private final boolean useOld;
 
 	public SubPageRankPicker(final Map<String, List<Number>> entityEmbeddings) {
-		this.similarityService = new EntitySimilarityService(entityEmbeddings);
+		this(new EntitySimilarityService(entityEmbeddings));
+	}
+
+	public SubPageRankPicker(final EntitySimilarityService similarityService) {
+		this(similarityService, 0.5d);
+	}
+
+	public SubPageRankPicker(final EntitySimilarityService similarityService, final double minEdgeThreshold) {
+		this.similarityService = similarityService;
+		this.useOld = true;
+		this.minSimilarityThreshold = minEdgeThreshold;
 	}
 
 	@Override
@@ -45,8 +53,8 @@ public class SubPageRankPicker implements ClusterItemPicker, Loggable {
 		final Map<String, List<String>> clusters = computeClusters(context);
 		getLogger().info("Finished Computing cluster in " + Stopwatch.endDiffStart(getClass().getName()) + " ms");
 		final Set<String> notFoundIRIs;
-		if (OLD) {
-			final double minSimilarityThreshold = 0.5d;
+
+		if (useOld) {
 			final ScorerGraph scorerGraph = new ScorerGraph(this.similarityService, minSimilarityThreshold)
 					.dampingFactor(0.85).iterations(5).startValue(1d).uniqueNeighbours(true).populate(clusters);
 			getLogger().info(
@@ -74,6 +82,11 @@ public class SubPageRankPicker implements ClusterItemPicker, Loggable {
 			getLogger().info("Could not find (" + notFoundIRIs.size() + "): " + s);
 		}
 		return retList;
+	}
+
+	@Override
+	public double getPickerWeight() {
+		return 5;
 	}
 
 }

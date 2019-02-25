@@ -61,6 +61,8 @@ public class LauncherSetupTDB implements Loggable {
 		final File inFile = new File(KGpath);
 		final List<String> inFiles = Lists.newArrayList();
 		if (inFile.isDirectory()) {
+			// Just takes files from the first level, does NOT go deeper if a directory is
+			// contained within specified directory
 			for (File f : inFile.listFiles()) {
 				if (f.isFile()) {
 					inFiles.add(f.getAbsolutePath());
@@ -127,11 +129,13 @@ public class LauncherSetupTDB implements Loggable {
 		model = dataset.getDefaultModel();
 		try {
 			TDBLoader.loadModel(model, KGpath, true);
-			model.commit();
+			//model.commit();
+			dataset.commit();
 		} catch (Exception e) {
 			System.out.println("Aborted: " + KGpath);
 			abortedList.add(KGpath);
-			model.abort();
+			//model.abort();
+			dataset.abort();
 		} finally {
 			dataset.end();
 		}
