@@ -16,7 +16,7 @@ public class PossibleAssignment implements Scorable, Comparable<PossibleAssignme
 	private static Logger logger = Logger.getLogger(PossibleAssignment.class);
 	private Number score = Float.valueOf(0f);
 	private final String assignment;
-	private final String mentionSource, mentionToken;
+	private final String mentionToken;
 	private boolean computedScore = false;
 	private boolean warned = false;
 	@SuppressWarnings("rawtypes")
@@ -35,14 +35,12 @@ public class PossibleAssignment implements Scorable, Comparable<PossibleAssignme
 	}
 
 	@SuppressWarnings("rawtypes")
-	public static PossibleAssignment createNew(final String assignment, final String mentionSource,
-			final String mentionToken) {
-		return new PossibleAssignment(new Resource(assignment, false).toN3(), mentionSource, mentionToken);
+	public static PossibleAssignment createNew(final String assignment, final String mentionToken) {
+		return new PossibleAssignment(new Resource(assignment, false).toN3(), mentionToken);
 	}
 
-	public PossibleAssignment(final String assignment, final String mentionSource, final String mentionToken) {
+	public PossibleAssignment(final String assignment, final String mentionToken) {
 		this.assignment = assignment;
-		this.mentionSource = mentionSource;
 		this.mentionToken = mentionToken;
 	}
 
@@ -106,7 +104,7 @@ public class PossibleAssignment implements Scorable, Comparable<PossibleAssignme
 
 	@Override
 	public int hashCode() {
-		return this.assignment.hashCode();
+		return this.assignment.hashCode() + this.score.hashCode() + this.mentionToken.hashCode();
 	}
 
 	@Override
@@ -121,10 +119,6 @@ public class PossibleAssignment implements Scorable, Comparable<PossibleAssignme
 			warned = true;
 		}
 		return this.score;
-	}
-
-	public String getMentionSource() {
-		return mentionSource;
 	}
 
 	public String getMentionToken() {

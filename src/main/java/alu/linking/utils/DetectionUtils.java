@@ -51,6 +51,7 @@ public class DetectionUtils {
 	}
 
 	public static void displayMentions(final Logger logger, Collection<Mention> mentions, final boolean detailed) {
+		logger.info("Mention Details(" + mentions.size() + "):");
 		final TreeMap<String, Mention> alphabeticalSortedMentions = new TreeMap<String, Mention>();
 		// Sort them by key for visibility
 		for (Mention m : mentions) {
@@ -60,7 +61,7 @@ public class DetectionUtils {
 		for (Map.Entry<String, Mention> e : alphabeticalSortedMentions.entrySet()) {
 			final Mention m = e.getValue();
 			if (detailed) {
-				logger.info("Mention[" + m.getMention() + "; " + m.getDetectionConfidence() + "] " + m.getSource());
+				logger.info("Mention[" + m.getMention() + "; " + m.getDetectionConfidence() + "] ");
 				logger.info("Original Text:" + m.getOriginalMention());
 				logger.info("Offset: " + m.getOffset());
 				logger.info("Possible assignments: "

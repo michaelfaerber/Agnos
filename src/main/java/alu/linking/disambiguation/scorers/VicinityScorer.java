@@ -49,7 +49,7 @@ public class VicinityScorer implements PostScorer<PossibleAssignment, Mention> {
 		if (startNodeID == null) {
 			logger.error("No node found for " + nodeURL);
 			logger.debug(
-					"\t->Skipping path building for: Assignment(" + assignment.getMentionSource() + ") - " + nodeURL);
+					"\t->Skipping path building for: Assignment(" + assignment + ") - " + nodeURL);
 			return 0;
 		}
 		// Add mention's source as a 'starting'/'from' node

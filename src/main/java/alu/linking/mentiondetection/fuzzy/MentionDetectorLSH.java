@@ -105,7 +105,8 @@ public class MentionDetectorLSH implements MentionDetector, Loggable {
 	 */
 	public MentionDetectorLSH(final EnumModelType KG, final double threshold, final int value,
 			final boolean bucketsVsBands, final InputProcessor inputProcessor) {
-		this(KG, threshold, bucketsVsBands ? bandsDefaultValue : value, bucketsVsBands ? value : bandsDefaultValue, inputProcessor);
+		this(KG, threshold, bucketsVsBands ? bandsDefaultValue : value, bucketsVsBands ? value : bandsDefaultValue,
+				inputProcessor);
 	}
 
 	/**
@@ -117,7 +118,8 @@ public class MentionDetectorLSH implements MentionDetector, Loggable {
 	 * @param bands     how many bands LSH should be computed with
 	 * @param buckets   how many buckets LSH should be computed with
 	 */
-	public MentionDetectorLSH(final EnumModelType KG, final double threshold, final int bands, final int buckets, final InputProcessor inputProcessor) {
+	public MentionDetectorLSH(final EnumModelType KG, final double threshold, final int bands, final int buckets,
+			final InputProcessor inputProcessor) {
 		this(KG, threshold, bands, buckets, EnumDetectionType.BOUND_DYNAMIC_WINDOW, inputProcessor);
 	}
 
@@ -291,7 +293,9 @@ public class MentionDetectorLSH implements MentionDetector, Loggable {
 				getLogger().error("Executor has not finished terminating");
 			}
 			// Removes all Mention objects that have no associated mention
-			return mentions.stream().filter(mention -> mention.getMention() != null).collect(Collectors.toList());
+			return mentions.stream()
+					.filter(mention -> mention.getMention() != null && mention.getMention().length() > 0)
+					.collect(Collectors.toList());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -304,22 +308,21 @@ public class MentionDetectorLSH implements MentionDetector, Loggable {
 	 * <b>Note</b>: Mentions list MUST be synchronized (e.g. through
 	 * Collections.synchronizedList(List))
 	 * 
-	 * @param executor
-	 * @param mentions
-	 * @param doneCounter
-	 * @param string
-	 * @param source
-	 * @param threshold
+	 * @param executor    multithreaded executor
+	 * @param mention     mention to see if there are candidates for it
+	 * @param doneCounter how many are done
+	 * @param threshold   min. similarity threshold for matching
 	 */
 	private void execFind(final ThreadPoolExecutor executor, final Mention mention, final AtomicInteger doneCounter,
 			final double threshold) {
 		executor.submit(new Callable<Integer>() {
 			@Override
 			public Integer call() throws Exception {
-
 				final MinHashObject minhashResult = find(mention.getOriginalWithoutStopwords(), threshold);
-				mention.setMention(minhashResult.word);
-				mention.setDetectionConfidence(minhashResult.confidence);
+				if (minhashResult != null) {
+					mention.setMention(minhashResult.word);
+					mention.setDetectionConfidence(minhashResult.confidence);
+				}
 				return doneCounter.incrementAndGet();
 			}
 		});
@@ -336,6 +339,9 @@ public class MentionDetectorLSH implements MentionDetector, Loggable {
 	 * 
 	 */
 	public MinHashObject find(final String input, final double threshold) {
+		if (input == null || input.length() == 0) {
+			return null;
+		}
 		final MinHashObject resMinHash = minhash(input, threshold);
 		if (resMinHash == null) {
 			return null;
@@ -502,7 +508,7 @@ public class MentionDetectorLSH implements MentionDetector, Loggable {
 					maxVal = e.getValue();
 				}
 			}
-			String retrievedWord = retrievalList.get(maxValIndex);
+			final String retrievedWord = retrievalList.get(maxValIndex);
 			return new MinHashObject(retrievedWord, maxVal);
 		} catch (Exception e) {
 			e.printStackTrace();

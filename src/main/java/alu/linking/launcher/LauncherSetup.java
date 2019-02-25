@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.executable.Pipeline;
+import alu.linking.executable.preprocessing.deprecated.PageRankComputer;
 import alu.linking.executable.preprocessing.setup.MentionDetectionSetup;
 
 public class LauncherSetup {
@@ -22,7 +23,7 @@ public class LauncherSetup {
 			// Combine transformed RDF files into a single graph
 			// pipeline.queue(new BMWGraphCombiner(), null);
 			// Computed Pagerank for the given RDF graph
-			// pipeline.queue(new PageRankComputer(KG), "./dbpedia_ttl");
+			pipeline.queue(new PageRankComputer(KG), "./dbpedia_ttl");
 			// Have to replace tab characters by space character for N3 compliance
 
 			// pipeline.queue(new EntitySFLinkingFromFile(), null);
