@@ -131,171 +131,185 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 	 * @throws IOException
 	 */
 	private void processFileEntitySurfaceFormLinking(final BufferedReader brIn) throws IOException {
-		String line = null;
 		boolean nxparsing = false;
-		boolean ONLY_STRING = true;
 		int counter = 0;
 		if (!nxparsing) {
-			if (ONLY_STRING) {
-				// Assumes that it's just plain strings and no RDF fanciness
-				while ((line = brIn.readLine()) != null) {
-					final String[] tokens = line.split(delim);
-					if (tokens.length == 2) {
-						addPossibility(mentionPossibilities, tokens[1], tokens[0]);
-						addSpacedPossibilities(mentionPossibilities, tokens[1], tokens[0]);
-					} else if (tokens.length == 3) {
-						addPossibility(mentionPossibilities, tokens[2], tokens[0]);
-						addSpacedPossibilities(mentionPossibilities, tokens[2], tokens[0]);
-					} else if (tokens.length != 0) {
-						getLogger().error("Invalid line...: " + line);
-					}
-				}
+			plainStringParsing(brIn);
+		} else {
+			nxparsing(brIn);
+		}
 
-			} else {
-				// Makes RDF Nodes out of the strings
-				while ((line = brIn.readLine()) != null) {
-					final String[] tokens = line.split(delim);
-					if (tokens.length == 2) {
-						mentionPossibility(tokens[0], "<link>", tokens[1]);
-						// addPossibility(mentionPossibilities, tokens[1], tokens[0]);
-					} else if (tokens.length == 3) {
-						// addPossibility(mentionPossibilities, tokens[2], tokens[0]);
-						mentionPossibility(tokens[0], tokens[1], tokens[2]);
-					} else if (tokens.length != 0) {
-						getLogger().error("Invalid line...: " + line);
-					}
+	}
+
+	private void plainStringParsing(BufferedReader brIn) throws IOException {
+		String line = null;
+		boolean ONLY_STRING = true;
+		if (ONLY_STRING) {
+			// Assumes that it's just plain strings and no RDF fanciness
+			while ((line = brIn.readLine()) != null) {
+				final String[] tokens = line.split(delim);
+				if (tokens.length == 2) {
+					addPossibility(mentionPossibilities, tokens[1], tokens[0]);
+					addSpacedPossibilities(mentionPossibilities, tokens[1], tokens[0]);
+				} else if (tokens.length == 3) {
+					addPossibility(mentionPossibilities, tokens[2], tokens[0]);
+					addSpacedPossibilities(mentionPossibilities, tokens[2], tokens[0]);
+				} else if (tokens.length != 0) {
+					getLogger().error("Invalid line...: " + line);
 				}
 			}
+
 		} else {
-
-			final Iterator<String> bufferIterator = new Iterator<String>() {
-				final StringBuilder ret = new StringBuilder();
-				final StringBuilder tokenBuilder = new StringBuilder();
-				String[] currLine = new String[] { "" };
-				final String dummyPredicate = "<link>";
-				// predicate position reosurce is missing
-				final int missingResourceIndex = 1;
-
-				@Override
-				public boolean hasNext() {
-					return currLine != null;
+			// Makes RDF Nodes out of the strings
+			while ((line = brIn.readLine()) != null) {
+				final String[] tokens = line.split(delim);
+				if (tokens.length == 2) {
+					mentionPossibility(tokens[0], "<link>", tokens[1]);
+					// addPossibility(mentionPossibilities, tokens[1], tokens[0]);
+				} else if (tokens.length == 3) {
+					// addPossibility(mentionPossibilities, tokens[2], tokens[0]);
+					mentionPossibility(tokens[0], tokens[1], tokens[2]);
+				} else if (tokens.length != 0) {
+					getLogger().error("Invalid line...: " + line);
 				}
+			}
+		}
+	}
 
-				@Override
-				public String next() {
-					if (hasNext()) {
-						ret.setLength(0);
-						tokenBuilder.setLength(0);
+	/**
+	 * Parses the two-columns file with NxParser and a bit of circumventing by
+	 * adding an unused token (so it still looks like triples to the NxParser)
+	 * 
+	 * @param brIn
+	 */
+	private void nxparsing(BufferedReader brIn) {
+		final Iterator<String> bufferIterator = new Iterator<String>() {
+			final StringBuilder ret = new StringBuilder();
+			final StringBuilder tokenBuilder = new StringBuilder();
+			String[] currLine = new String[] { "" };
+			final String dummyPredicate = "<link>";
+			// predicate position reosurce is missing
+			final int missingResourceIndex = 1;
 
-						String line;
-						try {
-							line = brIn.readLine();
-						} catch (IOException e) {
-							line = null;
-						}
-						if (line != null) {
-							currLine = line.split(delim);
-						} else {
-							currLine = null;
-							return null;
-						}
+			@Override
+			public boolean hasNext() {
+				return currLine != null;
+			}
 
-						for (int i = 0; i < currLine.length; ++i) {
-							if (i != currLine.length - 1) {
-								// For any token that's not the last
-								final String token = currLine[i];
-								final boolean isLiteral = token.contains("^^http://") || token.contains("^^<http://");
-								if (!token.startsWith("<") && !isLiteral) {
-									// Does not start w/ < and is not a literal
-									tokenBuilder.append("<");
-								}
-								// add the actual token
-								tokenBuilder.append(token);
+			@Override
+			public String next() {
+				if (hasNext()) {
+					ret.setLength(0);
+					tokenBuilder.setLength(0);
 
-								if (!token.endsWith(">") && !isLiteral) {
-									tokenBuilder.append(">");
-								}
-								tokenBuilder.append(" ");
-							} else {
-								// For the last one (should be a literal)
-								final String token = currLine[i];
-								final int literalTypeIndex = token.indexOf("^^http://");
-								final int literalTypeLtIndex = token.indexOf("^^<http://");
-								final int atEnglishLanguage = token.indexOf("@en");
-								// String is missing starting quotes
-								if (!token.startsWith("\"")) {
-									tokenBuilder.append("\"");
-								}
-
-								if (!token.endsWith("\"")) {
-									// String is missing ending quote
-									if (atEnglishLanguage != -1) {
-										// Put the quote before the @en
-										tokenBuilder.append(token.substring(0, atEnglishLanguage));
-										tokenBuilder.append("\"");
-										tokenBuilder.append(token.substring(atEnglishLanguage, token.length()));
-									} else if (literalTypeIndex != -1) {
-										// Put the quote before the string definition of ^^http:// etc
-										// but add < and > around the string definition
-										tokenBuilder.append(token.substring(0, literalTypeIndex));
-										tokenBuilder.append("\"^^<");
-										tokenBuilder.append(token.substring(literalTypeIndex + 2, token.length()));
-										tokenBuilder.append(">");
-									} else if (literalTypeLtIndex != -1) {
-										// Put the quote before the string definition of ^^<http:// etc
-										tokenBuilder.append(token.substring(0, literalTypeLtIndex));
-										tokenBuilder.append("\"");
-										tokenBuilder.append(token.substring(literalTypeLtIndex, token.length()));
-									} else {
-										// Put the quote at the end of line simply
-										tokenBuilder.append(token);
-										tokenBuilder.append("\"");
-									}
-								} else {
-									// String has an ending quote already, so no need to add one
-									tokenBuilder.append(token);
-								}
-								tokenBuilder.append(" ");
-							}
-							if (i == missingResourceIndex) {
-								// You're at the position you need to introduce a new resource into, so add it
-								// to the actual return value already
-								ret.append(dummyPredicate);
-								ret.append(" ");
-							}
-							ret.append(tokenBuilder.toString());
-							tokenBuilder.setLength(0);
-						}
-						ret.append(".");
-						return ret.toString();
+					String line;
+					try {
+						line = brIn.readLine();
+					} catch (IOException e) {
+						line = null;
+					}
+					if (line != null) {
+						currLine = line.split(delim);
 					} else {
-						// Should be handled by the above logic and hasNext() is resolved as currLine !=
-						// null anyway, but just in case logic somehow changes it up
 						currLine = null;
 						return null;
 					}
-				}
-			};
-			// Making use of NxParser to remove String definition etc
-			NxParser parser = new NxParser(new ArrayList<String>() {
-				@Override
-				public Iterator<String> iterator() {
-					return bufferIterator;
-				}
-			});
 
-			final StringBuilder sb = new StringBuilder();
-			while (parser.hasNext()) {
-				Node[] triple = parser.next();
-				if (triple.length == 3) {
-					mentionPossibility(triple[0], triple[1], triple[2]);
-				} else {
-					sb.setLength(0);
-					for (Node n : triple) {
-						sb.append(n.toString());
+					for (int i = 0; i < currLine.length; ++i) {
+						if (i != currLine.length - 1) {
+							// For any token that's not the last
+							final String token = currLine[i];
+							final boolean isLiteral = token.contains("^^http://") || token.contains("^^<http://");
+							if (!token.startsWith("<") && !isLiteral) {
+								// Does not start w/ < and is not a literal
+								tokenBuilder.append("<");
+							}
+							// add the actual token
+							tokenBuilder.append(token);
+
+							if (!token.endsWith(">") && !isLiteral) {
+								tokenBuilder.append(">");
+							}
+							tokenBuilder.append(" ");
+						} else {
+							// For the last one (should be a literal)
+							final String token = currLine[i];
+							final int literalTypeIndex = token.indexOf("^^http://");
+							final int literalTypeLtIndex = token.indexOf("^^<http://");
+							final int atEnglishLanguage = token.indexOf("@en");
+							// String is missing starting quotes
+							if (!token.startsWith("\"")) {
+								tokenBuilder.append("\"");
+							}
+
+							if (!token.endsWith("\"")) {
+								// String is missing ending quote
+								if (atEnglishLanguage != -1) {
+									// Put the quote before the @en
+									tokenBuilder.append(token.substring(0, atEnglishLanguage));
+									tokenBuilder.append("\"");
+									tokenBuilder.append(token.substring(atEnglishLanguage, token.length()));
+								} else if (literalTypeIndex != -1) {
+									// Put the quote before the string definition of ^^http:// etc
+									// but add < and > around the string definition
+									tokenBuilder.append(token.substring(0, literalTypeIndex));
+									tokenBuilder.append("\"^^<");
+									tokenBuilder.append(token.substring(literalTypeIndex + 2, token.length()));
+									tokenBuilder.append(">");
+								} else if (literalTypeLtIndex != -1) {
+									// Put the quote before the string definition of ^^<http:// etc
+									tokenBuilder.append(token.substring(0, literalTypeLtIndex));
+									tokenBuilder.append("\"");
+									tokenBuilder.append(token.substring(literalTypeLtIndex, token.length()));
+								} else {
+									// Put the quote at the end of line simply
+									tokenBuilder.append(token);
+									tokenBuilder.append("\"");
+								}
+							} else {
+								// String has an ending quote already, so no need to add one
+								tokenBuilder.append(token);
+							}
+							tokenBuilder.append(" ");
+						}
+						if (i == missingResourceIndex) {
+							// You're at the position you need to introduce a new resource into, so add it
+							// to the actual return value already
+							ret.append(dummyPredicate);
+							ret.append(" ");
+						}
+						ret.append(tokenBuilder.toString());
+						tokenBuilder.setLength(0);
 					}
-					getLogger().warn("Weird triple length(" + triple.length + "): " + sb.toString());
+					ret.append(".");
+					return ret.toString();
+				} else {
+					// Should be handled by the above logic and hasNext() is resolved as currLine !=
+					// null anyway, but just in case logic somehow changes it up
+					currLine = null;
+					return null;
 				}
+			}
+		};
+		// Making use of NxParser to remove String definition etc
+		NxParser parser = new NxParser(new ArrayList<String>() {
+			@Override
+			public Iterator<String> iterator() {
+				return bufferIterator;
+			}
+		});
+
+		final StringBuilder sb = new StringBuilder();
+		while (parser.hasNext()) {
+			Node[] triple = parser.next();
+			if (triple.length == 3) {
+				mentionPossibility(triple[0], triple[1], triple[2]);
+			} else {
+				sb.setLength(0);
+				for (Node n : triple) {
+					sb.append(n.toString());
+				}
+				getLogger().warn("Weird triple length(" + triple.length + "): " + sb.toString());
 			}
 		}
 
@@ -379,7 +393,7 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 	 * @param source what the word belongs to
 	 */
 	private void addPossibility(final HashMap<String, Set<String>> map, String word, String source) {
-		word = word.toLowerCase();
+		word = stripArrowSigns(word.toLowerCase());
 		// source = source;// .toLowerCase();
 		if (!passesRequirements(word))
 			return;
@@ -389,6 +403,14 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 			map.put(word, s);
 		}
 		s.add(source);
+	}
+
+	private String stripArrowSigns(final String line) {
+		if (line.startsWith("<") && line.endsWith(">")) {
+			return line.substring(1, line.length() - 1);
+		} else {
+			return line;
+		}
 	}
 
 	/**
