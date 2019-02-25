@@ -488,4 +488,10 @@ public class HillClimbingPicker implements ClusterItemPicker {
 		return sum;
 	}
 
+	@Override
+	public double getPickerWeight() {
+		// TODO Auto-generated method stub
+		return 10;
+	}
+
 }

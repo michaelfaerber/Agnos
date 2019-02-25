@@ -31,12 +31,14 @@ public class GraphWalkEmbeddingScorer implements PostScorer<PossibleAssignment, 
 	private final Set<String> bestCombination = new HashSet<>();
 	private final String changedLock = "hasChangedLock";
 	private final ClusterItemPicker clusterHelper;
-	private final EntitySimilarityService similarityService;
 
 	public GraphWalkEmbeddingScorer(final EntitySimilarityService similarityService) {
-		this.similarityService = similarityService;
 		// this.clusterHelper = new SubPageRankPicker<>(similarityService);
 		this.clusterHelper = new HillClimbingPicker(similarityService);
+	}
+
+	public GraphWalkEmbeddingScorer(final ClusterItemPicker entityPicker) {
+		this.clusterHelper = entityPicker;
 	}
 
 	public GraphWalkEmbeddingScorer(final EnumModelType KG)
@@ -54,8 +56,8 @@ public class GraphWalkEmbeddingScorer implements PostScorer<PossibleAssignment, 
 
 		// clusterHelper = new GreedyOptimalPicker<N>(this.entityEmbeddingsMap);
 		// clusterHelper = new SubPageRankPicker<N>(this.entityEmbeddingsMap);
-		this.similarityService = new EntitySimilarityService(entityEmbeddingsMap);
-		this.clusterHelper = new HillClimbingPicker(this.similarityService);
+		final EntitySimilarityService similarityService = new EntitySimilarityService(entityEmbeddingsMap);
+		this.clusterHelper = new HillClimbingPicker(similarityService);
 	}
 
 	/**
@@ -147,7 +149,8 @@ public class GraphWalkEmbeddingScorer implements PostScorer<PossibleAssignment, 
 
 	@Override
 	public Number getWeight() {
-		return 20f;
+		return this.clusterHelper.getPickerWeight();
+		// return 20f;
 	}
 
 	@Override

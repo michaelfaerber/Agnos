@@ -30,7 +30,7 @@ public class InputProcessor {
 
 	public static void main(String[] args) {
 		final String[] inStrings = new String[] { // "", " ", " I have ",
-				"I have   a cat that I like playing with" };
+				"I have   a cat that I like playing with  " };
 		// final EnumDetectionType detectionMode =
 		// EnumDetectionType.BOUND_DYNAMIC_WINDOW;
 		for (String inString : inStrings) {

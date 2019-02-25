@@ -74,4 +74,9 @@ public class GreedyOptimalPicker implements ClusterItemPicker, Loggable {
 	public void updateContext() {
 		// In case something else has to be updated
 	}
+
+	@Override
+	public double getPickerWeight() {
+		return 5;
+	}
 }
