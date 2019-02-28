@@ -17,6 +17,8 @@ import alu.linking.structure.Loggable;
 public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 	public List<String> combine();
 
+	public double getPickerWeight();
+
 	default Map<String, List<String>> computeClusters(final Collection<Mention> context) {
 		final Map<String, List<String>> clusterMap = new HashMap<>();
 
@@ -40,11 +42,8 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 				// input?)");
 			}
 		}
-		getLogger().warn("Multiple SF occurrences - Collisions(" + collisionCounter + ") for SF("
-				+ multipleOccurrences.size() + "): " + multipleOccurrences);
+		// getLogger().warn("Multiple SF occurrences - Collisions(" + collisionCounter +
+		// ") for SF("+ multipleOccurrences.size() + "): " + multipleOccurrences);
 		return clusterMap;
-
 	}
-	
-	public double getPickerWeight();
 }

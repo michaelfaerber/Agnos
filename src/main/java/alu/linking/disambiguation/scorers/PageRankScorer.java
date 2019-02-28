@@ -1,7 +1,7 @@
 package alu.linking.disambiguation.scorers;
 
 import java.io.File;
-import java.util.Map;
+import java.io.IOException;
 
 import org.apache.log4j.Logger;
 
@@ -15,42 +15,39 @@ import alu.linking.utils.Stopwatch;
 
 public class PageRankScorer implements Scorer<PossibleAssignment> {
 	private static Logger logger = Logger.getLogger(PageRankScorer.class);
-	private static Map<String, Number> pageRankMap = null;
 	private final EnumModelType KG;
 	private int warnCounter = 0;
+	private PageRankLoader pagerankLoader;
 
-	public PageRankScorer(final EnumModelType KG) {
+	public PageRankScorer(final EnumModelType KG) throws IOException {
 		this(KG, false);
 	}
 
-	public PageRankScorer(final EnumModelType KG, final boolean forceReload) {
+	public PageRankScorer(final EnumModelType KG, final boolean forceReload) throws IOException {
 		this(KG, forceReload, new File(FilePaths.FILE_PAGERANK.getPath(KG)));
-	}
-
-	public PageRankScorer(final EnumModelType KG, final File pageRankFile) {
-		this(KG, false, pageRankFile);
 	}
 
 	/**
 	 * Loads PageRank only once unless forced through the forceReload param
 	 * 
 	 * @param forceReload
+	 * @throws Exception
 	 */
-	public PageRankScorer(final EnumModelType KG, final boolean forceReload, final File pageRankFile) {
+	public PageRankScorer(final EnumModelType KG, final boolean forceReload, final File pageRankFile)
+			throws IOException {
 		this.KG = KG;
-		if (forceReload || pageRankMap == null) {
-			// Only load pagerank once (or it will takes ages for the same result)
-			Stopwatch.start("pagerankloading");
-			pageRankMap = loadPageRank(pageRankFile);
-			Stopwatch.endOutput("pagerankloading");
-		}
+		this.pagerankLoader = new PageRankLoader(KG);
+		// Only load pagerank once (or it will takes ages for the same result)
+		Stopwatch.start("pagerankloading");
+		loadPageRank();
+		Stopwatch.endOutput("pagerankloading");
 	}
 
 	@Override
 	public Number computeScore(PossibleAssignment param) {
 		final Object assignment = param.getAssignment();
 		if (assignment != null) {
-			final Number retNumber = pageRankMap.get(assignment.toString());
+			final Number retNumber = this.pagerankLoader.getScore(assignment.toString());
 			if (retNumber == null) {
 				warnCounter++;
 				if (warnCounter % 10_000 == 0) {
@@ -69,9 +66,10 @@ public class PageRankScorer implements Scorer<PossibleAssignment> {
 	 * Loads the pagerank map from the default location
 	 * 
 	 * @return
+	 * @throws Exception
 	 */
-	public Map<String, Number> loadPageRank(final File inputFile) {
-		return new PageRankLoader().readIn(inputFile);
+	public void loadPageRank() throws IOException {
+		this.pagerankLoader.exec();
 	}
 
 	@Override

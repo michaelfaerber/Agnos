@@ -54,7 +54,7 @@ public class PageRankComputer implements Executable {
 				}
 			}
 		}
-		final PageRankRDF pageRankRDF = new PageRankRDF(inFiles, 0.85, 1.0, 50, true);
+		final PageRankRDF pageRankRDF = new PageRankRDF(inFiles, 0.85, 1.0, 50, false);
 		pageRankRDF.compute();
 		try (PrintWriter wrt = new PrintWriter(new BufferedWriter(new FileWriter(new File(out))))) {
 			pageRankRDF.printPageRankScoresRDF(wrt);

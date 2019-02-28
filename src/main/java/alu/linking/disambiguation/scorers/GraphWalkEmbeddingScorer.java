@@ -32,32 +32,8 @@ public class GraphWalkEmbeddingScorer implements PostScorer<PossibleAssignment, 
 	private final String changedLock = "hasChangedLock";
 	private final ClusterItemPicker clusterHelper;
 
-	public GraphWalkEmbeddingScorer(final EntitySimilarityService similarityService) {
-		// this.clusterHelper = new SubPageRankPicker<>(similarityService);
-		this.clusterHelper = new HillClimbingPicker(similarityService);
-	}
-
 	public GraphWalkEmbeddingScorer(final ClusterItemPicker entityPicker) {
 		this.clusterHelper = entityPicker;
-	}
-
-	public GraphWalkEmbeddingScorer(final EnumModelType KG)
-			throws FileNotFoundException, IOException, ClassNotFoundException {
-		final Map<String, List<Number>> entityEmbeddingsMap;
-		// Whether to load it from a raw object-dump or a line-separated entity
-		// embeddings output
-		final boolean RAW_LOAD = false;
-		if (RAW_LOAD) {
-			entityEmbeddingsMap = rawload(FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS_RAWMAP.getPath(KG));
-		} else {
-			entityEmbeddingsMap = humanload(FilePaths.FILE_GRAPH_WALK_ID_MAPPING_ENTITY_HUMAN.getPath(KG),
-					FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG));
-		}
-
-		// clusterHelper = new GreedyOptimalPicker<N>(this.entityEmbeddingsMap);
-		// clusterHelper = new SubPageRankPicker<N>(this.entityEmbeddingsMap);
-		final EntitySimilarityService similarityService = new EntitySimilarityService(entityEmbeddingsMap);
-		this.clusterHelper = new HillClimbingPicker(similarityService);
 	}
 
 	/**
@@ -135,8 +111,8 @@ public class GraphWalkEmbeddingScorer implements PostScorer<PossibleAssignment, 
 		try {
 			bestCombination.clear();
 			bestCombination.addAll(clusterHelper.combine());
-			getLogger().info("Recomputeoptimum combo: ");
-			getLogger().info(bestCombination);
+			//getLogger().info("Recomputeoptimum combo: ");
+			//getLogger().info(bestCombination);
 		} catch (Exception exc) {
 //			getLogger().error(exc);
 //			getLogger().error(exc.getMessage());
