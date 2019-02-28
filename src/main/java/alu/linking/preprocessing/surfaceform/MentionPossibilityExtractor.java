@@ -393,7 +393,7 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 	 * @param source what the word belongs to
 	 */
 	private void addPossibility(final HashMap<String, Set<String>> map, String word, String source) {
-		word = stripArrowSigns(word.toLowerCase());
+		word = word.toLowerCase();
 		// source = source;// .toLowerCase();
 		if (!passesRequirements(word))
 			return;
@@ -402,7 +402,7 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 			s = new HashSet<String>();
 			map.put(word, s);
 		}
-		s.add(source);
+		s.add(stripArrowSigns(source));
 	}
 
 	private String stripArrowSigns(final String line) {

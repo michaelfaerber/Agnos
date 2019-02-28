@@ -7,8 +7,9 @@ import java.util.Set;
 import com.beust.jcommander.internal.Lists;
 
 import alu.linking.mentiondetection.Mention;
+import alu.linking.structure.Loggable;
 
-public class CandidateGeneratorMap implements CandidateGenerator<String> {
+public class CandidateGeneratorMap implements CandidateGenerator<String>, Loggable {
 	private final Map<String, Set<String>> linking;
 
 	public CandidateGeneratorMap(Map<String, Set<String>> linking) {
@@ -25,7 +26,7 @@ public class CandidateGeneratorMap implements CandidateGenerator<String> {
 	public List<PossibleAssignment> generate(Mention mention) {
 		final Set<String> possibleEntities = this.linking.get(mention.getMention());
 		if (possibleEntities == null) {
-			System.out.println("Could not find any such mention(" + mention.getMention() + ") o.o");
+			getLogger().error("Could not find any such mention(" + mention.getMention() + ") o.o");
 			return null;
 		}
 		final List<PossibleAssignment> ret = Lists.newArrayList();

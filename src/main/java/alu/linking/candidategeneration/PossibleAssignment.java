@@ -36,7 +36,8 @@ public class PossibleAssignment implements Scorable, Comparable<PossibleAssignme
 
 	@SuppressWarnings("rawtypes")
 	public static PossibleAssignment createNew(final String assignment, final String mentionToken) {
-		return new PossibleAssignment(new Resource(assignment, false).toN3(), mentionToken);
+		//return new PossibleAssignment(new Resource(assignment, false).toN3(), mentionToken);
+		return new PossibleAssignment(assignment, mentionToken);
 	}
 
 	public PossibleAssignment(final String assignment, final String mentionToken) {
@@ -109,7 +110,7 @@ public class PossibleAssignment implements Scorable, Comparable<PossibleAssignme
 
 	@Override
 	public String toString() {
-		return this.assignment.toString();
+		return getAssignment().toString();
 	}
 
 	public Number getScore() {
