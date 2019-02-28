@@ -4,24 +4,19 @@ import java.awt.Desktop;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.TreeMap;
-
-import org.semanticweb.yars.nx.Node;
 
 import alu.linking.candidategeneration.CandidateGenerator;
 import alu.linking.candidategeneration.CandidateGeneratorMap;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.AssignmentChooser;
-import alu.linking.disambiguation.hops.graph.Graph;
-import alu.linking.disambiguation.hops.graph.NodeBlacklisting;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
 import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.Mention;
@@ -47,7 +42,7 @@ public class LauncherEmbeddingLinking {
 	public void run() {
 		try {
 			Stopwatch.start(getClass().getName());
-			final Map<String, Set<String>> map;
+			final Map<String, Collection<String>> map;
 			final StopwordsLoader stopwordsLoader = new StopwordsLoader(KG);
 			final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG, stopwordsLoader);
 			map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));

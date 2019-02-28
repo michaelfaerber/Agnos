@@ -4,6 +4,7 @@ import java.awt.Desktop;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -12,8 +13,6 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeMap;
-
-import org.semanticweb.yars.nx.Node;
 
 import alu.linking.candidategeneration.CandidateGenerator;
 import alu.linking.candidategeneration.CandidateGeneratorMap;
@@ -47,7 +46,7 @@ public class LauncherLinkingMAG {
 	public void run() {
 		try {
 			Stopwatch.start(getClass().getName());
-			final Map<String, Set<String>> map;
+			final Map<String, Collection<String>> map;
 			final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG);
 			map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
 			Stopwatch.endOutputStart(getClass().getName());

@@ -3,9 +3,9 @@ package alu.linking.launcher;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.beust.jcommander.internal.Lists;
 
@@ -35,7 +35,7 @@ public class LauncherMentionDetectionTuning {
 	}
 
 	public void run() throws Exception {
-		final Map<String, Set<String>> map;
+		final Map<String, Collection<String>> map;
 		final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG);
 		map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
 		System.out.println("Startup completed.");

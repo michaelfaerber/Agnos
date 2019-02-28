@@ -69,7 +69,7 @@ public class LauncherContinuousMentionDetector {
 			System.out.println("Loading mention possibilities...");
 			final StopwordsLoader stopwordsLoader = new StopwordsLoader(KG);
 			final Set<String> stopwords = stopwordsLoader.getStopwords();
-			final Map<String, Set<String>> map = DetectionUtils.loadSurfaceForms(this.KG, stopwordsLoader);
+			final Map<String, Collection<String>> map = DetectionUtils.loadSurfaceForms(this.KG, stopwordsLoader);
 			final InputProcessor inputProcessor = new InputProcessor(stopwords);
 			// ########################################################
 			// Mention Detection

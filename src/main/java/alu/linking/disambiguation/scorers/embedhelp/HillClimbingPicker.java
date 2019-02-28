@@ -41,8 +41,8 @@ public class HillClimbingPicker implements ClusterItemPicker {
 	private static final int PR_TOP_K = 30;
 	// Whether to remove assignments when there is only one possibility (due to high
 	// likelihood of distortion)
-	private static final boolean REMOVE_SINGLE_ASSIGNMENTS = true;
-	private static final double PR_MIN_THRESHOLD = 1d;
+	private static final boolean REMOVE_SINGLE_ASSIGNMENTS = false;
+	private static final double PR_MIN_THRESHOLD = 1d;// 0.1d;
 	private static final int DEFAULT_REPEAT = 20;// was 200 before, but due to long texts...
 	private static final int MIN_REPEAT = 1;
 	private static final double MIN_SCORE_RATIO = 0.5;
@@ -106,15 +106,18 @@ public class HillClimbingPicker implements ClusterItemPicker {
 		final Map<String, Triple<AssignmentScore, AssignmentScore, Integer>> mapClusterPageRankItems = new HashMap<>();
 		final Map<String, String> clusterChoice = new HashMap<>();
 		final List<String> copyClusterNames = Lists.newArrayList(clusterNames);
+		final Logger log = getLogger();
+//		log.info("CLUSTERNAMES - Prior to PR SF-preprocessing: " + clusterNames);
 		for (final String clusterName : copyClusterNames) {
 			final List<String> entities = clusters.get(clusterName);
-			final List<AssignmentScore> rankedScores = this.pagerankLoader.getTopK(entities, PR_TOP_K,
-					PR_MIN_THRESHOLD);
+			// log.info("SF[" + clusterName + "] - Entities[" + entities + "]");
+			final List<AssignmentScore> rankedScores = this.pagerankLoader
+					.cutOff(this.pagerankLoader.getTopK(entities, PR_TOP_K), PR_MIN_THRESHOLD);
 			if (rankedScores == null || (REMOVE_SINGLE_ASSIGNMENTS && rankedScores.size() == 1)) {
 				// ALSO: Remove it from HillClimbing consideration when there's only one...
 				// If the PR score is too low for this, make sure no more disambiguation is done
 				// on it
-				getLogger().info("Removing CLUSTER[" + clusterName + "]");
+//				getLogger().info("Removing CLUSTER[" + clusterName + "]");
 				clusterChoice.remove(clusterName);
 				clusterNames.remove(clusterName);
 				clusters.remove(clusterName);
@@ -125,20 +128,19 @@ public class HillClimbingPicker implements ClusterItemPicker {
 					rankedScores.get(rankedScores.size() - 1), rankedScores.size()));
 			final List<String> limitedEntities = Lists.newArrayList();
 
-			//
+			// Compute the list to disambiguate from
 			rankedScores.stream().forEach(item -> limitedEntities.add(item.assignment));
 			// Overwrite clusters, so disambiguation is only done on top PR scores
 			clusters.put(clusterName, limitedEntities);
 			clusterChoice.put(clusterName, rankedScores.get(0).assignment);
 		}
+		//log.info("Remaining Surface Forms (CLUSTERNAMES[" + clusterNames.size() + "]):" + clusterNames);
 		// Display the min/max ones
-		final Logger log = getLogger();
-
-		for (Map.Entry<String, Triple<AssignmentScore, AssignmentScore, Integer>> e : mapClusterPageRankItems
-				.entrySet()) {
-			log.info("SF[" + e.getKey() + "]: Out of[" + e.getValue().getRight() + "] Best: " + e.getValue().getLeft()
-					+ " / Worst: " + e.getValue().getMiddle());
-		}
+//		for (Map.Entry<String, Triple<AssignmentScore, AssignmentScore, Integer>> e : mapClusterPageRankItems
+//				.entrySet()) {
+//			log.info("SF[" + e.getKey() + "]: Out of[" + e.getValue().getRight() + "] Best: " + e.getValue().getLeft()
+//					+ " / Worst: " + e.getValue().getMiddle());
+//		}
 
 		// Execute hillclimbing multiple times
 		for (int hillClimbExec = 0; hillClimbExec < REPEAT; ++hillClimbExec) {
@@ -198,7 +200,7 @@ public class HillClimbingPicker implements ClusterItemPicker {
 		for (Pair<String, Double> pair : finalChoiceMap.values()) {
 			retList.add(pair.getKey());
 		}
-		getLogger().info("FINAL CHOICES: " + retList.size());
+		getLogger().info("FINAL CHOICES[" + retList.size() + "]: " + retList);
 		return retList;
 	}
 
@@ -212,16 +214,16 @@ public class HillClimbingPicker implements ClusterItemPicker {
 		final Iterator<Entry<String, Pair<String, Double>>> finalChoicesIterator = choiceMap.entrySet().iterator();
 		final Double MIN_SCORE = computeMinScore();
 		// getLogger().info("Min score THRESHOLD:" + MIN_SCORE);
-		getLogger().info("PRUNING/ABSTAINING PROCEDURE - START");
+		//getLogger().info("PRUNING/ABSTAINING PROCEDURE - START");
 		while (finalChoicesIterator.hasNext()) {
 			final Entry<String, Pair<String, Double>> entry = finalChoicesIterator.next();
 			// getLogger().info("Entry:" + entry.getKey() + " - " + entry.getValue());
 			if (entry.getValue().getRight() < MIN_SCORE) {
-				getLogger().info("[" + MIN_SCORE + "] ->Pruning:" + entry.getKey() + " - " + entry.getValue());
+				//getLogger().info("[" + MIN_SCORE + "] ->Pruning:" + entry.getKey() + " - " + entry.getValue());
 				finalChoicesIterator.remove();
 			}
 		}
-		getLogger().info("PRUNING/ABSTAINING PROCEDURE - END");
+		//getLogger().info("PRUNING/ABSTAINING PROCEDURE - END");
 
 	}
 
@@ -324,6 +326,7 @@ public class HillClimbingPicker implements ClusterItemPicker {
 				iterativelyPickLocalBest(clusters, chosenClusterEntityMap, clusterNames);
 			}
 			currentChoices = mapToValueSet(chosenClusterEntityMap);
+			//getLogger().info("CHOICES AFTER ITERATIONS: " + currentChoices);
 			iterCounter += iterations;
 			if (iterCounter > maxIterations) {
 				getLogger().warn("Been iterating(" + iterCounter + ") for a while now...");
@@ -441,6 +444,7 @@ public class HillClimbingPicker implements ClusterItemPicker {
 	private void iterativelyPickLocalBest(Map<String, List<String>> clusters,
 			Map<String, Pair<String, Double>> chosenClusterEntityMap, List<String> clusterNames) {
 		// Now pick the best one between current and next
+		final Logger log = getLogger();
 		for (int clusterNameIndex = 1; clusterNameIndex < clusterNames.size(); ++clusterNameIndex) {
 			final String currClusterName = clusterNames.get(clusterNameIndex - 1);
 			final String nextClusterName = clusterNames.get(clusterNameIndex);
@@ -452,12 +456,19 @@ public class HillClimbingPicker implements ClusterItemPicker {
 			final Pair<String, Double> previousChoice = chosenClusterEntityMap.remove(nextClusterName);
 			final Double newSimilaritySum = getSimilaritySumToEntity(chosenClusterEntityMap, bestNext.getLeft());
 			final Double oldSimilaritySum = getSimilaritySumToEntity(chosenClusterEntityMap, previousChoice.getLeft());
-
+//			log.info("NEW 'CANDIDATE' TOP - From[" + currClusterName + "]-To[" + nextClusterName + "]: BEST["
+//					+ bestNext.getLeft() + ", " + bestNext.getRight() + "] - NEW SIM: " + newSimilaritySum);
+//			log.info("'CURRENT' TOP: " + previousChoice.getLeft() + ", " + previousChoice.getRight()
+//					+ " - CURRENT SIM: " + oldSimilaritySum);
 			// Intuition: If I like my choice more than anyone dislikes it, it is worth it!
 			// So if the new similarity sum is higher, we'll take it
 			if (newSimilaritySum > oldSimilaritySum) {
+//				log.info("CHOICE DONE: NEW SIMILARITY SUM");
 				chosenClusterEntityMap.put(nextClusterName, bestNext);
 			} else {
+//				log.info("CHOICE DONE: CURRENT SIMILARITY SUM");
+				// Has to be added again for the likely-updated similarity (as other entities
+				// might have changed since this was last set)
 				chosenClusterEntityMap.put(nextClusterName, previousChoice);
 			}
 		}
@@ -580,7 +591,7 @@ public class HillClimbingPicker implements ClusterItemPicker {
 
 	@Override
 	public double getPickerWeight() {
-		return 10;
+		return 50d;
 	}
 
 }

@@ -69,11 +69,11 @@ public class RDF2VecWalkGenerator implements Executable {
 		final String walkOutput = FilePaths.FILE_GRAPH_WALK_OUTPUT.getPath(kg);
 		final String sentencesOut = FilePaths.FILE_GRAPH_WALK_OUTPUT_SENTENCES.getPath(kg);
 
-		final Map<String, Set<String>> map;
+		final Map<String, Collection<String>> map;
 		final MentionPossibilityLoader mpl = new MentionPossibilityLoader(kg, new StopwordsLoader(kg));
 		map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(kg)));
 		final Set<String> allEntities = new HashSet<>();
-		for (Map.Entry<String, Set<String>> e : map.entrySet()) {
+		for (Map.Entry<String, Collection<String>> e : map.entrySet()) {
 			allEntities.addAll(e.getValue());
 		}
 

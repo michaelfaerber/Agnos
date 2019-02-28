@@ -1,5 +1,6 @@
 package alu.linking.candidategeneration;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -10,9 +11,9 @@ import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 
 public class CandidateGeneratorMap implements CandidateGenerator<String>, Loggable {
-	private final Map<String, Set<String>> linking;
+	private final Map<String, Collection<String>> linking;
 
-	public CandidateGeneratorMap(Map<String, Set<String>> linking) {
+	public CandidateGeneratorMap(Map<String, Collection<String>> linking) {
 		this.linking = linking;
 	}
 
@@ -24,7 +25,7 @@ public class CandidateGeneratorMap implements CandidateGenerator<String>, Loggab
 	 */
 	@Override
 	public List<PossibleAssignment> generate(Mention mention) {
-		final Set<String> possibleEntities = this.linking.get(mention.getMention());
+		final Collection<String> possibleEntities = this.linking.get(mention.getMention());
 		if (possibleEntities == null) {
 			getLogger().error("Could not find any such mention(" + mention.getMention() + ") o.o");
 			return null;

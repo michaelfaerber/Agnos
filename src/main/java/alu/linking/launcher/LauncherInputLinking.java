@@ -1,6 +1,7 @@
 package alu.linking.launcher;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -8,8 +9,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.semanticweb.yars.nx.Node;
 
 import alu.linking.candidategeneration.CandidateGenerator;
 import alu.linking.candidategeneration.CandidateGeneratorMap;
@@ -20,6 +19,7 @@ import alu.linking.disambiguation.hops.graph.EdgeBlacklisting;
 import alu.linking.disambiguation.hops.graph.Graph;
 import alu.linking.disambiguation.hops.graph.NodeBlacklisting;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
+import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
 import alu.linking.mentiondetection.StopwordsLoader;
@@ -33,7 +33,7 @@ public class LauncherInputLinking {
 	private static MentionDetector md;
 	private static AssignmentChooser chooser;
 	private static CandidateGenerator candidateGenerator;
-	private static Map<String, Set<String>> map;
+	private static Map<String, Collection<String>> map;
 	private static EnumModelType KG;
 	private static Long timeCounter = 0l;
 	private static Long mentionCounter = 0l;
@@ -45,14 +45,16 @@ public class LauncherInputLinking {
 
 		final StopwordsLoader stopwordsLoader = new StopwordsLoader(KG);
 		final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG, stopwordsLoader);
-		final Map<String, Set<String>> tmpMap = mpl
+		final Map<String, Collection<String>> tmpMap = mpl
 				.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
-		map = new HashMapCaseInsensitive<Set<String>>();
+		map = new HashMapCaseInsensitive<Collection<String>>();
 		// Case-insensitive map implementation
-		for (Map.Entry<String, Set<String>> e : tmpMap.entrySet()) {
+		for (Map.Entry<String, Collection<String>> e : tmpMap.entrySet()) {
 			map.put(e.getKey(), e.getValue());
 		}
-		LauncherInputLinking.md = new MentionDetectorMap(map);
+		
+		final InputProcessor inputProcessor = new InputProcessor(null);
+		LauncherInputLinking.md = new MentionDetectorMap(map, inputProcessor);
 		// LauncherInputLinking.md = new MentionDetectorLSH(map, 0.8);
 		candidateGenerator = new CandidateGeneratorMap(map);
 

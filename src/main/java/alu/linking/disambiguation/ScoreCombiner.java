@@ -10,23 +10,21 @@ public class ScoreCombiner<T> implements Loggable {
 		// Add all types of scorers here with the appropriate weights
 		final Number weight = scorer.getWeight();
 		final Number score = scorer.computeScore(scorerParam);
-		if (weight != null && score != null) {
-			return add(currScore, weight.doubleValue() * score.doubleValue());
-		} else {
-			// Generally not needed, but keeping here for the sake of it~
-			if (scorer instanceof PageRankScorer) {
-				// Pretty much just sets the weight
-				final Double prScore = Numbers.PAGERANK_WEIGHT.val.doubleValue()
-						* scorer.computeScore(scorerParam).doubleValue();
-				return add(currScore, prScore);
-			} else if (scorer instanceof VicinityScorer) {
-				final Double vicScore = Numbers.VICINITY_WEIGHT.val.doubleValue()
-						* scorer.computeScore(scorerParam).doubleValue();
-				return add(currScore, vicScore);
+		// Generally not needed, but keeping here for the sake of it~
+		if (scorer instanceof PageRankScorer) {
+			// Pretty much just sets the weight
+			final Double prScore = Numbers.PAGERANK_WEIGHT.val.doubleValue()
+					// Due to PR values varying highly, doing a square root of it to slightly
+					// smoothen it out
+					* Math.sqrt(scorer.computeScore(scorerParam).doubleValue());
+			return add(currScore, prScore);
+		} else if (scorer instanceof VicinityScorer) {
+			final Double vicScore = Numbers.VICINITY_WEIGHT.val.doubleValue()
+					* scorer.computeScore(scorerParam).doubleValue();
+			return add(currScore, vicScore);
 
-			} else {
-				return null;
-			}
+		} else {
+			return add(currScore, weight.doubleValue() * score.doubleValue());
 		}
 	}
 

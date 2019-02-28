@@ -2,8 +2,8 @@ package alu.linking.executable.preprocessing.loader;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
@@ -63,8 +63,8 @@ public class MentionPossibilityLoader implements Executable {
 	}
 
 	@Override
-	public Map<String, Set<String>> exec(Object... o) throws IOException {
-		Map<String, Set<String>> ret = null;
+	public Map<String, Collection<String>> exec(Object... o) throws IOException {
+		Map<String, Collection<String>> ret = null;
 		if (o != null) {
 			final File blacklistFile, entityLinkingFile;
 			if (o.length == 2 && o[0] instanceof File && o[1] instanceof File) {
@@ -73,11 +73,14 @@ public class MentionPossibilityLoader implements Executable {
 				// linked to
 				// Returned map is of the sort Map<O, Set<S>>
 				mpe.populateBlacklist((File) (o[0]));
-				ret = InputProcessor.processCollection(mpe.addPossibilities((File) (o[1])), this.inputProcessor);
+				ret = this.inputProcessor.processCollection(mpe.addPossibilities((File) (o[1])), this.inputProcessor);
 			} else if (o.length == 1 && o[0] instanceof File) {
 				// Takes the blacklist from the default location
 				mpe.populateBlacklist(new File(FilePaths.FILE_MENTIONS_BLACKLIST.getPath(KG)));
-				ret = InputProcessor.processCollection(mpe.addPossibilities((File) (o[0])), this.inputProcessor);
+				ret = this.inputProcessor.processCollection(
+						mpe.addPossibilities((File) (o[0]))
+						, this.inputProcessor)
+				;
 			}
 		}
 

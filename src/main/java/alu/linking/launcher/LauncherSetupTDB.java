@@ -129,12 +129,12 @@ public class LauncherSetupTDB implements Loggable {
 		model = dataset.getDefaultModel();
 		try {
 			TDBLoader.loadModel(model, KGpath, true);
-			//model.commit();
+			// model.commit();
 			dataset.commit();
 		} catch (Exception e) {
 			System.out.println("Aborted: " + KGpath);
 			abortedList.add(KGpath);
-			//model.abort();
+			// model.abort();
 			dataset.abort();
 		} finally {
 			dataset.end();

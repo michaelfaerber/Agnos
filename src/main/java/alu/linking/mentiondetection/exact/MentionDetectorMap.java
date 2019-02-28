@@ -1,5 +1,6 @@
 package alu.linking.mentiondetection.exact;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -9,8 +10,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import com.google.common.collect.Lists;
 
 import alu.linking.config.constants.Numbers;
 import alu.linking.mentiondetection.EnumDetectionType;
@@ -24,15 +23,16 @@ public class MentionDetectorMap implements MentionDetector, Loggable {
 	private final String tokenSeparator = " ";// space
 	private final EnumDetectionType detectionType = EnumDetectionType.BOUND_DYNAMIC_WINDOW;
 	private final String mentionLock = "mentionsList";
+	private final InputProcessor inputProcessor;
 
-	public MentionDetectorMap(final Map<String, Set<String>> map) {
+	public MentionDetectorMap(final Map<String, Collection<String>> map, final InputProcessor inputProcessor) {
 		Set<String> inKeys = map.keySet();
 		// Adds everything in lower case
 		this.keys = new HashSet<>();
 		for (String key : inKeys) {
 			this.keys.add(InputProcessor.combineProcessedInput(InputProcessor.process(key)));
 		}
-
+		this.inputProcessor = inputProcessor;
 	}
 
 	/**
@@ -52,93 +52,13 @@ public class MentionDetectorMap implements MentionDetector, Loggable {
 	@Override
 	public List<Mention> detect(final String input, final String source) {
 		try {
-			final String[] words = InputProcessor.process(input);
-			// Synchronized list
-			final List<Mention> mentions = Lists.newArrayList();
-
 			final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors
 					.newFixedThreadPool(Numbers.MENTION_DETECTION_THREAD_AMT.val.intValue());
 			AtomicInteger doneCounter = new AtomicInteger(0);
 
-			final StringBuilder combinedWords = new StringBuilder();
-			int stringPos = 0;
-			switch (detectionType) {
-			case BOUND_DYNAMIC_WINDOW:
-				final int windowSize = Numbers.MENTION_DETECTION_WINDOW_SIZE.val.intValue();
-				combinedWords.setLength(0);
-				stringPos = 0;
-				for (int i = 0; i < words.length; ++i) {
-					int subPos = stringPos;// + i*tokenSeparator.length();//+i due to spaces;
-					for (int j = 0; j < windowSize; ++j) {
-						if (i + j > words.length - 1) {
-							break;
-						}
-						// final int index = Math.min(words.length - 1, i + j);
-						final int index = i + j;
-						if (j != 0) {
-							combinedWords.append(tokenSeparator);
-							subPos += tokenSeparator.length();
-						}
-						combinedWords.append(words[index]);
-						execFind(executor, mentions, doneCounter, combinedWords.toString(), subPos);
-						subPos += words[index].length();
-					}
-					combinedWords.setLength(0);
-					stringPos += words[i].length() + tokenSeparator.length();
-				}
-				break;
-			case SINGLE_WORD:
-				// Just Single words
-				stringPos = 0;
-				for (String token : words) {
-					execFind(executor, mentions, doneCounter, token, stringPos);
-					stringPos += token.length();
-				}
-				break;
-			case UNBOUND_DYNAMIC_WINDOW:
-				/*
-				 * Example: Input: I have a cat Processed as: I I have I have a I have a cat
-				 * have have a have a cat ...
-				 */
-				// Just Single words
-				stringPos = 0;
-				for (String token : words) {
-					execFind(executor, mentions, doneCounter, token, stringPos);
-					stringPos += token.length();
-				}
-				// Multi-words (excluding single words)
-				combinedWords.setLength(0);
-				stringPos = 0;
-				for (int i = 0; i < words.length; ++i) {
-					combinedWords.append(words[i]);
-					int subPos = stringPos;
-					for (int j = i + 1; j < words.length; ++j) {
-						combinedWords.append(tokenSeparator + words[j]);
-						execFind(executor, mentions, doneCounter, combinedWords.toString(), stringPos);
-						subPos += tokenSeparator.length() + words[j].length();
-					}
-					stringPos += words[i].length();
-					combinedWords.setLength(0);
-				}
-				break;
-			case UNBOUND_DYNAMIC_WINDOW_STRICT_MULTI_WORD:
-				// Multi-words (excluding single words)
-				combinedWords.setLength(0);
-				stringPos = 0;
-				for (int i = 0; i < words.length; ++i) {
-					combinedWords.append(words[i]);
-					int subPos = stringPos;
-					for (int j = i + 1; j < words.length; ++j) {
-						combinedWords.append(tokenSeparator + words[j]);
-						execFind(executor, mentions, doneCounter, combinedWords.toString(), stringPos);
-						subPos = tokenSeparator.length() + words[j].length();
-					}
-					stringPos += words[i].length();
-					combinedWords.setLength(0);
-				}
-				break;
-			default:
-				break;
+			final List<Mention> mentions = inputProcessor.createMentions(input, source, detectionType);
+			for (Mention mention : mentions) {
+				execFind(executor, mention, doneCounter);
 			}
 
 			// No more tasks will be added
@@ -169,22 +89,17 @@ public class MentionDetectorMap implements MentionDetector, Loggable {
 	 * Collections.synchronizedList(List))
 	 * 
 	 * @param executor
-	 * @param mentions
+	 * @param mention
 	 * @param doneCounter
-	 * @param wordCombination
-	 * @param source
-	 * @param threshold
 	 */
-	private void execFind(final ThreadPoolExecutor executor, final List<Mention> mentions,
-			final AtomicInteger doneCounter, final String wordCombination, final int indexPos) {
+	private void execFind(final ThreadPoolExecutor executor, final Mention mention, final AtomicInteger doneCounter) {
 		executor.submit(new Callable<Integer>() {
 			@Override
 			public Integer call() throws Exception {
-				final Mention mention = find(wordCombination, indexPos);
-				if (mention != null) {
-					synchronized (mentionLock) {
-						mentions.add(mention);
-					}
+				final boolean found = find(mention.getOriginalWithoutStopwords());
+				if (found) {
+					mention.setMention(mention.getOriginalMention());
+					mention.setDetectionConfidence(1d);
 				}
 				return doneCounter.incrementAndGet();
 			}
@@ -194,16 +109,15 @@ public class MentionDetectorMap implements MentionDetector, Loggable {
 	/**
 	 * Finds a mention for a given input token
 	 * 
-	 * @param input     token or word
-	 * @param source    what entity this word is linked to
+	 * @param input  token or word
+	 * @param source what entity this word is linked to
 	 * 
-	 * @param threshold minimum similarity threshold for it to be accepted
 	 * @return mention with the closest possible mate
 	 * 
 	 */
-	public Mention find(final String input, final int offset) {
-		if (!this.keys.contains(input.toLowerCase())) {
-			System.out.println("Could not match w/:" + input.toLowerCase());
+	public boolean find(final String input) {
+		if (!this.keys.contains(input)) {
+			System.out.println("Could not match w/:" + input);
 			final int showAmt = 100;
 			int showCounter = 0;
 			System.out.println("Number of keys:" + this.keys.size());
@@ -212,11 +126,10 @@ public class MentionDetectorMap implements MentionDetector, Loggable {
 					System.out.println("Key:'" + key.toLowerCase() + "'");
 				}
 			}
-			return null;
+			return false;
 		}
 		// Create a mention with the best-found word
-		final Mention mention = new Mention(input, null, offset, 1, input, input);
-		return mention;
+		return true;
 	}
 
 	@Override

@@ -6,6 +6,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.jena.ext.com.google.common.collect.Lists;
 
 import alu.linking.api.GERBILAPIAnnotator;
 import alu.linking.config.kg.EnumModelType;
@@ -17,7 +21,17 @@ public class LauncherEvaluateFiles {
 		annotator.init();
 		final String inputDir = "./evaluation/split_log/";
 		final String outputDir = "./evaluation/split_output/";
-		for (File file : new File(inputDir).listFiles()) {
+		// final String inputDir = "./evaluation/min_example.ttl";
+		// final String outputDir = "./evaluation/annotated/";
+
+		final File inputDirObj = new File(inputDir);
+		final List<File> fileList = Lists.newArrayList();
+		if (inputDirObj.isFile()) {
+			fileList.add(inputDirObj);
+		} else {
+			fileList.addAll(Arrays.asList(inputDirObj.listFiles()));
+		}
+		for (File file : fileList) {
 			try {
 				if (file.isFile()) {
 					final FileInputStream inputStream = new FileInputStream(file);
