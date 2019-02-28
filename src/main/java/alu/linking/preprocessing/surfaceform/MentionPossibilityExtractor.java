@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.semanticweb.yars.nx.Literal;
@@ -46,7 +47,7 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 	private int lengthMinThreshold = DEFAULT_MIN_LENGTH_THRESHOLD;
 	private int lengthMaxThreshold = DEFAULT_MAX_LENGTH_THRESHOLD;
 	private final Set<String> blackList;
-	private final HashMap<String, Set<String>> mentionPossibilities = new HashMap<String, Set<String>>();
+	private final HashMap<String, Collection<String>> mentionPossibilities = new HashMap<>();
 	private final String delim = Strings.ENTITY_SURFACE_FORM_LINKING_DELIM.val;
 
 	public MentionPossibilityExtractor(final EnumModelType KG) {
@@ -105,7 +106,7 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 	 * @return
 	 * @throws IOException
 	 */
-	public HashMap<String, Set<String>> addPossibilities(final File inFile) throws IOException {
+	public Map<String, Collection<String>> addPossibilities(final File inFile) throws IOException {
 		try (final BufferedReader brIn = new BufferedReader(new FileReader(inFile), 8192 * 100)) {
 			processFile(brIn);
 		}
@@ -328,7 +329,7 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 	 * @param words                words/line
 	 * @param source               entity which points towards this surface form
 	 */
-	private void addSpacedPossibilities(HashMap<String, Set<String>> mentionPossibilities, String words,
+	private void addSpacedPossibilities(HashMap<String, Collection<String>> mentionPossibilities, String words,
 			String source) {
 		final String[] multiWordTokens = words.split("\\p{Space}");
 		if (multiWordTokens.length > 1) {
@@ -392,17 +393,17 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 	 * @param word   word to be added to the map
 	 * @param source what the word belongs to
 	 */
-	private void addPossibility(final HashMap<String, Set<String>> map, String word, String source) {
+	private void addPossibility(final Map<String, Collection<String>> map, String word, String source) {
 		word = word.toLowerCase();
 		// source = source;// .toLowerCase();
 		if (!passesRequirements(word))
 			return;
-		Set<String> s;
+		Collection<String> s;
 		if ((s = map.get(word)) == null) {
 			s = new HashSet<String>();
 			map.put(word, s);
 		}
-		s.add(stripArrowSigns(source));
+		s.add(source);
 	}
 
 	private String stripArrowSigns(final String line) {

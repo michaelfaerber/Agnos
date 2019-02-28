@@ -1,6 +1,7 @@
 package alu.linking.executable.preprocessing.setup;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,7 +40,7 @@ public class MentionDetectionSetup implements Executable {
 		final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG, stopwordsLoader);
 		// Map<String, Set<String>> map = mpe.exec(new
 		// File(FilePaths.FILE_EXTENDED_GRAPH.path));
-		Map<String, Set<String>> map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
+		Map<String, Collection<String>> map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
 		System.out.println("Map size:" + map.size());
 		final InputProcessor inputProcessor = new InputProcessor(stopwords);
 		final MentionDetectorLSH md = new MentionDetectorLSH(KG, inputProcessor);

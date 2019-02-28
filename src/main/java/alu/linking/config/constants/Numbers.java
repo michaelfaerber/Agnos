@@ -21,9 +21,9 @@ public enum Numbers {
 	VICINITY_SCORING_WEIGHT_SIGMA(0.5,
 			"Generally a value between 0 and 1. Represents the loss of information per hop beyond a direct link. Weight used to decrease the weight of longer hop-paths"), //
 	VICINITY_WEIGHT(5, "How much vicinity scoring affects final score"), //
-	PAGERANK_WEIGHT(10, "How much pagerank scoring affects final score"), //
+	PAGERANK_WEIGHT(3, "How much pagerank scoring affects final score"), //
 	// Mention Detection
-	MENTION_DETECTION_WINDOW_SIZE(3, "Size of the sliding window for mention detection when using "
+	MENTION_DETECTION_WINDOW_SIZE(2, "Size of the sliding window for mention detection when using "
 			+ EnumDetectionType.BOUND_DYNAMIC_WINDOW.name()
 			+ " mode. Note that this number generally represents the (maximum) 'number of words' used for word detection"), //
 	MENTION_DETECTION_THREAD_AMT(8, "Number of threads used for mention detection"), //

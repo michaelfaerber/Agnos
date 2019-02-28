@@ -13,11 +13,11 @@ import org.apache.log4j.Logger;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
-import alu.linking.launcher.LauncherContinuousMentionDetector;
 import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
 import alu.linking.mentiondetection.StopwordsLoader;
+import alu.linking.mentiondetection.exact.MentionDetectorMap;
 import alu.linking.mentiondetection.fuzzy.MentionDetectorLSH;
 
 public class DetectionUtils {
@@ -33,19 +33,28 @@ public class DetectionUtils {
 	 * @return
 	 * @throws IOException
 	 */
-	public static Map<String, Set<String>> loadSurfaceForms(final EnumModelType KG,
+	public static Map<String, Collection<String>> loadSurfaceForms(final EnumModelType KG,
 			final StopwordsLoader stopwordsLoader) throws IOException {
 		final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG, stopwordsLoader);
-		Map<String, Set<String>> map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
+		Map<String, Collection<String>> map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
 		return map;
 	}
 
-	public static MentionDetector setupMentionDetection(final EnumModelType KG, final Map<String, Set<String>> map,
+	public static MentionDetector setupMentionDetection(final EnumModelType KG, final Map<String, Collection<String>> map,
 			final InputProcessor inputProcessor) throws Exception {
-		Stopwatch.endOutputStart(LauncherContinuousMentionDetector.class.getName());
+		return setupMentionDetection(KG, map, inputProcessor, true);
+	}
+
+	public static MentionDetector setupMentionDetection(final EnumModelType KG, final Map<String, Collection<String>> map,
+			final InputProcessor inputProcessor, final boolean LSH_OR_MAP) throws Exception {
 		Logger.getLogger(DetectionUtils.class).info("Number of entries (aka. different surface forms): " + map.size());
 		// return new MentionDetectorMap(map);//
-		final MentionDetector md = new MentionDetectorLSH(KG, 0.9, inputProcessor);
+		final MentionDetector md;
+		if (LSH_OR_MAP) {
+			md = new MentionDetectorLSH(KG, 0.9, inputProcessor);
+		} else {
+			md = new MentionDetectorMap(map, inputProcessor);
+		}
 		md.init();
 		return md;
 	}

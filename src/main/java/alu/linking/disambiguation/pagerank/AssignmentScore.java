@@ -6,7 +6,7 @@ public class AssignmentScore implements Comparable<AssignmentScore> {
 
 	@Override
 	public int compareTo(AssignmentScore o) {
-		return (int) (10_000 * (this.score.doubleValue() - o.score.doubleValue()));
+		return (int) (Math.round((10_000 * (this.score.doubleValue() - o.score.doubleValue()))));
 	}
 
 	public AssignmentScore assignment(String assignment) {

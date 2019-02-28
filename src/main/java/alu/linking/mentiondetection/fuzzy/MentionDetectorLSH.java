@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -362,7 +363,7 @@ public class MentionDetectorLSH implements MentionDetector, Loggable {
 	 * @return
 	 * @throws Exception
 	 */
-	public void setup(final Map<String, Set<String>> map) throws Exception {
+	public void setup(final Map<String, Collection<String>> map) throws Exception {
 		if (setup)
 			return;// this.hashes;
 		ngrams.clear();

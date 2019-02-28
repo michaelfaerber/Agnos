@@ -26,7 +26,6 @@ import com.beust.jcommander.internal.Lists;
 
 import alu.linking.candidategeneration.CandidateGenerator;
 import alu.linking.candidategeneration.CandidateGeneratorMap;
-import alu.linking.candidategeneration.PossibleAssignment;
 import alu.linking.config.constants.Comparators;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.AssignmentChooser;
@@ -34,6 +33,8 @@ import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
 import alu.linking.mentiondetection.StopwordsLoader;
+import alu.linking.postprocessing.MentionPruner;
+import alu.linking.postprocessing.ThresholdPruner;
 import alu.linking.structure.Executable;
 import alu.linking.utils.DetectionUtils;
 import alu.linking.utils.Stopwatch;
@@ -45,17 +46,18 @@ public class GERBILAPIAnnotator implements Executable {
 	private final String chooserWatch = "Scorer (Watch)";
 	private final String detectionWatch = MentionDetector.class.getName();
 	private final String linking = "Linking (Watch)";
-	private final boolean REMOVE_OVERLAP = true;
+	private final boolean REMOVE_OVERLAP = false;
 	private final boolean PROCESS_JUST_MARKINGS = false;
 	private static final boolean detailed = false;
 	// No touchy
 	private Boolean init = false;
 	private final Comparator<Mention> offsetComparator = Comparators.mentionOffsetComp;
 
-	private AssignmentChooser chooser = null;
 	private Set<String> stopwords = null;
 	private MentionDetector md = null;
-	private CandidateGenerator<String> candidateGenerator;
+	private CandidateGenerator<String> candidateGenerator = null;
+	private AssignmentChooser chooser = null;
+	private MentionPruner pruner = null;
 
 	public GERBILAPIAnnotator(final EnumModelType KG) {
 		this.KG = KG;
@@ -77,26 +79,24 @@ public class GERBILAPIAnnotator implements Executable {
 			getLogger().info("Initializing Framework Structures");
 			getLogger().info("Loading mention possibilities...");
 			final StopwordsLoader stopwordsLoader = new StopwordsLoader(KG);
-			stopwords = stopwordsLoader.getStopwords();
-			final Map<String, Set<String>> map = DetectionUtils.loadSurfaceForms(this.KG, stopwordsLoader);
+			this.stopwords = stopwordsLoader.getStopwords();
+			final Map<String, Collection<String>> map = DetectionUtils.loadSurfaceForms(this.KG, stopwordsLoader);
 			final InputProcessor inputProcessor = new InputProcessor(stopwords);
 			// ########################################################
 			// Mention Detection
 			// ########################################################
-			md = DetectionUtils.setupMentionDetection(KG, map, inputProcessor);
+			this.md = DetectionUtils.setupMentionDetection(KG, map, inputProcessor);
 
 			// ########################################################
 			// Candidate Generator
 			// ########################################################
-			candidateGenerator = new CandidateGeneratorMap(map);
+			this.candidateGenerator = new CandidateGeneratorMap(map);
 			Stopwatch.endOutputStart(getClass().getName());
-			System.out.println("Started detection!");
-			// In order to check if exec duration depends on one-time loading
-			// or whether it will 'always' be this approx. speed for this case
 			// Initialise AssignmentChooser
 			Stopwatch.start(chooserWatch);
-			chooser = new AssignmentChooser(this.KG);
+			this.chooser = new AssignmentChooser(this.KG);
 			Stopwatch.endOutput(chooserWatch);
+			this.pruner = new ThresholdPruner(1.0d);
 			init = true;
 		} catch (Exception exc) {
 			getLogger().error("Exception during init", exc);
@@ -167,16 +167,16 @@ public class GERBILAPIAnnotator implements Executable {
 			if (orderedMarkings != null && orderedMarkings.size() > 0 // && orderedMarkings.size() > MIN_MARKINGS
 			) {
 				text = markingsToText(document, orderedMarkings);
-				System.out.println("Using [Markings]:" + smallText(text));
+				getLogger().info("Using [Markings]:" + smallText(text));
 			} else {
 				text = document.getText();
 				orderedMarkings = null;
-				System.out.println("No markings; Using [plain text]:" + smallText(text));
+				getLogger().info("No markings; Using [plain text]:" + smallText(text));
 			}
 		} else {
 			// Processes the entire input text
 			text = document.getText();
-			System.out.println("Using [plain text]:" + smallText(text));
+			getLogger().info("Using [plain text]:" + smallText(text));
 			orderedMarkings = null;
 		}
 
@@ -200,7 +200,7 @@ public class GERBILAPIAnnotator implements Executable {
 		final int length = 50;
 		final StringBuilder sb = new StringBuilder(text.substring(0, Math.min(text.length(), length)));
 		if (text.length() > length) {
-			sb.append("[...]");
+			sb.append("[...] (" + text.length() + ")");
 		}
 		return sb.toString();
 	}
@@ -332,16 +332,15 @@ public class GERBILAPIAnnotator implements Executable {
 		// Display them
 		// DetectionUtils.displayMentions(getLogger(), mentions, true);
 		Stopwatch.endOutput(linking);
-		return mentions;
-	}
 
-	private void displayMentions(List<Mention> mentions) {
-		final org.apache.log4j.Logger log = getLogger();
-		for (Mention m : mentions) {
-			for (PossibleAssignment assignment : m.getPossibleAssignments()) {
-				log.info("M:" + m.getMention() + "->PA:" + assignment.getAssignment());
-			}
-		}
+		// ########################################################
+		// Pruning
+		// ########################################################
+		getLogger().info("Before Pruning:" + mentions);
+		mentions = this.pruner.prune(mentions);
+		getLogger().info("After Pruning:" + mentions);
+
+		return mentions;
 	}
 
 	/**
@@ -419,10 +418,11 @@ public class GERBILAPIAnnotator implements Executable {
 				if (leftMention.overlaps(rightMention)) {
 					// Remove smaller one
 					final int mentionLenDiff = leftMention.getMention().length() - rightMention.getMention().length();
+					final boolean sameFinalMention = rightMention.getMention().equals(leftMention.getMention());
 					if (mentionLenDiff > 0) {
 						// If they have the same mention, remove the longer one, otherwise the shorter
 						// one
-						if (rightMention.getMention().equals(leftMention.getMention())) {
+						if (sameFinalMention) {
 							toRemoveMentions.add(leftMention);
 						} else {
 							// Left is bigger, so remove right
@@ -430,8 +430,8 @@ public class GERBILAPIAnnotator implements Executable {
 						}
 					} else {
 						// If they have the same mention, remove the longer one, otherwise the shorter
-						// one
-						if (rightMention.getMention().equals(leftMention.getMention())) {
+						// one -> idea is to remove noise/stopwords as much as possible
+						if (sameFinalMention) {
 							toRemoveMentions.add(rightMention);
 						} else {
 							// Right is bigger or EQUAL to left; if equal, it doesn't matter which...

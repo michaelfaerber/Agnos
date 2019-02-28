@@ -2,8 +2,8 @@ package alu.linking.preprocessing.embeddings;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 import com.google.code.externalsorting.ExternalSort;
 
@@ -40,7 +40,7 @@ public class SSPEmbeddingGenerator implements Executable {
 		 */
 		try {
 			// Should contain entity surface form linking
-			final Map<String, Set<String>> mapEntitySF = new MentionPossibilityLoader(KG)
+			final Map<String, Collection<String>> mapEntitySF = new MentionPossibilityLoader(KG)
 					.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
 			// Concat wanted contents to single file
 			final File[] sfInputFiles = new File(FilePaths.DIR_QUERY_OUT_SURFACEFORM.getPath(KG)).listFiles();

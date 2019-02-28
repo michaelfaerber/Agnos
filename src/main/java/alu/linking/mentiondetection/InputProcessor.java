@@ -1,6 +1,7 @@
 package alu.linking.mentiondetection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -167,7 +168,16 @@ public class InputProcessor {
 	 * @return
 	 */
 	public static String[] process(final String input) {
-		return input.replaceAll("\\p{Punct}", "").toLowerCase().split("\\p{Space}+");// POSIX class
+		final String retStr = input.replaceAll("\\p{Punct}", "").toLowerCase();
+//		final String[] ret;
+//		if ((ret = retStr.split("\\p{Space}+")) == null || ret.length == 0) {
+//			System.out.println("<Empty>: "+input);
+//			return new String[] { retStr };
+//		} else {
+//			System.out.println("Works! "+input);
+//			return ret;
+//		}
+		return retStr.split("\\p{Space}+");// POSIX class
 	}
 
 	/**
@@ -190,9 +200,10 @@ public class InputProcessor {
 	 * @return split tokens excluding any defined stopwords
 	 */
 	public static String[] processAndRemoveStopwords(final String input, final Collection<String> blacklist) {
-		final String[] inputArr = process(input);// POSIX class
+		final String[] inputArr = process(input);// to lower case, space splitting etc.
 		final List<String> ret = Lists.newArrayList();
 		if (blacklist == null) {
+			// No blacklist, so jump out with the normal-processed words
 			return inputArr;
 		}
 		for (String str : inputArr) {
@@ -231,14 +242,19 @@ public class InputProcessor {
 	 * @param map
 	 * @return
 	 */
-	public static <V> HashMap<String, V> processCollection(final Map<String, V> map,
+	public static <V> Map<String, Collection<V>> processCollection(final Map<String, Collection<V>> map,
 			final InputProcessor inputProcessor) {
-		final HashMap<String, V> ret = new HashMap<>(map.keySet().size());
-		map.forEach((key, value) -> {
-			if (key != null) {
-				ret.put(InputProcessor.combineProcessedInput(inputProcessor.processAndRemoveStopwords(key)), value);
+		final HashMap<String, Collection<V>> ret = new HashMap<>(map.keySet().size());
+		for (Map.Entry<String, Collection<V>> e : map.entrySet()) {
+			final String key = InputProcessor
+					.combineProcessedInput(inputProcessor.processAndRemoveStopwords(e.getKey()));
+			final Collection<V> val = ret.get(key);
+			if (val == null) {
+				ret.put(e.getKey(), e.getValue());
+			} else {
+				val.addAll(e.getValue());
 			}
-		});
+		}
 		return ret;
 	}
 

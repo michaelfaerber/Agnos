@@ -8,7 +8,6 @@ import java.util.Scanner;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
-import org.semanticweb.yars.nx.Node;
 
 import alu.linking.candidategeneration.CandidateGenerator;
 import alu.linking.candidategeneration.CandidateGeneratorMap;
@@ -36,7 +35,7 @@ public class LauncherTestEmbeddingSimilarity {
 			getLogger().info("Testing embedding similarity");
 			final EnumModelType KG = EnumModelType.DBPEDIA_FULL;
 			System.out.println("Loading mention possibilities...");
-			final Map<String, Set<String>> map = DetectionUtils.loadSurfaceForms(KG, null);
+			final Map<String, Collection<String>> map = DetectionUtils.loadSurfaceForms(KG, null);
 			final StopwordsLoader stopwordsLoader = new StopwordsLoader(KG);
 			final Set<String> stopwords = stopwordsLoader.getStopwords();
 			final InputProcessor inputProcessor = new InputProcessor(stopwords);

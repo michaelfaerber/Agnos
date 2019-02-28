@@ -63,7 +63,7 @@ public class PageRankLoader implements Executable {
 	 * @return score associated to the entity
 	 */
 	public Number getScore(final String entity) {
-		return this.pagerankScores.get(entity);
+		return this.pagerankScores.get(processKey(entity));
 	}
 
 	/**
@@ -94,29 +94,43 @@ public class PageRankLoader implements Executable {
 		return topKList.subList(0, cutOffIndex);
 	}
 
-	public <T> List<AssignmentScore> getTopK(final Collection<T> assignments, final int topK,
-			final double minThreshold) {
-		final List<AssignmentScore> topKList = getTopK(assignments, topK);
+	/**
+	 * Cuts off the passed (sorted) list if the score goes under the passed
+	 * threshold<br>
+	 * Returns NULL rather than an empty list if the first one already is below
+	 * threshold
+	 * 
+	 * @param scores
+	 * @param minThreshold
+	 * @return
+	 */
+	public <T> List<AssignmentScore> cutOff(final List<AssignmentScore> scores, final double minThreshold) {
 		int cutOffIndex = -1;
-		for (int i = 0; i < topKList.size(); ++i) {
-			final AssignmentScore assScore = topKList.get(i);
+		int counter = 0;
+		for (AssignmentScore assScore : scores) {
 			if (assScore.score.doubleValue() < minThreshold) {
-				cutOffIndex = i;
+				cutOffIndex = counter;
 				break;
 			}
+			counter++;
 		}
 		if (cutOffIndex == -1) {
-			//Means none of them was too small
-			cutOffIndex = topKList.size();
+			// Means none of them was too small, so take them all!
+			// cutOffIndex = scores.size();
+			//getLogger().info("ALL scores are good 'enough':" + scores);
+			return scores;
 		}
-		
+
 		if (cutOffIndex == 0) {
+			//getLogger().info("NULL - Too small Scores list:" + scores);
 			return null;
 		}
-		return topKList.subList(0, cutOffIndex);
+		//getLogger().info("LIMITED scores [0," + cutOffIndex + "]:" + scores);
+		final List<AssignmentScore> retList = scores.subList(0, cutOffIndex);
+		return retList;
 	}
 
-	public <T> List<AssignmentScore> getTopK(final Collection<T> assignments, final int topK) {
+	public <T extends Comparable<T>> List<AssignmentScore> getTopK(final Collection<T> assignments, final int topK) {
 		final List<AssignmentScore> assignmentScores = Lists.newArrayList();
 		for (T possAss : assignments) {
 			assignmentScores
@@ -140,7 +154,12 @@ public class PageRankLoader implements Executable {
 			while (nxparser.hasNext()) {
 				final Node[] nodes = nxparser.next();
 				try {
-					map.put(nodes[0].toString(), Float.valueOf(nodes[2].toString()));
+					final String key = processKey(nodes[0].toString());
+					Number val;
+					if ((val = map.get(key)) == null) {
+						val = 0f;
+					}
+					map.put(key, val.floatValue() + Float.valueOf(nodes[2].toString()));
 				} catch (ArrayIndexOutOfBoundsException aiooe) {
 					getLog().error("Error appeared with: " + Arrays.toString(nodes));
 					throw aiooe;
@@ -150,6 +169,10 @@ public class PageRankLoader implements Executable {
 			e.printStackTrace();
 		}
 		return map;
+	}
+
+	private static String processKey(final String key) {
+		return key.toLowerCase();
 	}
 
 	public static Logger getLog() {
