@@ -30,7 +30,7 @@ public class MentionDetectorMap implements MentionDetector, Loggable {
 		// Adds everything in lower case
 		this.keys = new HashSet<>();
 		for (String key : inKeys) {
-			this.keys.add(InputProcessor.combineProcessedInput(InputProcessor.process(key)));
+			this.keys.add(InputProcessor.combineProcessedInput(InputProcessor.processToStr(key)));
 		}
 		this.inputProcessor = inputProcessor;
 	}

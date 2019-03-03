@@ -28,6 +28,7 @@ import org.semanticweb.yars.nx.util.NxUtil;
 
 import alu.linking.config.constants.Strings;
 import alu.linking.config.kg.EnumModelType;
+import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.StopwordsLoader;
 import alu.linking.structure.Loggable;
 import alu.linking.structure.MentionPossibilityProcessor;
@@ -331,7 +332,9 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 	 */
 	private void addSpacedPossibilities(HashMap<String, Collection<String>> mentionPossibilities, String words,
 			String source) {
-		final String[] multiWordTokens = words.split("\\p{Space}");
+		//Add pattern Matcher for proper processing
+		//final String[] multiWordTokens = words.split("\\p{Space}");
+		final String[] multiWordTokens = InputProcessor.processToStr(words);
 		if (multiWordTokens.length > 1) {
 			for (String word : multiWordTokens) {
 				addPossibility(mentionPossibilities, word, source);

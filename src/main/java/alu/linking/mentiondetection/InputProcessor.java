@@ -1,7 +1,6 @@
 package alu.linking.mentiondetection;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -31,15 +30,17 @@ public class InputProcessor {
 
 	public static void main(String[] args) {
 		final String[] inStrings = new String[] { // "", " ", " I have ",
-				"I have   a cat that I like playing with  " };
+				"I have   a cat, !!that I like- playing with  " };
 		// final EnumDetectionType detectionMode =
 		// EnumDetectionType.BOUND_DYNAMIC_WINDOW;
 		for (String inString : inStrings) {
 			for (EnumDetectionType detectionMode : EnumDetectionType.values()) {
 				System.out.println(detectionMode.name());
 				final List<Mention> mentions = new InputProcessor(null).createMentions(inString, null, detectionMode);
+				System.out.println(mentions.size() + "x Mentions");
 				for (Mention m : mentions) {
 					// System.out.println(m.getOriginalMention() + " - " + m.getOffset());
+					// System.out.println("[" + m.getOriginalMention() + "]");
 					System.out.println("[" + m.getOriginalWithoutStopwords() + "]");
 				}
 			}
@@ -51,7 +52,11 @@ public class InputProcessor {
 	}
 
 	private static final String tokenSeparator = " ";// space
-	private static final Pattern spacePattern = Pattern.compile("\\p{Space}+");
+	// Greedy from the front, reluctant from the back
+	// Take all the spaces away in the front
+	private static final Pattern spacePunctPattern = Pattern.compile("(\\p{Punct}+?|\\p{Space}++)");
+	// Perfect from the front, but takes too much in the back (aka. should stop
+	// sooner): .compile("(\\p{Punct}|\\p{Space})++");
 
 	public List<Mention> createMentions(final String input, final String source,
 			final EnumDetectionType detectionMode) {
@@ -71,20 +76,77 @@ public class InputProcessor {
 		if (input == null || input.length() == 0) {
 			return retList;
 		}
-		final Matcher matcher = spacePattern.matcher(input);
+		final List<TextOffset> tokens = process(input, detectionMode);
+		for (TextOffset token : tokens) {
+			final Mention mention = createMention(token.text, token.offset, blacklist);
+			if (mention != null) {
+				retList.add(mention);
+			}
+		}
+		return retList;
+	}
 
-		final List<Integer> spacedIndices = Lists.newArrayList();
+	private static Mention createMention(String original, int startIndex, Collection<String> blacklist) {
+		final String processedInput = combineProcessedInput(processAndRemoveStopwords(original, blacklist));
+		if (processedInput == null || processedInput.length() == 0) {
+			return null;
+		}
+		return new Mention(null, null, startIndex, 0f, original, processedInput);
+	}
+
+	public static String[] processToStr(final String input) {
+		final List<TextOffset> tokens = process(input, EnumDetectionType.SINGLE_WORD);
+		final String[] retArr = new String[tokens.size()];
+		for (int i = 0; i < tokens.size(); ++i) {
+			final TextOffset token = tokens.get(i);
+			retArr[i] = token.text;
+		}
+		return retArr;
+	}
+
+	/**
+	 * Call to {@link #process(String, EnumDetectionType)} with
+	 * EnumDetectionType.BOUND_DYNAMIC_WINDOW as the default detection mode
+	 * 
+	 * @param input
+	 * @param detectionMode
+	 * @return
+	 */
+	public static List<TextOffset> process(final String input) {
+		return process(input, EnumDetectionType.BOUND_DYNAMIC_WINDOW);
+	}
+
+	/**
+	 * Centralised splitting method (without stopword removal)
+	 * 
+	 * @param input
+	 * @return
+	 */
+	public static List<TextOffset> process(final String input, final EnumDetectionType detectionMode) {
+		// final String retStr = input.replaceAll("\\p{Punct}", "").toLowerCase();
+
+		final List<TextOffset> retList = Lists.newArrayList();
+		// Splits on a space or punctuation
+		final Matcher matcher = spacePunctPattern.matcher(input);
+
+		final TreeSet<Integer> spacedIndicesUnique = new TreeSet<Integer>();
 		// Add initial index so substring starts from beginning of text
 		int counter = 0;
-		spacedIndices.add(0);
+		spacedIndicesUnique.add(0);
 		while (matcher.find()) {
-			spacedIndices.add(matcher.start() + matcher.group().length());
+			final int groupLen = matcher.group().length();
+			spacedIndicesUnique.add(matcher.start() + groupLen);
 		}
-		spacedIndices.add(input.length() + 1);
+		spacedIndicesUnique.add(input.length() + 1);
+
+		final List<Integer> spacedIndices = Lists.newArrayList(spacedIndicesUnique);
 
 //		System.out.println("Input:" + input);
 //		System.out.println("Indices:" + spacedIndices);
 //		System.out.println("Counter (same as indices.size()): " + counter);
+		final int MIN_MENTION_LENGTH = Numbers.MENTION_MIN_SIZE.val.intValue();
+		// Minimum additional word length required to be considered as a mention
+		final int MIN_LENGTH_CONNECTING_WORD = Numbers.MENTION_MIN_WORD_VARIATION.val.intValue();
 
 		switch (detectionMode) {
 		case BOUND_DYNAMIC_WINDOW:
@@ -99,7 +161,12 @@ public class InputProcessor {
 //					System.out.println("i(" + i + ")/j(" + j + "): START(" + startIndex + ")/END(" + endIndex + ")");
 					final String subStr = input.substring(subStartIndex, endIndex);
 					sbConcat.append(subStr);
-					retList.add(createMention(sbConcat.toString(), startIndex, blacklist));
+					if (subStr.length() >= MIN_LENGTH_CONNECTING_WORD) {
+						final String mentionText = sbConcat.toString();
+						if (mentionText.length() >= MIN_MENTION_LENGTH) {
+							retList.add(new TextOffset().text(mentionText).offset(startIndex));
+						}
+					}
 					prevIndex = endIndex;
 				}
 			}
@@ -116,7 +183,10 @@ public class InputProcessor {
 			// Just Single words
 			for (int i = 0; i < spacedIndices.size() - 1; ++i) {
 				final int startIndex = spacedIndices.get(i), endIndex = spacedIndices.get(i + 1) - 1;
-				retList.add(createMention(input.substring(startIndex, endIndex), startIndex, blacklist));
+				final String mentionText = input.substring(startIndex, endIndex);
+				if (mentionText.length() > MIN_MENTION_LENGTH && mentionText.length() > MIN_LENGTH_CONNECTING_WORD) {
+					retList.add(new TextOffset().text(mentionText).offset(startIndex));
+				}
 			}
 			break;
 		case UNBOUND_DYNAMIC_WINDOW:
@@ -124,10 +194,16 @@ public class InputProcessor {
 			 * Example: Input: I have a cat Processed as: I; I have; I have a; I have a cat;
 			 * have; have a; have a cat; ...
 			 */
+			int prevLength = 0;
 			for (int i = 0; i < spacedIndices.size(); ++i) {
 				for (int j = i + 1; j < spacedIndices.size(); ++j) {
 					final int startIndex = spacedIndices.get(i), endIndex = spacedIndices.get(j) - 1;
-					retList.add(createMention(input.substring(startIndex, endIndex), startIndex, blacklist));
+					final String mentionText = input.substring(startIndex, endIndex);
+					if (mentionText.length() > MIN_MENTION_LENGTH
+							&& (mentionText.length() - prevLength) > MIN_LENGTH_CONNECTING_WORD) {
+						retList.add(new TextOffset().text(mentionText).offset(startIndex));
+					}
+					prevLength = mentionText.length();
 				}
 			}
 			break;
@@ -153,31 +229,9 @@ public class InputProcessor {
 			break;
 		}
 
+		// return retList.toArray(new String[retList.size()]);
 		return retList;
-	}
-
-	private static Mention createMention(String original, int startIndex, Collection<String> blacklist) {
-		final String processedInput = combineProcessedInput(processAndRemoveStopwords(original, blacklist));
-		return new Mention(null, null, startIndex, 0f, original, processedInput);
-	}
-
-	/**
-	 * Centralised splitting method (without stopword removal)
-	 * 
-	 * @param input
-	 * @return
-	 */
-	public static String[] process(final String input) {
-		final String retStr = input.replaceAll("\\p{Punct}", "").toLowerCase();
-//		final String[] ret;
-//		if ((ret = retStr.split("\\p{Space}+")) == null || ret.length == 0) {
-//			System.out.println("<Empty>: "+input);
-//			return new String[] { retStr };
-//		} else {
-//			System.out.println("Works! "+input);
-//			return ret;
-//		}
-		return retStr.split("\\p{Space}+");// POSIX class
+		// return retStr.split("\\p{Space}+");// POSIX class
 	}
 
 	/**
@@ -200,14 +254,14 @@ public class InputProcessor {
 	 * @return split tokens excluding any defined stopwords
 	 */
 	public static String[] processAndRemoveStopwords(final String input, final Collection<String> blacklist) {
-		final String[] inputArr = process(input);// to lower case, space splitting etc.
+		final String[] inputArr = processToStr(input);// to lower case, space splitting etc.
 		final List<String> ret = Lists.newArrayList();
 		if (blacklist == null) {
 			// No blacklist, so jump out with the normal-processed words
 			return inputArr;
 		}
 		for (String str : inputArr) {
-			if (!blacklist.contains(str)) {
+			if (!blacklist.contains(str) && !blacklist.contains(str.toLowerCase())) {
 				ret.add(str);
 			}
 		}

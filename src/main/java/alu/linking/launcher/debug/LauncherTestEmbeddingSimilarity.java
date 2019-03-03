@@ -71,7 +71,7 @@ public class LauncherTestEmbeddingSimilarity {
 					System.out.println("\\\\033[1mAwaiting user input\\\\033[0m...");
 					// inputLine = sc.nextLine();
 					inputLine = "Victoria Beckham";
-					mentionsLeft = md.detect(InputProcessor.combineProcessedInput(InputProcessor.process(inputLine)));
+					mentionsLeft = md.detect(InputProcessor.combineProcessedInput(InputProcessor.processToStr(inputLine)));
 					System.out.println("Detected [" + mentionsLeft.size() + "] mentions.");
 					for (Mention mention : mentionsLeft) {
 						mention.updatePossibleAssignments(candidateGenerator.generate(mention));
@@ -79,7 +79,7 @@ public class LauncherTestEmbeddingSimilarity {
 
 					// inputLine = sc.nextLine();
 					inputLine = "David Beckham";
-					mentionsRight = md.detect(InputProcessor.combineProcessedInput(InputProcessor.process(inputLine)));
+					mentionsRight = md.detect(InputProcessor.combineProcessedInput(InputProcessor.processToStr(inputLine)));
 					System.out.println("Detected [" + mentionsRight.size() + "] mentions.");
 					for (Mention mention : mentionsRight) {
 						mention.updatePossibleAssignments(candidateGenerator.generate(mention));
