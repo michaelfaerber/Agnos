@@ -35,7 +35,7 @@ public class Mention implements Loggable {
 
 	@Override
 	public String toString() {
-		return getMention();
+		return getMention() + "/" + getOriginalMention() +"/" + getOriginalWithoutStopwords();
 	}
 
 	/**

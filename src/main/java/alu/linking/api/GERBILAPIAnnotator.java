@@ -49,6 +49,7 @@ public class GERBILAPIAnnotator implements Executable {
 	private final boolean REMOVE_OVERLAP = false;
 	private final boolean PROCESS_JUST_MARKINGS = false;
 	private static final boolean detailed = false;
+	private static int docCounter = 0;
 	// No touchy
 	private Boolean init = false;
 	private final Comparator<Mention> offsetComparator = Comparators.mentionOffsetComp;
@@ -186,6 +187,8 @@ public class GERBILAPIAnnotator implements Executable {
 		// 4. Add your generated Markings to the document
 		try {
 			document.setMarkings(new ArrayList<Marking>(annotateSafely(text, orderedMarkings, document.getText())));
+			document.setText(text);
+			document.setDocumentURI("http://informatik.uni-freiburg.de/document#" + docCounter++);
 		} catch (InterruptedException ie) {
 			getLogger().error("Exception while annotating.", ie);
 			return "";
@@ -196,7 +199,7 @@ public class GERBILAPIAnnotator implements Executable {
 		return nifDocument;
 	}
 
-	private String smallText(String text) {
+	public static String smallText(String text) {
 		final int length = 50;
 		final StringBuilder sb = new StringBuilder(text.substring(0, Math.min(text.length(), length)));
 		if (text.length() > length) {
@@ -297,7 +300,7 @@ public class GERBILAPIAnnotator implements Executable {
 		// Mention Detection
 		// ########################################################
 		mentions = md.detect(text);
-
+		getLogger().info("Detected " + mentions.size() + " mentions!");
 		// ------------------------------------------------------------------------------
 		// Change the offsets due to stopword-removal applied through InputProcessor
 		// modifying the actual input, therewith distorting it greatly
@@ -336,9 +339,9 @@ public class GERBILAPIAnnotator implements Executable {
 		// ########################################################
 		// Pruning
 		// ########################################################
-		getLogger().info("Before Pruning:" + mentions);
+		getLogger().info("Before Pruning(" + mentions.size() + "):" + mentions);
 		mentions = this.pruner.prune(mentions);
-		getLogger().info("After Pruning:" + mentions);
+		getLogger().info("After Pruning(" + mentions.size() + "):" + mentions);
 
 		return mentions;
 	}

@@ -22,7 +22,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 
@@ -294,9 +293,18 @@ public class MentionDetectorLSH implements MentionDetector, Loggable {
 				getLogger().error("Executor has not finished terminating");
 			}
 			// Removes all Mention objects that have no associated mention
-			return mentions.stream()
-					.filter(mention -> mention.getMention() != null && mention.getMention().length() > 0)
-					.collect(Collectors.toList());
+
+			final Iterator<Mention> itMention = mentions.iterator();
+			while (itMention.hasNext()) {
+				final Mention mention = itMention.next();
+				if (mention == null || mention.getMention() == null || mention.getMention().length() == 0) {
+					itMention.remove();
+				}
+			}
+			return mentions;
+//			return mentions.stream()
+//					.filter(mention -> mention.getMention() != null && mention.getMention().length() > 0)
+//					.collect(Collectors.toList());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -436,7 +444,7 @@ public class MentionDetectorLSH implements MentionDetector, Loggable {
 		executor.awaitTermination(10L, TimeUnit.MINUTES);
 		//
 		getLogger()
-				.debug("Finished computing signatures for " + doneCounter.get() + " / " + documentSize + " documents!");
+				.info("Finished computing signatures for " + doneCounter.get() + " / " + documentSize + " documents!");
 
 		this.hashes = hashes;
 		setup = true;

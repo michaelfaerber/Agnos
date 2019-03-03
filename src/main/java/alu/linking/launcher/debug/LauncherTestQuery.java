@@ -22,7 +22,7 @@ import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
 public class LauncherTestQuery {
 
 	public static void main(String[] args) {
-		final EnumModelType KG = EnumModelType.CRUNCHBASE2;
+		final EnumModelType KG = EnumModelType.MAG;
 		System.out.println("Testing query for: " + KG.name());
 		 final Dataset dataset =
 		 TDBFactory.createDataset(FilePaths.DATASET.getPath(KG));
