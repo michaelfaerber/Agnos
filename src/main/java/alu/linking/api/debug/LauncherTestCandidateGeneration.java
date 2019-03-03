@@ -144,7 +144,7 @@ public class LauncherTestCandidateGeneration {
 				"        nif:referenceContext  <http://www.aksw.org/gerbil/NifWebService/request_38#char=0,129> .\r\n" + 
 				"";
 		annotator.init();
-		annotator.annotate(nifString2);
+		annotator.annotateNIF(nifString2);
 	}
 		
 }

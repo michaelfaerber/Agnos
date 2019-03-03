@@ -15,6 +15,7 @@ import org.apache.jena.tdb.TDBFactory;
 import alu.linking.config.constants.EnumConnection;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
+import alu.linking.utils.Stopwatch;
 import virtuoso.jena.driver.VirtGraph;
 import virtuoso.jena.driver.VirtuosoQueryExecution;
 import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
@@ -24,8 +25,12 @@ public class LauncherTestQuery {
 	public static void main(String[] args) {
 		final EnumModelType KG = EnumModelType.MAG;
 		System.out.println("Testing query for: " + KG.name());
+		Stopwatch.start(LauncherTestQuery.class.getName());
 		 final Dataset dataset =
 		 TDBFactory.createDataset(FilePaths.DATASET.getPath(KG));
+		 System.out.println("Finished loading!");
+			Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
+			
 		 final Model model = dataset.getDefaultModel();
 //		final String queryStr = "select distinct ?s (CONCAT(CONCAT(?fname, \" \"), ?lname) AS ?o) where {\r\n"
 //				+ "?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://ontologycentral.com/2010/05/cb/vocab#Person> .\r\n"
@@ -33,8 +38,13 @@ public class LauncherTestQuery {
 //				+ "?s <http://ontologycentral.com/2010/05/cb/vocab#first_name> ?fname .\r\n" + "}";
 		System.out.println("Executing query...");
 		// getABC(model);
+		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
 		getPredicates(model);
+		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
 		getTypes(model);
+		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
+		getPredicatesGroupCounts(model);
+		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
 		// getRandom(model);
 		//testVirtuoso();
 		// getDBLPAuthors(model);
@@ -143,6 +153,16 @@ public class LauncherTestQuery {
 		System.out.println("# Predicates                               #");
 		System.out.println("############################################");
 		final String queryStr = "select distinct ?bPred where { \n" + "?aSubj ?bPred ?cObj . \n" + "}";
+		execQuery(model, queryStr);
+		System.out.println("---------------------------------------------");
+	}
+
+	
+	private static void getPredicatesGroupCounts(Model model) {
+		System.out.println("############################################");
+		System.out.println("# Predicate Counts                         #");
+		System.out.println("############################################");
+		final String queryStr = "select ?bPred (COUNT(?bPred) AS ?CT) where { \n" + "?aSubj ?bPred ?cObj . \n" + "} GROUP BY ?bPred";
 		execQuery(model, queryStr);
 		System.out.println("---------------------------------------------");
 	}

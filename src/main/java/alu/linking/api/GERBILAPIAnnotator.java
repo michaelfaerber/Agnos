@@ -66,10 +66,7 @@ public class GERBILAPIAnnotator implements Executable {
 
 	@Override
 	@SuppressWarnings("unused")
-	public void init() {
-		if (false) {
-			return;
-		}
+	public synchronized void init() {
 		synchronized (this.init) {
 			if (this.init)
 				return;
@@ -105,7 +102,7 @@ public class GERBILAPIAnnotator implements Executable {
 	}
 
 	@SuppressWarnings("unused")
-	public String annotate(final InputStream inputStream) {
+	public String annotateNIFInputStream(final InputStream inputStream) {
 		if (false) {
 			try (final BufferedReader brIn = new BufferedReader(new InputStreamReader(inputStream))) {
 				String line = null;
@@ -132,23 +129,23 @@ public class GERBILAPIAnnotator implements Executable {
 			return "";
 		}
 
-		return annotate(document);
+		return annotateDocument(document);
 	}
 
-	public String annotate(final String input) {
+	public String annotateNIF(final String nifInput) {
 		// Parse the NIF using a Parser (currently, we use only Turtle)
 		final TurtleNIFDocumentParser parser = new TurtleNIFDocumentParser();
 		final Document document;
 		try {
-			document = parser.getDocumentFromNIFString(input);
+			document = parser.getDocumentFromNIFString(nifInput);
 		} catch (Exception e) {
 			getLogger().error("Exception while reading request.", e);
 			return "";
 		}
-		return annotate(document);
+		return annotateDocument(document);
 	}
 
-	private String annotate(final Document document) {
+	public String annotateDocument(final Document nifDocument) {
 		// In case it hasn't been initialised yet
 		init();
 		final int MIN_MARKINGS = 1;
@@ -157,7 +154,7 @@ public class GERBILAPIAnnotator implements Executable {
 
 		// Ordered markings required to reconciliate the markings' detected mentions'
 		// offsets
-		List<Marking> orderedMarkings = getSortedMarkings(document);
+		List<Marking> orderedMarkings = getSortedMarkings(nifDocument);
 		// Whether to process just for the markings or all the entire document
 		if (PROCESS_JUST_MARKINGS) {
 			// Gets the markings - if there are any, it will annotate with them (making it a
@@ -167,16 +164,16 @@ public class GERBILAPIAnnotator implements Executable {
 
 			if (orderedMarkings != null && orderedMarkings.size() > 0 // && orderedMarkings.size() > MIN_MARKINGS
 			) {
-				text = markingsToText(document, orderedMarkings);
+				text = markingsToText(nifDocument, orderedMarkings);
 				getLogger().info("Using [Markings]:" + smallText(text));
 			} else {
-				text = document.getText();
+				text = nifDocument.getText();
 				orderedMarkings = null;
 				getLogger().info("No markings; Using [plain text]:" + smallText(text));
 			}
 		} else {
 			// Processes the entire input text
-			text = document.getText();
+			text = nifDocument.getText();
 			getLogger().info("Using [plain text]:" + smallText(text));
 			orderedMarkings = null;
 		}
@@ -186,26 +183,20 @@ public class GERBILAPIAnnotator implements Executable {
 		// (a.k.a annotations) depending on the task you want to solve
 		// 4. Add your generated Markings to the document
 		try {
-			document.setMarkings(new ArrayList<Marking>(annotateSafely(text, orderedMarkings, document.getText())));
-			document.setText(text);
-			document.setDocumentURI("http://informatik.uni-freiburg.de/document#" + docCounter++);
+			nifDocument.setMarkings(
+					new ArrayList<Marking>(annotatePlainText(text, orderedMarkings, nifDocument.getText())));
+			// Not really necessary methinks?
+			// nifDocument.setText(text);
+			// nifDocument.setDocumentURI("http://informatik.uni-freiburg.de/document#" +
+			// docCounter++);
 		} catch (InterruptedException ie) {
 			getLogger().error("Exception while annotating.", ie);
 			return "";
 		}
 		// 5. Generate a String containing the NIF and send it back to GERBIL
 		final TurtleNIFDocumentCreator creator = new TurtleNIFDocumentCreator();
-		final String nifDocument = creator.getDocumentAsNIFString(document);
-		return nifDocument;
-	}
-
-	public static String smallText(String text) {
-		final int length = 50;
-		final StringBuilder sb = new StringBuilder(text.substring(0, Math.min(text.length(), length)));
-		if (text.length() > length) {
-			sb.append("[...] (" + text.length() + ")");
-		}
-		return sb.toString();
+		final String retNifDocumentStr = creator.getDocumentAsNIFString(nifDocument);
+		return retNifDocumentStr;
 	}
 
 	private String markingsToText(final Document document, final List<Marking> markings) {
@@ -229,13 +220,22 @@ public class GERBILAPIAnnotator implements Executable {
 		return markings;
 	}
 
-	private Collection<? extends Marking> annotateSafely(final String text, final List<Marking> markings,
+	/**
+	 * 
+	 * @param markingsText plain string text to be annotated
+	 * @param markings     markings that are wanted
+	 * @param origText     original text (may vary from markingsText IF markings are
+	 *                     passed, otherwise they should be the same)
+	 * @return annotations
+	 * @throws InterruptedException
+	 */
+	private Collection<? extends Marking> annotatePlainText(final String markingsText, final List<Marking> markings,
 			final String origText) throws InterruptedException {
 		final List<Marking> retList = Lists.newArrayList();
 		// new ScoredNamedEntity(startPosition, length, uris, confidence);
 		// new Mention()... transform mention into a scored named entity
 
-		final List<Mention> mentions = linking(text);
+		final List<Mention> mentions = linking(markingsText);
 
 		if (markings != null) {
 			// If we're just using markings, we need to readjust the offsets for the output
@@ -467,7 +467,7 @@ public class GERBILAPIAnnotator implements Executable {
 				}
 			}
 			if (inputReader != null) {
-				return annotate(inputReader);
+				return annotateNIFInputStream(inputReader);
 			}
 		}
 		return null;
@@ -478,4 +478,14 @@ public class GERBILAPIAnnotator implements Executable {
 		// Tear down all the loaded data structures
 		return false;
 	}
+
+	public static String smallText(String text) {
+		final int length = 50;
+		final StringBuilder sb = new StringBuilder(text.substring(0, Math.min(text.length(), length)));
+		if (text.length() > length) {
+			sb.append("[...] (" + text.length() + ")");
+		}
+		return sb.toString();
+	}
+
 }

@@ -25,6 +25,11 @@ public class TestMarking {
 	@Override
 	public int hashCode() {
 		final int superHash = super.hashCode();
-		return (this.uri.hashCode() + this.mention.hashCode()) * 89 + superHash;
+		return (this.uri.hashCode() + this.mention.hashCode()) * 89;// + superHash;
+	}
+
+	@Override
+	public String toString() {
+		return "[" + this.mention + ", " + this.uri + "]";
 	}
 }
