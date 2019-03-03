@@ -29,23 +29,25 @@ public class LauncherEvaluateKORE {
 		annotator.init();
 		final TurtleNIFParser parser = new TurtleNIFParser();
 		List<Document> documents = null;
+		List<Document> copyDocuments = null;
 		try {
 			documents = parser.parseNIF(new FileInputStream(fileKORE50));
+			copyDocuments = parser.parseNIF(new FileInputStream(fileKORE50));
 		} catch (FileNotFoundException e) {
 			documents = null;
 			e.printStackTrace();
 		}
 
 		// Process one document after the other
-		for (Document inputDoc : documents) {
-
+		for (int i = 0; i < documents.size(); ++i) {
+			final Document inputDoc = documents.get(i);
 			getLogger().info("Evaluating:" + GERBILAPIAnnotator.smallText(inputDoc.getText()));
 			try {
-				final String results = annotator.annotate(inputDoc.getText());
+				final String results = annotator.annotateDocument(inputDoc);
 				// Read the output results and compare to the one I was handed
-				getLogger().info("########################## Results: ##########################");
-				getLogger().info(results);
-				getLogger().info("##############################################################");
+//				getLogger().info("########################## Results: ##########################");
+//				getLogger().info(results);
+//				getLogger().info("##############################################################");
 				final Document resultDoc = new TurtleNIFDocumentParser().getDocumentFromNIFString(results);
 //			Document resultDoc = null;
 //			switch (resultDocs.size()) {
@@ -63,7 +65,7 @@ public class LauncherEvaluateKORE {
 //			}
 
 				// Compare "result" doc's markings and the "input" doc's
-				compareMarkings(inputDoc.getMarkings(), resultDoc.getMarkings(), inputDoc.getText());
+				compareMarkings(copyDocuments.get(i).getMarkings(), resultDoc.getMarkings(), inputDoc.getText());
 			} catch (IOException ioe) {
 				getLogger().error("IOE Exception happened... ", ioe);
 				break;
@@ -79,6 +81,10 @@ public class LauncherEvaluateKORE {
 			final String inputText) {
 		final Set<TestMarking> setInputMarkings = transformToTestMarkings(inputMarkings, inputText);
 		final Set<TestMarking> setResultMarkings = transformToTestMarkings(resultMarkings, inputText);
+		getLogger().info("Input: List(" + inputMarkings.size() + "), Set(" + setInputMarkings.size() + ")");
+		getLogger().info("Result: List(" + resultMarkings.size() + "), Set(" + setResultMarkings.size() + ")");
+		getLogger().info("Input Set:" + setInputMarkings);
+		getLogger().info("Result Set:" + setResultMarkings);
 		double tp = 0, fp = 0, tn = 0, fn = 0;
 		for (TestMarking m : setInputMarkings) {
 			// Iterate through set, check if each is also in the result one
@@ -97,7 +103,7 @@ public class LauncherEvaluateKORE {
 				fp++;
 			}
 		}
-		final String outStr = "Markings TRUE(" + setInputMarkings.size() + ") / Found(" + setInputMarkings.size()
+		final String outStr = "Markings TRUE(" + setInputMarkings.size() + ") / Found(" + setResultMarkings.size()
 				+ "): TP(" + tp + "), FN(" + fn + "), FP(" + fp + "), TN(" + tn + ")";
 		final double precision = tp / (tp + fp);
 		final double recall = tp / (tp + fn);
@@ -117,7 +123,7 @@ public class LauncherEvaluateKORE {
 		final Set<TestMarking> ret = new HashSet<>();
 		for (Marking mark : markings) {
 			final NamedEntity ne = (NamedEntity) mark;
-			final String text = inputText.substring(ne.getStartPosition(), ne.getLength());
+			final String text = inputText.substring(ne.getStartPosition(), ne.getStartPosition() + ne.getLength());
 			final Set<String> uris = ne.getUris();
 			if (uris.size() == 0) {
 				getLogger().warn("No URI passed...");

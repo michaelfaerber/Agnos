@@ -36,7 +36,7 @@ public class LauncherEvaluateFiles {
 				if (file.isFile()) {
 					final FileInputStream inputStream = new FileInputStream(file);
 					System.out.println("Evaluating:" + file.getAbsolutePath());
-					final String results = annotator.annotate(inputStream);
+					final String results = annotator.annotateNIFInputStream(inputStream);
 					final String outFilePath = outputDir + file.getName();
 					try (BufferedWriter bwOut = new BufferedWriter(new FileWriter(new File(outFilePath)))) {
 						System.out.println("Outputting results to:" + outFilePath);

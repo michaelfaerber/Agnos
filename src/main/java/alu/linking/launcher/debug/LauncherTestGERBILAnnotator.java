@@ -18,7 +18,7 @@ public class LauncherTestGERBILAnnotator {
 		try (final FileInputStream inputStream = new FileInputStream(
 				new File("./evaluation/kore50-nif_angelina.ttl"))) {
 			System.out.println("Annotated stuff:");
-			System.out.println(gerbil.annotate(inputStream));
+			System.out.println(gerbil.annotateNIFInputStream(inputStream));
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
