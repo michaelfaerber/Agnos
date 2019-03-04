@@ -1,4 +1,6 @@
-package alu.linking.disambiguation.scorers.embedhelp;
+package alu.linking.disambiguation.scorers.subpagerank;
+
+import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
 
 public abstract class AbstractScorerGraph {
 	// How many iterations
