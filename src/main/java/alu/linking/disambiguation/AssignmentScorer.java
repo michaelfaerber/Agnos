@@ -25,6 +25,7 @@ import alu.linking.disambiguation.scorers.GraphWalkEmbeddingScorer;
 import alu.linking.disambiguation.scorers.PageRankScorer;
 import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
 import alu.linking.disambiguation.scorers.hillclimbing.HillClimbingPicker;
+import alu.linking.disambiguation.scorers.subpagerank.SubPageRankPicker;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 
@@ -56,10 +57,8 @@ public class AssignmentScorer<N> implements Loggable {
 				FilePaths.FILE_GRAPH_WALK_ID_MAPPING_ENTITY_HUMAN.getPath(KG),
 				FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG));
 		final EntitySimilarityService similarityService = new EntitySimilarityService(entityEmbeddingsMap);
-		PossibleAssignment
-				.addPostScorer(new GraphWalkEmbeddingScorer(new HillClimbingPicker(similarityService, pagerankLoader)));
-		// PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new
-		// SubPageRankPicker(similarityService, 0.8d)));
+		//PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new HillClimbingPicker(similarityService, pagerankLoader)));
+		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new SubPageRankPicker(similarityService, 0.8d)));
 		// PossibleAssignment.addPostScorer(new SSPEmbeddingScorer(KG));
 
 		for (PostScorer postScorer : PossibleAssignment.getPostScorers()) {

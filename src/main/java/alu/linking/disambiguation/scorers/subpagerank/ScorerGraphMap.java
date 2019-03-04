@@ -17,8 +17,8 @@ import alu.linking.utils.Stopwatch;
 public class ScorerGraphMap extends AbstractScorerGraph implements Loggable {
 	private Map<String, Double> prScores = new HashMap<>();
 
-	ScorerGraphMap(final EntitySimilarityService similarityService) {
-		super(similarityService);
+	ScorerGraphMap(final EntitySimilarityService similarityService, final double minSimilarityThreshold) {
+		super(similarityService, minSimilarityThreshold);
 	}
 
 	public ScorerGraphMap startValue(Number num) {
@@ -51,7 +51,7 @@ public class ScorerGraphMap extends AbstractScorerGraph implements Loggable {
 						for (String targetEntity : eTarget.getValue()) {
 							final double sim = this.similarityService.similarity(sourceEntity, targetEntity)
 									.doubleValue();
-							if (sim < MIN_SIMILARITY) {
+							if (sim < this.minEdgeSimilarityThreshold) {
 								// skip if too small
 								continue;
 							}
@@ -87,16 +87,25 @@ public class ScorerGraphMap extends AbstractScorerGraph implements Loggable {
 		Stopwatch.endOutputStart(getClass().getName());
 		for (int i = 0; i < this.iter; i++) {
 			for (final String entity : entities) {
-				final List<String> incLinks = mapIncToEntity.get(entity);
+				final List<String> incEntities = mapIncToEntity.get(entity);
 
 				double pageRank = initDampingPR;
-				for (final String inc : incLinks) {
-					Double pageRankIn = prScores.get(inc);
+				for (final String incEntity : incEntities) {
+					Double pageRankIn = prScores.get(incEntity);
+					// Entity similarity weight - they should all still be cached from the setup
+					// before
+					Number weight = this.similarityService.similarity(entity, incEntity);
+					if (weight == null) {
+						// Should never be this low due to the threshold... so continue and ignore
+						// increasing PR value (as this would just multiply by 0)
+						weight = 0d;
+						continue;
+					}
 					if (pageRankIn == null) {
 						pageRankIn = this.startValue;
 					}
-					final double outAmt = mapOutEntityAmt.get(inc).doubleValue();
-					pageRank += this.damping * (pageRankIn.doubleValue() / outAmt);
+					final double outAmt = mapOutEntityAmt.get(incEntity).doubleValue();
+					pageRank += this.damping * weight.doubleValue() * (pageRankIn.doubleValue() / outAmt);
 				}
 				prScores.put(entity, pageRank);
 			}

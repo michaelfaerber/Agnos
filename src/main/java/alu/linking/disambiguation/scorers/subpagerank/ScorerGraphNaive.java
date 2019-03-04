@@ -21,8 +21,7 @@ public class ScorerGraphNaive extends AbstractScorerGraph {
 
 	protected ScorerGraphNaive(final EntitySimilarityService similarityService,
 			final double minEdgeSimilarityThreshold) {
-		super(similarityService);
-		this.minEdgeSimilarityThreshold = minEdgeSimilarityThreshold;
+		super(similarityService, minEdgeSimilarityThreshold);
 	}
 
 	public void addNode(final String nodeName) {
