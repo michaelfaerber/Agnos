@@ -24,7 +24,7 @@ import alu.linking.disambiguation.pagerank.PageRankLoader;
 import alu.linking.disambiguation.scorers.GraphWalkEmbeddingScorer;
 import alu.linking.disambiguation.scorers.PageRankScorer;
 import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
-import alu.linking.disambiguation.scorers.embedhelp.HillClimbingPicker;
+import alu.linking.disambiguation.scorers.hillclimbing.HillClimbingPicker;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 

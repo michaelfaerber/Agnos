@@ -19,7 +19,7 @@ import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.PostScorer;
 import alu.linking.disambiguation.scorers.embedhelp.ClusterItemPicker;
 import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
-import alu.linking.disambiguation.scorers.embedhelp.HillClimbingPicker;
+import alu.linking.disambiguation.scorers.hillclimbing.HillClimbingPicker;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 import alu.linking.utils.EmbeddingsUtils;

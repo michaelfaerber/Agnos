@@ -1,4 +1,4 @@
-package alu.linking.disambiguation.scorers.embedhelp;
+package alu.linking.disambiguation.scorers.subpagerank;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -10,6 +10,8 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.jena.ext.com.google.common.collect.Lists;
+
+import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
 
 public class ScorerGraphNaive extends AbstractScorerGraph {
 	private final Map<String, ScorerGraphNode> nodes = new HashMap<String, ScorerGraphNode>();

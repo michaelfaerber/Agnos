@@ -1,4 +1,4 @@
-package alu.linking.disambiguation.scorers.embedhelp;
+package alu.linking.disambiguation.scorers.subpagerank;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -10,6 +10,7 @@ import java.util.Set;
 import com.beust.jcommander.internal.Lists;
 
 import alu.linking.disambiguation.pagerank.AssignmentScore;
+import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
 import alu.linking.structure.Loggable;
 import alu.linking.utils.Stopwatch;
 
