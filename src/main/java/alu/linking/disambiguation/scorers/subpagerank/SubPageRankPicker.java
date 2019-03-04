@@ -40,8 +40,13 @@ public class SubPageRankPicker implements ClusterItemPicker, Loggable {
 	}
 
 	public SubPageRankPicker(final EntitySimilarityService similarityService, final double minEdgeThreshold) {
+		this(similarityService, minEdgeThreshold, PageRankAlgorithm.SCORER_GRAPH_MAP);
+	}
+
+	public SubPageRankPicker(final EntitySimilarityService similarityService, final double minEdgeThreshold,
+			final PageRankAlgorithm algorithm) {
 		this.similarityService = similarityService;
-		this.algorithm = PageRankAlgorithm.SCORER_GRAPH_MAP;
+		this.algorithm = algorithm;
 		this.minSimilarityThreshold = minEdgeThreshold;
 	}
 
@@ -69,8 +74,8 @@ public class SubPageRankPicker implements ClusterItemPicker, Loggable {
 		switch (this.algorithm) {
 		case SCORER_GRAPH:
 			if (true) {
-				final ScorerGraphNaive scorerGraph = new ScorerGraphNaive(this.similarityService, minSimilarityThreshold)
-						.uniqueNeighbours(true);
+				final ScorerGraphNaive scorerGraph = new ScorerGraphNaive(this.similarityService,
+						minSimilarityThreshold).uniqueNeighbours(true);
 				scorerGraph.dampingFactor(dampingFactor).iterations(iterations).startValue(startVal);
 				scorerGraph.populate(clusters);
 				getLogger().info("Finished instantiating scorer graph in "
@@ -98,7 +103,7 @@ public class SubPageRankPicker implements ClusterItemPicker, Loggable {
 			break;
 		case SCORER_GRAPH_MAP:
 			if (true) {
-				final ScorerGraphMap scorerGraph = new ScorerGraphMap(this.similarityService);
+				final ScorerGraphMap scorerGraph = new ScorerGraphMap(this.similarityService, minSimilarityThreshold);
 				scorerGraph.dampingFactor(dampingFactor).iterations(iterations).startValue(startVal).pagerank(clusters);
 				for (Map.Entry<String, List<String>> eClusters : clusters.entrySet()) {
 					final AssignmentScore bestScore = scorerGraph.grabBest(eClusters.getValue());

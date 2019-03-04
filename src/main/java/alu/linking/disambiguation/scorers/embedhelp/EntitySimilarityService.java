@@ -44,21 +44,10 @@ public class EntitySimilarityService {
 	}
 
 	public Number similarity(final String entity1, final String entity2) {
-		final StringBuilder sbDistKey;
-		final int compareRes = entity1.compareTo(entity2);
-		if (compareRes > 0) {
-			sbDistKey = new StringBuilder(entity1);
-			sbDistKey.append(entity2);
-		} else {
-			// If they're both equal... it means it's the same entity, so doesn't matter
-			// which one is first and which second
-			sbDistKey = new StringBuilder(entity2);
-			sbDistKey.append(entity1);
-		}
-		final String sbDistKeyStr = sbDistKey.toString();
+		final String keyStr = key(entity1, entity2);
 		Number retVal;
 		synchronized (this.distCache) {
-			retVal = this.distCache.get(sbDistKeyStr);
+			retVal = this.distCache.get(keyStr);
 		}
 		if (retVal == null) {
 			final List<Number> left = this.embeddings.get(entity1);
@@ -74,10 +63,25 @@ public class EntitySimilarityService {
 			}
 			retVal = EmbeddingsUtils.cosineSimilarity(left, right, true);
 			synchronized (this.distCache) {
-				this.distCache.put(sbDistKeyStr, retVal);
+				this.distCache.put(keyStr, retVal);
 			}
 		}
 		return retVal;
+	}
+
+	private String key(String entity1, String entity2) {
+		final StringBuilder sbDistKey;
+		final int compareRes = entity1.compareTo(entity2);
+		if (compareRes > 0) {
+			sbDistKey = new StringBuilder(entity1);
+			sbDistKey.append(entity2);
+		} else {
+			// If they're both equal... it means it's the same entity, so doesn't matter
+			// which one is first and which second
+			sbDistKey = new StringBuilder(entity2);
+			sbDistKey.append(entity1);
+		}
+		return sbDistKey.toString();
 	}
 
 	/**

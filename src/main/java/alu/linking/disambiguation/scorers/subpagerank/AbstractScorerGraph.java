@@ -8,13 +8,18 @@ public abstract class AbstractScorerGraph {
 	// Likelihood of following a link
 	protected double damping = 0.85d;
 	// Minimum similarity threshold required to set an "edge" between two entities
-	protected double minEdgeSimilarityThreshold;
+	protected final double minEdgeSimilarityThreshold;
 	protected final EntitySimilarityService similarityService;
-	protected final double MIN_SIMILARITY = 0.5d;
 	protected double startValue = 0.1d;
 
 	public AbstractScorerGraph(final EntitySimilarityService similarityService) {
+		this(similarityService, 0.5);
+	}
+
+	public AbstractScorerGraph(final EntitySimilarityService similarityService,
+			final double minEdgeSimilarityThreshold) {
 		this.similarityService = similarityService;
+		this.minEdgeSimilarityThreshold = minEdgeSimilarityThreshold;
 	}
 
 	public AbstractScorerGraph startValue(Number num) {
