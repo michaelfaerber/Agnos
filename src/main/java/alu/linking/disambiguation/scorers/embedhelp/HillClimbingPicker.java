@@ -13,7 +13,6 @@ import java.util.Random;
 import java.util.Set;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.ImmutableTriple;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.log4j.Logger;
@@ -105,36 +104,30 @@ public class HillClimbingPicker implements ClusterItemPicker {
 		// Pagerank stuff
 		final Map<String, Triple<AssignmentScore, AssignmentScore, Integer>> mapClusterPageRankItems = new HashMap<>();
 		final Map<String, String> clusterChoice = new HashMap<>();
-		final List<String> copyClusterNames = Lists.newArrayList(clusterNames);
-		final Logger log = getLogger();
-//		log.info("CLUSTERNAMES - Prior to PR SF-preprocessing: " + clusterNames);
-		for (final String clusterName : copyClusterNames) {
-			final List<String> entities = clusters.get(clusterName);
-			// log.info("SF[" + clusterName + "] - Entities[" + entities + "]");
-			final List<AssignmentScore> rankedScores = this.pagerankLoader
-					.cutOff(this.pagerankLoader.getTopK(entities, PR_TOP_K), PR_MIN_THRESHOLD);
+		final Map<String, List<String>> limitedClusters = limitTopPRClusters(this.pagerankLoader, clusters, PR_TOP_K,
+				PR_MIN_THRESHOLD);
+		Iterator<String> itClusterNames = clusterNames.iterator();
+		while (itClusterNames.hasNext()) {
+			final String clusterName = itClusterNames.next();
+			final List<String> rankedScores = limitedClusters.get(clusterName);
 			if (rankedScores == null || (REMOVE_SINGLE_ASSIGNMENTS && rankedScores.size() == 1)) {
 				// ALSO: Remove it from HillClimbing consideration when there's only one...
 				// If the PR score is too low for this, make sure no more disambiguation is done
 				// on it
-//				getLogger().info("Removing CLUSTER[" + clusterName + "]");
+				// getLogger().info("Removing CLUSTER[" + clusterName + "]");
+				// Removes in case it exists there... which it shouldn't
 				clusterChoice.remove(clusterName);
-				clusterNames.remove(clusterName);
+				itClusterNames.remove();
+				// clusterNames.remove(clusterName);
 				clusters.remove(clusterName);
 				continue;
 			}
-			// Just used for diagnostic reasons
-			mapClusterPageRankItems.put(clusterName, new ImmutableTriple(rankedScores.get(0),
-					rankedScores.get(rankedScores.size() - 1), rankedScores.size()));
-			final List<String> limitedEntities = Lists.newArrayList();
-
-			// Compute the list to disambiguate from
-			rankedScores.stream().forEach(item -> limitedEntities.add(item.assignment));
 			// Overwrite clusters, so disambiguation is only done on top PR scores
-			clusters.put(clusterName, limitedEntities);
-			clusterChoice.put(clusterName, rankedScores.get(0).assignment);
+			clusters.put(clusterName, rankedScores);
+			clusterChoice.put(clusterName, rankedScores.get(0));
 		}
-		//log.info("Remaining Surface Forms (CLUSTERNAMES[" + clusterNames.size() + "]):" + clusterNames);
+		// log.info("Remaining Surface Forms (CLUSTERNAMES[" + clusterNames.size() +
+		// "]):" + clusterNames);
 		// Display the min/max ones
 //		for (Map.Entry<String, Triple<AssignmentScore, AssignmentScore, Integer>> e : mapClusterPageRankItems
 //				.entrySet()) {
@@ -214,16 +207,17 @@ public class HillClimbingPicker implements ClusterItemPicker {
 		final Iterator<Entry<String, Pair<String, Double>>> finalChoicesIterator = choiceMap.entrySet().iterator();
 		final Double MIN_SCORE = computeMinScore();
 		// getLogger().info("Min score THRESHOLD:" + MIN_SCORE);
-		//getLogger().info("PRUNING/ABSTAINING PROCEDURE - START");
+		// getLogger().info("PRUNING/ABSTAINING PROCEDURE - START");
 		while (finalChoicesIterator.hasNext()) {
 			final Entry<String, Pair<String, Double>> entry = finalChoicesIterator.next();
 			// getLogger().info("Entry:" + entry.getKey() + " - " + entry.getValue());
 			if (entry.getValue().getRight() < MIN_SCORE) {
-				//getLogger().info("[" + MIN_SCORE + "] ->Pruning:" + entry.getKey() + " - " + entry.getValue());
+				// getLogger().info("[" + MIN_SCORE + "] ->Pruning:" + entry.getKey() + " - " +
+				// entry.getValue());
 				finalChoicesIterator.remove();
 			}
 		}
-		//getLogger().info("PRUNING/ABSTAINING PROCEDURE - END");
+		// getLogger().info("PRUNING/ABSTAINING PROCEDURE - END");
 
 	}
 
@@ -326,7 +320,7 @@ public class HillClimbingPicker implements ClusterItemPicker {
 				iterativelyPickLocalBest(clusters, chosenClusterEntityMap, clusterNames);
 			}
 			currentChoices = mapToValueSet(chosenClusterEntityMap);
-			//getLogger().info("CHOICES AFTER ITERATIONS: " + currentChoices);
+			// getLogger().info("CHOICES AFTER ITERATIONS: " + currentChoices);
 			iterCounter += iterations;
 			if (iterCounter > maxIterations) {
 				getLogger().warn("Been iterating(" + iterCounter + ") for a while now...");

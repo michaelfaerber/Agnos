@@ -11,6 +11,8 @@ import com.beust.jcommander.internal.Lists;
 
 import alu.linking.candidategeneration.PossibleAssignment;
 import alu.linking.disambiguation.ContextBase;
+import alu.linking.disambiguation.pagerank.AssignmentScore;
+import alu.linking.disambiguation.pagerank.PageRankLoader;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 
@@ -45,5 +47,23 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 		// getLogger().warn("Multiple SF occurrences - Collisions(" + collisionCounter +
 		// ") for SF("+ multipleOccurrences.size() + "): " + multipleOccurrences);
 		return clusterMap;
+	}
+
+	default Map<String, List<String>> limitTopPRClusters(final PageRankLoader prLoader,
+			final Map<String, List<String>> clusters, final int PR_TOP_K, final double PR_MIN_THRESHOLD) {
+		final Map<String, List<String>> copyClusters = new HashMap<>();
+		for (final String clusterName : clusters.keySet()) {
+			final List<String> entities = clusters.get(clusterName);
+			// log.info("SF[" + clusterName + "] - Entities[" + entities + "]");
+			final List<AssignmentScore> rankedScores = prLoader.cutOff(prLoader.getTopK(entities, PR_TOP_K),
+					PR_MIN_THRESHOLD);
+			final List<String> limitedEntities = Lists.newArrayList();
+			// Compute the list to disambiguate from
+			rankedScores.stream().forEach(item -> limitedEntities.add(item.assignment));
+			// Overwrite clusters, so disambiguation is only done on top PR scores
+			copyClusters.put(clusterName, limitedEntities);
+		}
+		return copyClusters;
+
 	}
 }

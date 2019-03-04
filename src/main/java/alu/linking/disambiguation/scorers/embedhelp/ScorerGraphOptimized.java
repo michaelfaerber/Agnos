@@ -7,19 +7,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ScorerGraphOptimized {
+public class ScorerGraphOptimized extends AbstractScorerGraph {
 	private Map<String, List<String>> clusters = null;
 	private double amtEntities = -1d;
-	private Number damping = 0.85f;
-	private int iter = 5;
-	private Double defaultValue = 1.0d;
-
-	private final EntitySimilarityService similarityService;
 	private final String separatorSFEntity = "//__//";
 	private HashMap<String, Number> iterMap = null;
 
 	ScorerGraphOptimized(final EntitySimilarityService similarityService) {
-		this.similarityService = similarityService;
+		super(similarityService);
 	}
 
 	public ScorerGraphOptimized clusters(final Map<String, List<String>> clusters) {
@@ -31,21 +26,6 @@ public class ScorerGraphOptimized {
 		this.amtEntities = (double) sumItems;
 		this.iterMap = new HashMap<>((int) this.amtEntities);
 
-		return this;
-	}
-
-	public ScorerGraphOptimized startValue(Number num) {
-		this.defaultValue = num.doubleValue();
-		return this;
-	}
-
-	public ScorerGraphOptimized iterations(final int iterations) {
-		this.iter = iterations;
-		return this;
-	}
-
-	public ScorerGraphOptimized dampingFactor(final Number damping) {
-		this.damping = damping;
 		return this;
 	}
 
@@ -84,7 +64,7 @@ public class ScorerGraphOptimized {
 
 	private void iteration(final Map<String, Number> iterMap) {
 		final double N = this.amtEntities;
-		final double d = this.damping.doubleValue();
+		final double d = this.damping;
 		for (Map.Entry<String, List<String>> entryToCluster : this.clusters.entrySet()) {
 			for (Map.Entry<String, List<String>> entryFromCluster : this.clusters.entrySet()) {
 				if (!entryToCluster.getKey().equals(entryFromCluster.getKey())) {
@@ -94,7 +74,7 @@ public class ScorerGraphOptimized {
 						for (String fromNode : entryFromCluster.getValue()) {
 							final Number weight = this.similarityService.similarity(fromNode, toNode);
 							final Number prevNodePR = iterMap.getOrDefault(iterKey(entryFromCluster.getKey(), fromNode),
-									this.defaultValue);
+									this.startValue);
 							// This only works due to N-to-N connectivity (excluding own cluster's entities)
 							final double prevNodeConnections = (double) (N - entryFromCluster.getValue().size());
 							predecessorPRSum += weight.doubleValue() * (prevNodePR.doubleValue() / prevNodeConnections);

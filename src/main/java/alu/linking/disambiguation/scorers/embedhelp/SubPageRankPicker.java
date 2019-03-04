@@ -9,16 +9,25 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import com.google.common.collect.Lists;
 
+import alu.linking.disambiguation.pagerank.AssignmentScore;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 import alu.linking.utils.Stopwatch;
 
 public class SubPageRankPicker implements ClusterItemPicker, Loggable {
 
+	enum PageRankAlgorithm {
+		SCORER_GRAPH_MAP, // Probably best
+		SCORER_GRAPH_OPTIMIZED, // Making use of problem's properties to do it
+		// Warning: DO NOT use the OPTIMIZED one for a general PR problem (it exploits
+		// the nxn connection idea)
+		SCORER_GRAPH // Naive approach
+	}
+
 	private Collection<Mention> context;
 	private final EntitySimilarityService similarityService;
 	private final double minSimilarityThreshold;
-	private final boolean useOld;
+	private final PageRankAlgorithm algorithm;
 
 	public SubPageRankPicker(final Map<String, List<Number>> entityEmbeddings) {
 		this(new EntitySimilarityService(entityEmbeddings));
@@ -30,7 +39,7 @@ public class SubPageRankPicker implements ClusterItemPicker, Loggable {
 
 	public SubPageRankPicker(final EntitySimilarityService similarityService, final double minEdgeThreshold) {
 		this.similarityService = similarityService;
-		this.useOld = true;
+		this.algorithm = PageRankAlgorithm.SCORER_GRAPH_MAP;
 		this.minSimilarityThreshold = minEdgeThreshold;
 	}
 
@@ -53,40 +62,71 @@ public class SubPageRankPicker implements ClusterItemPicker, Loggable {
 		final Map<String, List<String>> clusters = computeClusters(context);
 		getLogger().info("Finished Computing cluster in " + Stopwatch.endDiffStart(getClass().getName()) + " ms");
 		final Set<String> notFoundIRIs;
-
-		if (useOld) {
-			final ScorerGraph scorerGraph = new ScorerGraph(this.similarityService, minSimilarityThreshold)
-					.dampingFactor(0.85).iterations(5).startValue(1d).uniqueNeighbours(true).populate(clusters);
-			getLogger().info(
-					"Finished instantiating scorer graph in " + Stopwatch.endDiffStart(getClass().getName()) + " ms");
-			scorerGraph.pagerank();
-			getLogger().info("Finished pagerank in " + Stopwatch.endDiffStart(getClass().getName()) + " ms");
-			Map<Integer, ImmutablePair<String, Double>> groupedMap = scorerGraph.topByGroup();
-			for (Map.Entry<Integer, ImmutablePair<String, Double>> e : groupedMap.entrySet()) {
-				System.out.println("Value / Score: " + e.getValue().left + " - " + e.getValue().right);
-				retList.add(e.getValue().left);
+		final int iterations = 5;
+		final double startVal = 0.1d, dampingFactor = 0.85;
+		switch (this.algorithm) {
+		case SCORER_GRAPH:
+			if (true) {
+				final ScorerGraphNaive scorerGraph = new ScorerGraphNaive(this.similarityService, minSimilarityThreshold)
+						.uniqueNeighbours(true);
+				scorerGraph.dampingFactor(dampingFactor).iterations(iterations).startValue(startVal);
+				scorerGraph.populate(clusters);
+				getLogger().info("Finished instantiating scorer graph in "
+						+ Stopwatch.endDiffStart(getClass().getName()) + " ms");
+				scorerGraph.pagerank();
+				getLogger().info("Finished pagerank in " + Stopwatch.endDiffStart(getClass().getName()) + " ms");
+				Map<Integer, ImmutablePair<String, Double>> groupedMap = scorerGraph.topByGroup();
+				for (Map.Entry<Integer, ImmutablePair<String, Double>> e : groupedMap.entrySet()) {
+					System.out.println("Value / Score: " + e.getValue().left + " - " + e.getValue().right);
+					retList.add(e.getValue().left);
+				}
+				notFoundIRIs = this.similarityService.notFoundIRIs;
 			}
-			notFoundIRIs = this.similarityService.notFoundIRIs;
-		} else {
-			final ScorerGraphOptimized sgo = new ScorerGraphOptimized(this.similarityService).dampingFactor(0.85)
-					.iterations(5).startValue(1d).clusters(clusters);
-			sgo.pagerank();
-			retList.addAll(sgo.getTop());
-			System.out.println("Top values found: ");
-			System.out.println(retList);
-			notFoundIRIs = sgo.getNotFoundIRIs();
-
+			break;
+		case SCORER_GRAPH_OPTIMIZED:
+			if (true) {
+				final ScorerGraphOptimized sgo = new ScorerGraphOptimized(this.similarityService);
+				sgo.dampingFactor(dampingFactor).iterations(iterations).startValue(startVal);
+				sgo.clusters(clusters).pagerank();
+				retList.addAll(sgo.getTop());
+				System.out.println("Top values found: ");
+				System.out.println(retList);
+				notFoundIRIs = sgo.getNotFoundIRIs();
+			}
+			break;
+		case SCORER_GRAPH_MAP:
+			if (true) {
+				final ScorerGraphMap scorerGraph = new ScorerGraphMap(this.similarityService);
+				scorerGraph.dampingFactor(dampingFactor).iterations(iterations).startValue(startVal).pagerank(clusters);
+				for (Map.Entry<String, List<String>> eClusters : clusters.entrySet()) {
+					final AssignmentScore bestScore = scorerGraph.grabBest(eClusters.getValue());
+					getLogger().info("Cluster[" + eClusters.getKey() + "]: " + bestScore);
+					retList.add(bestScore.assignment);
+				}
+				notFoundIRIs = this.similarityService.notFoundIRIs;
+			}
+			break;
+		default:
+			notFoundIRIs = null;
+			break;
 		}
-		// Display problems
+
+		// Display problems we had during computations
+		getLogger().info("Could not find (" + notFoundIRIs.size() + "): ");
+		int notFoundCounter = 0;
+		final int MAX_DISPLAY = 50;
 		for (String s : notFoundIRIs) {
-			getLogger().info("Could not find (" + notFoundIRIs.size() + "): " + s);
+			if (notFoundCounter > MAX_DISPLAY) {
+				break;
+			}
+			getLogger().info(notFoundCounter++ + " - " + s);
 		}
 		return retList;
 	}
 
 	@Override
 	public double getPickerWeight() {
-		return 5;
+		return 20;
 	}
 
 }

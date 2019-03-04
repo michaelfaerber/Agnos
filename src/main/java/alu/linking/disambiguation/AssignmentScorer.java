@@ -42,8 +42,13 @@ public class AssignmentScorer<N> implements Loggable {
 		// Determines how everything is scored!
 		PossibleAssignment.setScoreCombiner(new ScoreCombiner<PossibleAssignment>());
 
+		// How to load pagerank
+		final PageRankLoader pagerankLoader = new PageRankLoader(KG);
+		// Loads the pagerank from file
+		pagerankLoader.exec();
+
 		// Pre-scoring
-		PossibleAssignment.addScorer(new PageRankScorer(KG));
+		PossibleAssignment.addScorer(new PageRankScorer(KG, pagerankLoader));
 
 		// Post-scoring
 		// PossibleAssignment.addPostScorer(new VicinityScorer());
@@ -51,15 +56,8 @@ public class AssignmentScorer<N> implements Loggable {
 				FilePaths.FILE_GRAPH_WALK_ID_MAPPING_ENTITY_HUMAN.getPath(KG),
 				FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG));
 		final EntitySimilarityService similarityService = new EntitySimilarityService(entityEmbeddingsMap);
-		final PageRankLoader pagerank = new PageRankLoader(KG);
-		try {
-			//Loads the pagerank from file
-			pagerank.exec();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 		PossibleAssignment
-				.addPostScorer(new GraphWalkEmbeddingScorer(new HillClimbingPicker(similarityService, pagerank)));
+				.addPostScorer(new GraphWalkEmbeddingScorer(new HillClimbingPicker(similarityService, pagerankLoader)));
 		// PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new
 		// SubPageRankPicker(similarityService, 0.8d)));
 		// PossibleAssignment.addPostScorer(new SSPEmbeddingScorer(KG));
