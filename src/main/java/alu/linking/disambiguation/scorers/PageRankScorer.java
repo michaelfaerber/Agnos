@@ -14,10 +14,10 @@ import alu.linking.disambiguation.pagerank.PageRankLoader;
 import alu.linking.utils.Stopwatch;
 
 public class PageRankScorer implements Scorer<PossibleAssignment> {
-	private static Logger logger = Logger.getLogger(PageRankScorer.class);
+	private static final Logger logger = Logger.getLogger(PageRankScorer.class);
 	private final EnumModelType KG;
 	private int warnCounter = 0;
-	private PageRankLoader pagerankLoader;
+	private final PageRankLoader pagerankLoader;
 
 	public PageRankScorer(final EnumModelType KG) throws IOException {
 		this(KG, false);
@@ -41,6 +41,12 @@ public class PageRankScorer implements Scorer<PossibleAssignment> {
 		Stopwatch.start("pagerankloading");
 		loadPageRank();
 		Stopwatch.endOutput("pagerankloading");
+	}
+	
+	public PageRankScorer(final EnumModelType KG, final PageRankLoader pagerankLoader)
+	{
+		this.KG = KG;
+		this.pagerankLoader = pagerankLoader;
 	}
 
 	@Override

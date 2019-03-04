@@ -90,23 +90,22 @@ public class PageRankRDF implements PageRank {
 		System.err.println("Computing PageRank: " + numberOfIterations + " iterations, damping factor " + dampingFactor
 				+ ", start value " + startValue + ", considering literals " + literals);
 
-		Set<String> keyset = incomingPerPage.keySet();
 		System.err.println("Iteration ...");
-		for (int j = 1; j <= numberOfIterations; j++) {
-			System.err.print(j + " ");
-			for (String string : keyset) {
-				ArrayList<String> incomingLinks = incomingPerPage.get(string);
+		for (int i = 0; i < numberOfIterations; i++) {
+			System.err.print(i + " ");
+			for (final String incoming : incomingPerPage.keySet()) {
+				final List<String> incomingLinks = incomingPerPage.get(incoming);
 
-				double pageRank = 1.0D - dampingFactor;
-				for (String inLink : incomingLinks) {
+				double pageRank = 1.0d - dampingFactor;
+				for (final String inLink : incomingLinks) {
 					Double pageRankIn = (Double) pageRankScores.get(inLink);
 					if (pageRankIn == null) {
 						pageRankIn = Double.valueOf(startValue);
 					}
-					int numberOut = ((Integer) numberOutgoing.get(inLink)).intValue();
-					pageRank += dampingFactor * (pageRankIn.doubleValue() / numberOut);
+					final double numberOut = (double) numberOutgoing.get(inLink);
+					pageRank += dampingFactor * (pageRankIn / numberOut);
 				}
-				pageRankScores.put(string, Double.valueOf(pageRank));
+				pageRankScores.put(incoming, pageRank);
 			}
 		}
 		System.err.println();

@@ -63,6 +63,16 @@ public class PageRankLoader implements Executable {
 	 * @return score associated to the entity
 	 */
 	public Number getScore(final String entity) {
+		synchronized (this.pagerankScores) {
+			if (this.pagerankScores == null || this.pagerankScores.size() == 0) {
+				try {
+					exec();
+				} catch (IOException e) {
+					getLogger().error(
+							"IOException while loading PageRank scores from file (KG = " + this.KG.name() + ")", e);
+				}
+			}
+		}
 		return this.pagerankScores.get(processKey(entity));
 	}
 
@@ -117,15 +127,15 @@ public class PageRankLoader implements Executable {
 		if (cutOffIndex == -1) {
 			// Means none of them was too small, so take them all!
 			// cutOffIndex = scores.size();
-			//getLogger().info("ALL scores are good 'enough':" + scores);
+			// getLogger().info("ALL scores are good 'enough':" + scores);
 			return scores;
 		}
 
 		if (cutOffIndex == 0) {
-			//getLogger().info("NULL - Too small Scores list:" + scores);
+			// getLogger().info("NULL - Too small Scores list:" + scores);
 			return null;
 		}
-		//getLogger().info("LIMITED scores [0," + cutOffIndex + "]:" + scores);
+		// getLogger().info("LIMITED scores [0," + cutOffIndex + "]:" + scores);
 		final List<AssignmentScore> retList = scores.subList(0, cutOffIndex);
 		return retList;
 	}
