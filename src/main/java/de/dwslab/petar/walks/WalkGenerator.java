@@ -9,6 +9,7 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -82,6 +83,9 @@ public abstract class WalkGenerator implements AutoCloseable {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
@@ -98,9 +102,10 @@ public abstract class WalkGenerator implements AutoCloseable {
 	 *                  quantities)
 	 * @param limit     how many should be returned (useful for large quantities)
 	 * @throws IOException
+	 * @throws InterruptedException
 	 */
-	public void generateWalks(BufferedWriter wrt, Collection<String> entitiesCollection, int nmWalks, int dpWalks,
-			int nmThreads, int offset, int limit) throws IOException {
+	public void generateWalks(BufferedWriter wrt, Iterable<String> entitiesCollection, int nmWalks, int dpWalks,
+			int nmThreads, int offset, int limit) throws IOException, InterruptedException {
 
 		// set the parameters
 		// this.numberWalks = nmWalks;
@@ -111,18 +116,25 @@ public abstract class WalkGenerator implements AutoCloseable {
 		final String walkQuery = generateQuery(dpWalks);
 		System.out.println("Walk query(" + dpWalks + "):");
 		System.out.println(walkQuery);
-		Collection<String> entities;
-		if (entitiesCollection == null || entitiesCollection.size() == 0) {
+		Iterable<String> entities;
+		if ((entitiesCollection instanceof Collection)
+				&& (entitiesCollection == null || ((Collection) entitiesCollection).size() == 0)) {
 			System.out.println("SELECTING all entities from repo");
 			entities = selectAllEntities(offset, limit);
-		} else {
-			System.out.println("Using passed entities (" + entitiesCollection.size() + ")");
+			this.resultProcessor.updateEntityAmt(((Collection) entitiesCollection).size());
+		} else if ((entitiesCollection instanceof Collection)) {
+			System.out.println("Using passed entities (" + ((Collection) entitiesCollection).size() + ")");
 			entities = entitiesCollection;
+			this.resultProcessor.updateEntityAmt(((Collection) entitiesCollection).size());
+		} else {
+			final long MAG_entity_count = 209792741l;
+			System.out.println("Using passed iterable[" + entitiesCollection.getClass() + "]:" + MAG_entity_count);
+			entities = entitiesCollection;
+			this.resultProcessor.updateEntityAmt(MAG_entity_count);
 		}
-		this.resultProcessor.updateEntityAmt(entitiesCollection.size());
 		System.out.println("Total number of entities to process: " + this.resultProcessor.getEntityAmt());
-		ThreadPoolExecutor pool = new ThreadPoolExecutor(nmThreads, nmThreads, 0, TimeUnit.SECONDS,
-				new java.util.concurrent.ArrayBlockingQueue<Runnable>(entities.size()));
+		final ThreadPoolExecutor pool = new ThreadPoolExecutor(nmThreads, nmThreads, 0, TimeUnit.SECONDS,
+				new java.util.concurrent.LinkedBlockingQueue<Runnable>());
 
 		final BufferedWriter bwLogEntities;
 		if (this.logEntities != null) {
@@ -139,16 +151,20 @@ public abstract class WalkGenerator implements AutoCloseable {
 
 		final EntityThreadFactory th = new EntityThreadFactory(this, walkQuery, wrt, resultProcessor, bwLogEntities,
 				isLineByLineOutput());
-		for (String entity : entities) {
-			// Thread which will compute the hops for this particular entity
-			pool.execute(th.createNew(entity));
-		}
+
+		final Iterator<String> it = entities.iterator();
+		do {
+			while (it.hasNext() && pool.getActiveCount() < nmThreads) {
+				// Thread which will compute the hops for this particular entity
+				pool.execute(th.createNew(it.next()));
+			}
+			Thread.sleep(100l);
+		} while (it.hasNext());
 		entities = null;
 		pool.shutdown();
 		try {
-			pool.awaitTermination(10, TimeUnit.DAYS);
+			pool.awaitTermination(30, TimeUnit.DAYS);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

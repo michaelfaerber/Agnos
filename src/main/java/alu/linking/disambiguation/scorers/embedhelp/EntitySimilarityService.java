@@ -14,27 +14,10 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import com.github.jsonldjava.shaded.com.google.common.collect.Lists;
 
+import alu.linking.config.constants.Comparators;
 import alu.linking.utils.EmbeddingsUtils;
 
 public class EntitySimilarityService {
-	private final Comparator<Pair<? extends Comparable, ? extends Comparable>> rightComparator = new Comparator<Pair<? extends Comparable, ? extends Comparable>>() {
-
-		@Override
-		public int compare(Pair<? extends Comparable, ? extends Comparable> o1,
-				Pair<? extends Comparable, ? extends Comparable> o2) {
-			return o1.getRight().compareTo(o2.getRight());
-		}
-
-	};
-	private final Comparator<Pair<? extends Comparable, ? extends Comparable>> leftComparator = new Comparator<Pair<? extends Comparable, ? extends Comparable>>() {
-
-		@Override
-		public int compare(Pair<? extends Comparable, ? extends Comparable> o1,
-				Pair<? extends Comparable, ? extends Comparable> o2) {
-			return o1.getLeft().compareTo(o2.getLeft());
-		}
-
-	};
 	private final Map<String, List<Number>> embeddings;
 	private final Map<String, Number> distCache = new HashMap<>();
 	public final Set<String> notFoundIRIs = new HashSet<>();
@@ -92,14 +75,51 @@ public class EntitySimilarityService {
 	 * @param targets
 	 * @return
 	 */
-	public Pair<String, Double> topSimilarity(final String source, Collection<String> targets) {
-		final List<Pair<String, Double>> retList = Lists.newArrayList();
+	public Pair<String, Double> topSimilarity(final String source, Collection<String> targets,
+			final boolean allowSelfConnection) {
+		if (!allowSelfConnection && targets.contains(source)) {
+			// Copies to a new list and removes the source
+			final Set<String> copyTargets = new HashSet<String>(targets);
+			copyTargets.remove(source);
+			List<Pair<String, Double>> pairs = computeSortedSimilarities(source, copyTargets,
+					Comparators.pairRightComparator);
+			if (pairs != null && pairs.size() > 0) {
+				return pairs.get(0);
+			} else {
+				return null;
+			}
+		} else {
+			List<Pair<String, Double>> pairs = computeSortedSimilarities(source, targets,
+					Comparators.pairRightComparator);
+			if (pairs != null && pairs.size() > 0) {
+				return pairs.get(0);
+			} else {
+				return null;
+			}
+		}
+	}
 
+	public List<Pair<String, Double>> computeSortedSimilarities(final String source, final Collection<String> targets,
+			final Comparator<Pair<? extends Comparable, ? extends Comparable>> comparator) {
+		final List<Pair<String, Double>> retList = computeSimilarities(source, targets);
+		Collections.sort(retList, comparator.reversed());
+		return retList;
+	}
+
+	/**
+	 * Computes similarities from a source to the given targets and returns a list
+	 * with all of them
+	 * 
+	 * @param source  from where
+	 * @param targets to where
+	 * @return
+	 */
+	public List<Pair<String, Double>> computeSimilarities(final String source, final Collection<String> targets) {
+		List<Pair<String, Double>> retList = Lists.newArrayList();
 		for (String target : targets) {
 			retList.add(new ImmutablePair<String, Double>(target, similarity(source, target).doubleValue()));
 		}
-		Collections.sort(retList, rightComparator.reversed());
-		return retList.get(0);
+		return retList;
 	}
 
 }

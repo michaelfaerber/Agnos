@@ -4,7 +4,6 @@ import java.util.Collection;
 
 import org.apache.jena.query.QueryExecution;
 
-import alu.linking.utils.IDMappingGenerator;
 import virtuoso.jena.driver.VirtGraph;
 import virtuoso.jena.driver.VirtuosoQueryExecution;
 import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;

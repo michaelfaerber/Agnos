@@ -9,9 +9,10 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 
 import alu.linking.utils.IDMappingGenerator;
+import alu.linking.utils.IDMappingLoader;
 
 public class WalkResultProcessorRandomUniform extends WalkResultProcessor {
-	protected IDMappingGenerator<String> entityMapper = null;
+	protected IDMappingLoader<String> entityMapping = null;
 	protected IDMappingGenerator<String> predicateMapper = null;
 	protected final Random rand;
 	protected double probabilityRatio = 1.0;
@@ -32,10 +33,10 @@ public class WalkResultProcessorRandomUniform extends WalkResultProcessor {
 		this.rand = new Random(System.currentTimeMillis());
 	}
 
-	public WalkResultProcessorRandomUniform(final double probabilityAdded, IDMappingGenerator<String> entityMapper,
+	public WalkResultProcessorRandomUniform(final double probabilityAdded, IDMappingLoader<String> entityMapping,
 			IDMappingGenerator<String> predicateMapper, final int minWalks, final int maxWalks, final long seed) {
 		this(seed);
-		entityMapper(entityMapper);
+		entityMapping(entityMapping);
 		predicateMapper(predicateMapper);
 		minWalks(minWalks);
 		maxWalks(maxWalks);
@@ -47,8 +48,8 @@ public class WalkResultProcessorRandomUniform extends WalkResultProcessor {
 		return this;
 	}
 
-	public WalkResultProcessorRandomUniform entityMapper(final IDMappingGenerator<String> entityMapper) {
-		this.entityMapper = entityMapper;
+	public WalkResultProcessorRandomUniform entityMapping(final IDMappingLoader<String> entityMapping) {
+		this.entityMapping = entityMapping;
 		return this;
 	}
 
@@ -120,9 +121,14 @@ public class WalkResultProcessorRandomUniform extends WalkResultProcessor {
 	 */
 	private void makeStringWalk(QuerySolution result, String entity, BufferedWriter wrt, boolean lineByLineOutput) {
 		StringBuilder singleWalk;
-		if (entityMapper != null) {
+		if (entityMapping != null) {
 			try {
-				singleWalk = new StringBuilder(entityMapper.generateMapping(entity));
+				String entityVal = entity;
+				final String tmpVal;
+				if ((tmpVal = entityMapping.getKey(entity)) != null) {
+					entityVal = tmpVal;
+				}
+				singleWalk = new StringBuilder(entityVal);
 			} catch (Exception e) {
 				// Do the same as 'else' clause to be consistent
 				System.err.println("Mapping Error for entity (" + entity + ")");
@@ -158,9 +164,23 @@ public class WalkResultProcessorRandomUniform extends WalkResultProcessor {
 			try {
 				final String nodeVal;
 				if (var.startsWith(prefixPredicate) && predicateMapper != null) {
+					// it's a predicate-seeming variable, so replace it by a predicate mapping
 					nodeVal = predicateMapper.generateMapping(solution.get(var).toString()).toString();
 				} else {
-					nodeVal = solution.get(var).toString();
+					String tmpNodeVal = solution.get(var).toString();
+					if (entityMapping != null) {
+						final String key;
+						if ((key = entityMapping.getKey(tmpNodeVal)) != null) {
+							tmpNodeVal = key;
+							// entityMapping.getKey(uri)
+						}
+						// if there is a key, will use that one
+						// otherwise will just take it as-is
+						nodeVal = tmpNodeVal;
+					} else {
+						// output data as-is
+						nodeVal = solution.get(var).toString();
+					}
 				}
 				walk.append(StringDelims.WALK_DELIM + nodeVal);
 			} catch (Exception e) {

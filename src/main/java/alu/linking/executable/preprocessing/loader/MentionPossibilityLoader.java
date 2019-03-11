@@ -8,8 +8,8 @@ import java.util.Map;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.mentiondetection.InputProcessor;
+import alu.linking.mentiondetection.MentionPossibilityExtractor;
 import alu.linking.mentiondetection.StopwordsLoader;
-import alu.linking.preprocessing.surfaceform.MentionPossibilityExtractor;
 import alu.linking.structure.Executable;
 
 /**

@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
-import org.semanticweb.yars.nx.Resource;
 
 import alu.linking.disambiguation.PostScorer;
 import alu.linking.disambiguation.ScoreCombiner;
@@ -26,17 +25,10 @@ public class PossibleAssignment implements Scorable, Comparable<PossibleAssignme
 	@SuppressWarnings("rawtypes")
 	private static ScoreCombiner<PossibleAssignment> combiner = null;
 
-	public static Set<Scorer<PossibleAssignment>> getScorers() {
-		return scorers;
-	}
-
-	public static Set<PostScorer<PossibleAssignment, Mention>> getPostScorers() {
-		return postScorers;
-	}
-
 	@SuppressWarnings("rawtypes")
 	public static PossibleAssignment createNew(final String assignment, final String mentionToken) {
-		//return new PossibleAssignment(new Resource(assignment, false).toN3(), mentionToken);
+		// return new PossibleAssignment(new Resource(assignment, false).toN3(),
+		// mentionToken);
 		return new PossibleAssignment(assignment, mentionToken);
 	}
 
@@ -57,6 +49,14 @@ public class PossibleAssignment implements Scorable, Comparable<PossibleAssignme
 	public static void addPostScorer(
 			@SuppressWarnings("rawtypes") final PostScorer<PossibleAssignment, Mention> scorer) {
 		postScorers.add(scorer);
+	}
+
+	public static Set<Scorer<PossibleAssignment>> getScorers() {
+		return scorers;
+	}
+
+	public static Set<PostScorer<PossibleAssignment, Mention>> getPostScorers() {
+		return postScorers;
 	}
 
 	public static void setScoreCombiner(
@@ -105,7 +105,7 @@ public class PossibleAssignment implements Scorable, Comparable<PossibleAssignme
 
 	@Override
 	public int hashCode() {
-		return this.assignment.hashCode() + this.score.hashCode() + this.mentionToken.hashCode();
+		return 23 * (this.assignment.hashCode() + this.score.hashCode() + this.mentionToken.hashCode());
 	}
 
 	@Override

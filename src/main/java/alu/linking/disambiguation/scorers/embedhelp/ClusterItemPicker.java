@@ -20,6 +20,8 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 	public List<String> combine();
 
 	public double getPickerWeight();
+	
+	public void printExperimentSetup();
 
 	default Map<String, List<String>> computeClusters(final Collection<Mention> context) {
 		final Map<String, List<String>> clusterMap = new HashMap<>();
@@ -55,11 +57,26 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 		for (final String clusterName : clusters.keySet()) {
 			final List<String> entities = clusters.get(clusterName);
 			// log.info("SF[" + clusterName + "] - Entities[" + entities + "]");
-			final List<AssignmentScore> rankedScores = prLoader.cutOff(prLoader.getTopK(entities, PR_TOP_K),
-					PR_MIN_THRESHOLD);
+
+			List<AssignmentScore> rankedScores = prLoader.makeOrPopulateList(entities);
+			if (PR_TOP_K > 0) {
+				rankedScores = prLoader.getTopK(entities, PR_TOP_K);
+			}
+
+			if (PR_MIN_THRESHOLD > 0) {
+				prLoader.cutOff(entities, PR_MIN_THRESHOLD);
+			}
+
+			// final List<AssignmentScore> rankedScores = prLoader.cutOff(entities,
+			// PR_MIN_THRESHOLD);
+
 			final List<String> limitedEntities = Lists.newArrayList();
 			// Compute the list to disambiguate from
-			rankedScores.stream().forEach(item -> limitedEntities.add(item.assignment));
+			// rankedScores.stream().forEach(item -> limitedEntities.add(item.assignment));
+			for (AssignmentScore item : rankedScores) {
+				limitedEntities.add(item.assignment);
+			}
+
 			// Overwrite clusters, so disambiguation is only done on top PR scores
 			copyClusters.put(clusterName, limitedEntities);
 		}

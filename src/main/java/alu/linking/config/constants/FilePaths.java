@@ -109,6 +109,9 @@ public enum FilePaths {
 	// FILE_EXTENDED_GRAPH(DIR_DATA.path + "rdf.nt"), //
 	FILE_OUT_HSFURL_MAPPING(DIR_DATA.path + "url_mapping_log.txt",
 			"Log file keeping track where each website is stored locally so we can easily retrieve the appropriate URL's contents!"), //
+
+	FILE_NT_ENTITIES(DIR_DATA.path + "entities.nt", "NT File containing all entities"), //
+
 	// "Corrected" RDF Graph files
 	FILE_GRAPH_RDF(DIR_DATA.path + "rdf.ttl"), //
 	FILE_GRAPH_RDF_TYPES(DIR_DATA.path + "types.ttl"), //
@@ -131,7 +134,9 @@ public enum FilePaths {
 	FILE_ENTITY_SURFACEFORM_LINKING(DIR_DATA.path + "links_surfaceForms.txt"), //
 
 	// Walk Generator Embeddings files
-	FILE_GRAPH_WALK_OUTPUT(DIR_WALK_GENERATOR.path + "walk.txt"), //
+
+	//FILE_GRAPH_WALK_OUTPUT(DIR_WALK_GENERATOR.path + "walk.txt"), //
+	FILE_GRAPH_WALK_OUTPUT("/mnt/maclusext/" + "walk.txt", true, EnumModelType.NONE), //
 	FILE_GRAPH_WALK_OUTPUT_SENTENCES(DIR_WALK_GENERATOR.path + "walk_sentences.txt"), //
 	FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS(DIR_WALK_GENERATOR.path + "graphwalk_entity_embeddings.txt",
 			"Proper output for computed entity embeddings"), //

@@ -7,7 +7,6 @@ import alu.linking.preprocessing.surfaceform.query.SFQuery;
 import alu.linking.structure.Executable;
 
 public class SFQueryExecutor implements Executable {
-	private Logger logger = getLogger();
 
 	@Override
 	public void init() {

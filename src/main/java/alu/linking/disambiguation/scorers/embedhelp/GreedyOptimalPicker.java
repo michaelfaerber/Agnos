@@ -79,4 +79,9 @@ public class GreedyOptimalPicker implements ClusterItemPicker, Loggable {
 	public double getPickerWeight() {
 		return 5;
 	}
+
+	@Override
+	public void printExperimentSetup() {
+		getLogger().info("GreedyOptimal");
+	}
 }

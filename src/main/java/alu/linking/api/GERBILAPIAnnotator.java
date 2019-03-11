@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -154,7 +155,7 @@ public class GERBILAPIAnnotator implements Executable {
 
 		// Ordered markings required to reconciliate the markings' detected mentions'
 		// offsets
-		List<Marking> orderedMarkings = getSortedMarkings(nifDocument);
+		final List<Marking> orderedMarkings = getSortedMarkings(nifDocument);
 		// Whether to process just for the markings or all the entire document
 		if (PROCESS_JUST_MARKINGS) {
 			// Gets the markings - if there are any, it will annotate with them (making it a
@@ -168,14 +169,14 @@ public class GERBILAPIAnnotator implements Executable {
 				getLogger().info("Using [Markings]:" + smallText(text));
 			} else {
 				text = nifDocument.getText();
-				orderedMarkings = null;
+				// orderedMarkings = null;
 				getLogger().info("No markings; Using [plain text]:" + smallText(text));
 			}
 		} else {
 			// Processes the entire input text
 			text = nifDocument.getText();
 			getLogger().info("Using [plain text]:" + smallText(text));
-			orderedMarkings = null;
+			// orderedMarkings = null;
 		}
 
 		// 3. use the text and maybe some Markings sent by GERBIL to generate your
@@ -235,11 +236,13 @@ public class GERBILAPIAnnotator implements Executable {
 		// new ScoredNamedEntity(startPosition, length, uris, confidence);
 		// new Mention()... transform mention into a scored named entity
 
-		final List<Mention> mentions = linking(markingsText);
+		List<Mention> mentions = linking(markingsText, markings);
 
 		if (markings != null) {
 			// If we're just using markings, we need to readjust the offsets for the output
-			fixMentionMarkingOffsets(mentions, markings, origText);
+			// fixMentionMarkingOffsets(mentions, markings, origText);
+			// Limit to just the wanted markings to increase precision...
+			mentions = restrictMentionsToMarkings(mentions, markings, origText);
 		}
 
 		// Transform mentions into GERBIL's wanted markings
@@ -248,6 +251,47 @@ public class GERBILAPIAnnotator implements Executable {
 					mention.getAssignment().toString(), mention.getAssignment().getScore().doubleValue()));
 		}
 		return retList;
+	}
+
+	private List<Mention> restrictMentionsToMarkings(List<Mention> mentions, List<Marking> markings, String origText) {
+		final List<Mention> retMentions = Lists.newArrayList();
+		final List<Mention> copyMentions = Lists.newArrayList(mentions);
+		for (Marking marking : markings) {
+			final Span spanMarking = ((Span) marking);
+			final int startPos = spanMarking.getStartPosition();
+			if (startPos < 0) {
+				continue;
+			}
+			final int length = spanMarking.getLength();
+			// If a mention has the same startoffset and the same length, keep it
+			final Iterator<Mention> it = copyMentions.iterator();
+			while (it.hasNext()) {
+				final Mention mention = it.next();
+				if ((mention.getOffset() == startPos) && (length == mention.getOriginalMention().length())) {
+					retMentions.add(mention);
+					// Remove it since it gets added to the returned list
+					it.remove();
+				}
+			}
+		}
+//		for (Mention m : copyMentions) {
+//			getLogger().info("Not added to ResultSet (" + copyMentions.size() + "): " + m.getOffset() + "+["
+//					+ m.getOriginalMention().length() + "] = " + m.getOriginalMention());
+//		}
+		final boolean displayMarkingsDebug = false;
+		if (displayMarkingsDebug) {
+			for (Marking m : markings) {
+				final Span spanM = ((Span) m);
+				getLogger().info("Wanted markings: InputSet(" + markings.size() + "): " + spanM.getStartPosition()
+						+ "+[" + spanM.getLength() + "] = "
+						+ origText.substring(spanM.getStartPosition(), spanM.getStartPosition() + spanM.getLength()));
+			}
+			for (Mention m : retMentions) {
+				getLogger().info("Filtered FOUND mentions(" + mentions.size() + "->" + retMentions.size() + "):"
+						+ m.getOffset() + "+[" + m.getOriginalMention().length() + "] = " + m.getOriginalMention());
+			}
+		}
+		return retMentions;
 	}
 
 	private void fixMentionMarkingOffsets(final List<Mention> mentions, final List<Marking> markings,
@@ -291,7 +335,7 @@ public class GERBILAPIAnnotator implements Executable {
 		}
 	}
 
-	private List<Mention> linking(String text) throws InterruptedException {
+	private List<Mention> linking(String text, List<Marking> markings) throws InterruptedException {
 		List<Mention> mentions = null;
 
 		Stopwatch.start(linking);
@@ -300,6 +344,10 @@ public class GERBILAPIAnnotator implements Executable {
 		// Mention Detection
 		// ########################################################
 		mentions = md.detect(text);
+		if (markings != null) {
+			mentions = restrictMentionsToMarkings(mentions, markings, text);
+		}
+
 		getLogger().info("Detected " + mentions.size() + " mentions!");
 		// ------------------------------------------------------------------------------
 		// Change the offsets due to stopword-removal applied through InputProcessor
@@ -339,9 +387,16 @@ public class GERBILAPIAnnotator implements Executable {
 		// ########################################################
 		// Pruning
 		// ########################################################
-		getLogger().info("Before Pruning(" + mentions.size() + "):" + mentions);
+		final String beforePruning = "Before Pruning(" + mentions.size() + "):" + mentions;
+		final int priorPruningSize = mentions.size();
 		mentions = this.pruner.prune(mentions);
-		getLogger().info("After Pruning(" + mentions.size() + "):" + mentions);
+		final int postPruningSize = mentions.size();
+		if (priorPruningSize != postPruningSize) {
+			getLogger().info(beforePruning);
+			getLogger().info("[PRUNE] After Pruning(" + mentions.size() + "):" + mentions);
+		} else {
+			getLogger().info("[PRUNE] No pruning done (" + mentions.size() + ")");
+		}
 
 		return mentions;
 	}

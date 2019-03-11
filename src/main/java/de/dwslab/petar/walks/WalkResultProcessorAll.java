@@ -6,13 +6,14 @@ import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 
 import alu.linking.utils.IDMappingGenerator;
+import alu.linking.utils.IDMappingLoader;
 
 public class WalkResultProcessorAll extends WalkResultProcessor {
 	private final IDMappingGenerator<String> predicateMapper;
-	private final IDMappingGenerator<String> entityMapper;
+	private final IDMappingLoader<String> entityMapping;
 
-	public WalkResultProcessorAll(IDMappingGenerator<String> entityMapper, IDMappingGenerator<String> predicateMapper) {
-		this.entityMapper = entityMapper;
+	public WalkResultProcessorAll(IDMappingLoader<String> entityMapping, IDMappingGenerator<String> predicateMapper) {
+		this.entityMapping = entityMapping;
 		this.predicateMapper = predicateMapper;
 	}
 
@@ -22,9 +23,14 @@ public class WalkResultProcessorAll extends WalkResultProcessor {
 		while (results.hasNext()) {
 			final QuerySolution result = results.next();
 			StringBuilder singleWalk;
-			if (entityMapper != null) {
+			if (entityMapping != null) {
 				try {
-					singleWalk = new StringBuilder(entityMapper.generateMapping(entity));
+					String entityVal = entity;
+					final String tmpVal;
+					if ((tmpVal = entityMapping.getKey(entity)) != null) {
+						entityVal = tmpVal;
+					}
+					singleWalk = new StringBuilder(entityVal);
 				} catch (Exception e) {
 					// Do the same as 'else' clause to be consistent
 					System.err.println("Mapping Error for entity (" + entity + ")");

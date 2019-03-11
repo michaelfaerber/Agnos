@@ -7,7 +7,6 @@ import alu.linking.preprocessing.surfaceform.query.NP_URL_HSFQuery;
 import alu.linking.structure.Executable;
 
 public class NP_URLHSFQueryExecutor implements Executable {
-	private Logger logger = getLogger();
 
 	@Override
 	public void init() {
