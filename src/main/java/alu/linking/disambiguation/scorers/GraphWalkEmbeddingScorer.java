@@ -14,12 +14,8 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import alu.linking.candidategeneration.PossibleAssignment;
-import alu.linking.config.constants.FilePaths;
-import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.PostScorer;
 import alu.linking.disambiguation.scorers.embedhelp.ClusterItemPicker;
-import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
-import alu.linking.disambiguation.scorers.hillclimbing.HillClimbingPicker;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 import alu.linking.utils.EmbeddingsUtils;
@@ -34,6 +30,7 @@ public class GraphWalkEmbeddingScorer implements PostScorer<PossibleAssignment, 
 
 	public GraphWalkEmbeddingScorer(final ClusterItemPicker entityPicker) {
 		this.clusterHelper = entityPicker;
+		this.clusterHelper.printExperimentSetup();
 	}
 
 	/**
@@ -111,8 +108,8 @@ public class GraphWalkEmbeddingScorer implements PostScorer<PossibleAssignment, 
 		try {
 			bestCombination.clear();
 			bestCombination.addAll(clusterHelper.combine());
-			//getLogger().info("Recomputeoptimum combo: ");
-			//getLogger().info(bestCombination);
+			// getLogger().info("Recomputeoptimum combo: ");
+			// getLogger().info(bestCombination);
 		} catch (Exception exc) {
 //			getLogger().error(exc);
 //			getLogger().error(exc.getMessage());

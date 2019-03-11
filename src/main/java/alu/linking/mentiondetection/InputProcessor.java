@@ -94,7 +94,7 @@ public class InputProcessor {
 		return new Mention(null, null, startIndex, 0f, original, processedInput);
 	}
 
-	public static String[] processToStr(final String input) {
+	public static String[] processToSingleWords(final String input) {
 		final List<TextOffset> tokens = process(input, EnumDetectionType.SINGLE_WORD);
 		final String[] retArr = new String[tokens.size()];
 		for (int i = 0; i < tokens.size(); ++i) {
@@ -134,7 +134,11 @@ public class InputProcessor {
 		int counter = 0;
 		spacedIndicesUnique.add(0);
 		while (matcher.find()) {
-			final int groupLen = matcher.group().length();
+			final String match = matcher.group();
+			if (match.length() == 0) {
+				continue;
+			}
+			final int groupLen = match.length();
 			spacedIndicesUnique.add(matcher.start() + groupLen);
 		}
 		spacedIndicesUnique.add(input.length() + 1);
@@ -254,7 +258,7 @@ public class InputProcessor {
 	 * @return split tokens excluding any defined stopwords
 	 */
 	public static String[] processAndRemoveStopwords(final String input, final Collection<String> blacklist) {
-		final String[] inputArr = processToStr(input);// to lower case, space splitting etc.
+		final String[] inputArr = processToSingleWords(input);// to lower case, space splitting etc.
 		final List<String> ret = Lists.newArrayList();
 		if (blacklist == null) {
 			// No blacklist, so jump out with the normal-processed words

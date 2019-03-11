@@ -14,6 +14,7 @@ import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import alu.linking.config.constants.Strings;
 
 public class IDMappingGenerator<V> implements AutoCloseable {
+	// Key = prefix+counter; Value = URL or whatever value is given
 	private DualHashBidiMap<String, V> mapping = new DualHashBidiMap<String, V>();
 	private AtomicInteger counter = new AtomicInteger();
 	private final boolean alwaysFlush;
@@ -71,6 +72,12 @@ public class IDMappingGenerator<V> implements AutoCloseable {
 			}
 			// Else: simply return it
 			return key;
+		}
+	}
+
+	public synchronized boolean exists(final V val) {
+		synchronized (mapping) {
+			return (mapping.getKey(val) != null);
 		}
 	}
 

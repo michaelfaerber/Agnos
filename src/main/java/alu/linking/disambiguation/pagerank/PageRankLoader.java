@@ -10,8 +10,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.semanticweb.yars.nx.Node;
@@ -27,6 +29,7 @@ import alu.linking.structure.Executable;
 public class PageRankLoader implements Executable {
 	private final EnumModelType KG;
 	public Map<String, Number> pagerankScores = null;
+	public static Set<String> setPRNotFound = new HashSet<>();
 
 	public PageRankLoader(final EnumModelType KG) {
 		this.KG = KG;
@@ -114,10 +117,13 @@ public class PageRankLoader implements Executable {
 	 * @param minThreshold
 	 * @return
 	 */
-	public <T> List<AssignmentScore> cutOff(final List<AssignmentScore> scores, final double minThreshold) {
+	public <T extends Comparable<T>> List<AssignmentScore> cutOff(final Collection<T> scores,
+			final double minThreshold) {
 		int cutOffIndex = -1;
 		int counter = 0;
-		for (AssignmentScore assScore : scores) {
+		List<AssignmentScore> assignmentScores = makeOrPopulateList(scores);
+		Collections.sort(assignmentScores, Comparator.reverseOrder());
+		for (AssignmentScore assScore : assignmentScores) {
 			if (assScore.score.doubleValue() < minThreshold) {
 				cutOffIndex = counter;
 				break;
@@ -128,26 +134,46 @@ public class PageRankLoader implements Executable {
 			// Means none of them was too small, so take them all!
 			// cutOffIndex = scores.size();
 			// getLogger().info("ALL scores are good 'enough':" + scores);
-			return scores;
+			return assignmentScores;
 		}
 
 		if (cutOffIndex == 0) {
 			// getLogger().info("NULL - Too small Scores list:" + scores);
-			return null;
+			return Lists.newArrayList();
 		}
 		// getLogger().info("LIMITED scores [0," + cutOffIndex + "]:" + scores);
-		final List<AssignmentScore> retList = scores.subList(0, cutOffIndex);
+		final List<AssignmentScore> retList = assignmentScores.subList(0, cutOffIndex);
 		return retList;
 	}
 
 	public <T extends Comparable<T>> List<AssignmentScore> getTopK(final Collection<T> assignments, final int topK) {
-		final List<AssignmentScore> assignmentScores = Lists.newArrayList();
-		for (T possAss : assignments) {
-			assignmentScores
-					.add(new AssignmentScore().assignment(possAss.toString()).score(getScore(possAss.toString())));
+		final List<AssignmentScore> assignmentScores = makeOrPopulateList(assignments);
+		if (assignmentScores.size() == 0) {
+			return assignmentScores;
 		}
 		Collections.sort(assignmentScores, Comparator.reverseOrder());
 		return assignmentScores.subList(0, Math.min(assignmentScores.size(), topK));
+	}
+
+	public <T extends Comparable<T>> List<AssignmentScore> makeOrPopulateList(Collection<T> assignments) {
+		final List<AssignmentScore> assignmentScores = Lists.newArrayList();
+		for (T possAss : assignments) {
+			if (possAss instanceof AssignmentScore) {
+				assignmentScores.add((AssignmentScore) possAss);
+			} else {
+				Number foundScore = getScore(possAss.toString());
+				if (foundScore == null) {
+					getLogger().error("[" + possAss.toString() + "] No PR score.");
+					setPRNotFound.add(possAss.toString());
+					foundScore = 0d;
+				}
+
+				final AssignmentScore assignmentScore = new AssignmentScore().assignment(possAss.toString())
+						.score(foundScore);
+				assignmentScores.add(assignmentScore);
+			}
+		}
+		return assignmentScores;
 	}
 
 	/**

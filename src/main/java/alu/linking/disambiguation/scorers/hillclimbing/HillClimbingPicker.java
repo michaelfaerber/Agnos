@@ -2,7 +2,6 @@ package alu.linking.disambiguation.scorers.hillclimbing;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -15,10 +14,10 @@ import java.util.Set;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
-import org.apache.log4j.Logger;
 
 import com.github.jsonldjava.shaded.com.google.common.collect.Lists;
 
+import alu.linking.config.constants.Comparators;
 import alu.linking.disambiguation.pagerank.AssignmentScore;
 import alu.linking.disambiguation.pagerank.PageRankLoader;
 import alu.linking.disambiguation.scorers.embedhelp.ClusterItemPicker;
@@ -27,47 +26,55 @@ import alu.linking.mentiondetection.Mention;
 import alu.linking.utils.Stopwatch;
 
 public class HillClimbingPicker implements ClusterItemPicker {
-	private enum PICK_SELECTION {
+	public enum PICK_SELECTION {
 		TOP_PAGERANK, RANDOM, OPTIMAL_CALC
 	}
 
 	private final Random r = new Random(System.currentTimeMillis());
-	final Comparator<Mention> offsetComparator = new Comparator<Mention>() {
-		@Override
-		public int compare(Mention o1, Mention o2) {
-			return o1.getOffset() - o2.getOffset();
-		}
-	};
-	private static final PICK_SELECTION FIRST_CHOICE = PICK_SELECTION.TOP_PAGERANK;
-	private static final int PR_TOP_K = 30;
+
+	public static final PICK_SELECTION DEFAULT_FIRST_CHOICE = PICK_SELECTION.RANDOM;// .TOP_PAGERANK;// RANDOM;//
+	public static final int DEFAULT_PR_TOP_K = 20;//50;// 30;// 0;// 100;
+	public static final double DEFAULT_PR_MIN_THRESHOLD = 1d;// 0.16d;// 0.16d;// 1d;// 0.1d;
+	public static final int DEFAULT_REPEAT = 2000;// was 200 before, but due to long texts...
+	private static final double DEFAULT_PRUNE_MIN_SCORE_RATIO = 0.1;
+	public static final boolean allowSelfConnection = false;
 	// Whether to remove assignments when there is only one possibility (due to high
 	// likelihood of distortion)
 	private static final boolean REMOVE_SINGLE_ASSIGNMENTS = false;
-	private static final double PR_MIN_THRESHOLD = 1d;// 0.1d;
-	private static final int DEFAULT_REPEAT = 20;// was 200 before, but due to long texts...
+	// 0.16d due to MANY rarely-referenced 0.15d endpoints existing
 	private static final int MIN_REPEAT = 1;
-	private static final double MIN_SCORE_RATIO = 0.5;
+
 	// Instance variables
-	private final int REPEAT;
+	public final int REPEAT;
 	private Collection<Mention> context;
 	private final EntitySimilarityService similarityService;
 	private final PageRankLoader pagerankLoader;
+	public final int pagerankTopK;
+	public final double pagerankMinThreshold;
+	public final PICK_SELECTION initStrategy;
+	public final double pruneThreshold;
 
 	public HillClimbingPicker(final Map<String, List<Number>> entityEmbeddingsMap,
 			final PageRankLoader pagerankLoader) {
-		this(new EntitySimilarityService(entityEmbeddingsMap), DEFAULT_REPEAT, pagerankLoader);
+		this(new EntitySimilarityService(entityEmbeddingsMap), pagerankLoader);
 	}
 
 	public HillClimbingPicker(final EntitySimilarityService similarityService, final PageRankLoader pagerankLoader) {
-		this(similarityService, DEFAULT_REPEAT, pagerankLoader);
+		this(similarityService, DEFAULT_REPEAT, pagerankLoader, DEFAULT_PR_TOP_K, DEFAULT_PR_MIN_THRESHOLD,
+				DEFAULT_FIRST_CHOICE, DEFAULT_PRUNE_MIN_SCORE_RATIO);
 	}
 
 	public HillClimbingPicker(final EntitySimilarityService similarityService, final int repeat,
-			final PageRankLoader pagerankLoader) {
+			final PageRankLoader pagerankLoader, final int pagerankTopK, final double pagerankMinThreshold,
+			final PICK_SELECTION initStrategy, final double pruneThreshold) {
 		this.similarityService = similarityService;
 		// How many times to repeat hillclimbing
 		this.REPEAT = Math.max(MIN_REPEAT, repeat);
+		this.pagerankTopK = pagerankTopK;
+		this.pagerankMinThreshold = pagerankMinThreshold;
+		this.initStrategy = initStrategy;
 		this.pagerankLoader = pagerankLoader;
+		this.pruneThreshold = pruneThreshold;
 	}
 
 	@Override
@@ -94,7 +101,7 @@ public class HillClimbingPicker implements ClusterItemPicker {
 		// Order list by natural occurring order of words (enforces intuition of words
 		// close to each other being about the same stuff)
 		final List<Mention> contextList = Lists.newArrayList(this.context);
-		Collections.sort(contextList, offsetComparator);
+		Collections.sort(contextList, Comparators.mentionOffsetComparator);
 
 		// Compute clusters with the strings for simplicity of calls
 		final Map<String, List<String>> clusters = computeClusters(contextList);
@@ -103,16 +110,17 @@ public class HillClimbingPicker implements ClusterItemPicker {
 		final List<String> clusterNames = Lists.newArrayList(clusters.keySet());
 		// Collections.shuffle(clusterNames);
 
-		// Pagerank stuff
+		// Pagerank stuff - limits the items to the top PR_TOP_K and PR_MIN_THRESHOLD
 		final Map<String, Triple<AssignmentScore, AssignmentScore, Integer>> mapClusterPageRankItems = new HashMap<>();
 		final Map<String, String> clusterChoice = new HashMap<>();
-		final Map<String, List<String>> limitedClusters = limitTopPRClusters(this.pagerankLoader, clusters, PR_TOP_K,
-				PR_MIN_THRESHOLD);
+		final Map<String, List<String>> limitedClusters = limitTopPRClusters(this.pagerankLoader, clusters,
+				this.pagerankTopK, this.pagerankMinThreshold);
 		Iterator<String> itClusterNames = clusterNames.iterator();
 		while (itClusterNames.hasNext()) {
 			final String clusterName = itClusterNames.next();
 			final List<String> rankedScores = limitedClusters.get(clusterName);
-			if (rankedScores == null || (REMOVE_SINGLE_ASSIGNMENTS && rankedScores.size() == 1)) {
+			if (rankedScores == null || rankedScores.size() == 0
+					|| (REMOVE_SINGLE_ASSIGNMENTS && rankedScores.size() == 1)) {
 				// ALSO: Remove it from HillClimbing consideration when there's only one...
 				// If the PR score is too low for this, make sure no more disambiguation is done
 				// on it
@@ -139,7 +147,7 @@ public class HillClimbingPicker implements ClusterItemPicker {
 
 		// Execute hillclimbing multiple times
 		for (int hillClimbExec = 0; hillClimbExec < REPEAT; ++hillClimbExec) {
-			hillClimb(disambiguationResultsMap, contextList, clusters, clusterNames, clusterChoice);
+			hillClimb(disambiguationResultsMap, contextList, clusters, Lists.newArrayList(clusterNames), clusterChoice);
 		}
 
 		// -------------------------------------------
@@ -243,7 +251,7 @@ public class HillClimbingPicker implements ClusterItemPicker {
 		if (clusterNames.size() > 1) {
 			final String finalTarget;
 
-			switch (FIRST_CHOICE) {
+			switch (this.initStrategy) {
 			case RANDOM:
 				if (true) {
 					Collections.shuffle(clusterNames);
@@ -358,7 +366,7 @@ public class HillClimbingPicker implements ClusterItemPicker {
 	 * @return minimum score threshold
 	 */
 	private Double computeMinScore() {
-		return ((double) REPEAT) * MIN_SCORE_RATIO;
+		return ((double) REPEAT) * this.pruneThreshold;
 	}
 
 	/**
@@ -372,9 +380,9 @@ public class HillClimbingPicker implements ClusterItemPicker {
 	private Double applyOperation(Double previousValue, Double pairSimilaritySum) {
 		// Either sum them or just add +1
 		// occurrence
-		return previousValue + 1;
+		// return previousValue + 1;
 		// summed similarity
-		// return previousValue + pairSimilaritySum;
+		return previousValue + pairSimilaritySum;
 	}
 
 	private void displayAllResultsMap(Map<String, List<Pair<String, Double>>> allResultsMap) {
@@ -440,13 +448,18 @@ public class HillClimbingPicker implements ClusterItemPicker {
 	private void iterativelyPickLocalBest(Map<String, List<String>> clusters,
 			Map<String, Pair<String, Double>> chosenClusterEntityMap, List<String> clusterNames) {
 		// Now pick the best one between current and next
-		final Logger log = getLogger();
 		for (int clusterNameIndex = 1; clusterNameIndex < clusterNames.size(); ++clusterNameIndex) {
 			final String currClusterName = clusterNames.get(clusterNameIndex - 1);
 			final String nextClusterName = clusterNames.get(clusterNameIndex);
 
 			final Pair<String, Double> bestNext = this.similarityService.topSimilarity(
-					chosenClusterEntityMap.get(currClusterName).getLeft(), clusters.get(nextClusterName));
+					chosenClusterEntityMap.get(currClusterName).getLeft(), clusters.get(nextClusterName),
+					allowSelfConnection);
+			if (bestNext == null) {
+				// If there is no connection other than possibly oneself (depending on
+				// allowSelfConnection), skip it
+				continue;
+			}
 			// If this increases the similarity sum, take it
 			// Otherwise just go to the next one
 			final Pair<String, Double> previousChoice = chosenClusterEntityMap.remove(nextClusterName);
@@ -494,7 +507,11 @@ public class HillClimbingPicker implements ClusterItemPicker {
 
 		Stopwatch.start("topSimilarity");
 		for (String fromEntity : fromEntities) {
-			final Pair<String, Double> entitySimPair = this.similarityService.topSimilarity(fromEntity, toEntities);
+			final Pair<String, Double> entitySimPair = this.similarityService.topSimilarity(fromEntity, toEntities,
+					allowSelfConnection);
+			if (entitySimPair == null) {
+				continue;
+			}
 			final Double entitySim = entitySimPair.getRight();
 			if (entitySim > currBestSim) {
 				currBestSim = entitySim;
@@ -543,10 +560,13 @@ public class HillClimbingPicker implements ClusterItemPicker {
 		for (int i = 1; i < clusterNames.size() - 1; ++i) {
 			fromClusterName = clusterNames.get(i);
 			toClusterName = clusterNames.get(i + 1);
-			final Pair<String, Double> entitySimPair = this.similarityService
-					.topSimilarity(chosenClusterEntityMap.get(fromClusterName).getLeft(), clusters.get(toClusterName));
-			chosenClusterEntityMap.put(toClusterName, entitySimPair);
-			similaritySum += entitySimPair.getRight();
+			final Pair<String, Double> entitySimPair = this.similarityService.topSimilarity(
+					chosenClusterEntityMap.get(fromClusterName).getLeft(), clusters.get(toClusterName),
+					allowSelfConnection);
+			if (entitySimPair != null) {
+				chosenClusterEntityMap.put(toClusterName, entitySimPair);
+				similaritySum += entitySimPair.getRight();
+			}
 //			Logger.getLogger(getClass().getName())
 //					.info("Cluster[" + toClusterName + "]: Found a top-similar item(" + entitySimPair.getLeft() + ", "
 //							+ entitySimPair.getRight() + ") in " + Stopwatch.endDiffStart("topSimilarity") + " ms!");
@@ -588,6 +608,16 @@ public class HillClimbingPicker implements ClusterItemPicker {
 	@Override
 	public double getPickerWeight() {
 		return 50d;
+	}
+
+	public String getExperimentSetupString() {
+		return "Experiment Setup: INIT_STRATEGY[" + this.initStrategy.name() + "], ITERATIONS[" + this.REPEAT
+				+ "], PR_MIN_THRESHOLD[" + this.pagerankMinThreshold + "], PR_TOP_K[" + this.pagerankTopK + "]";
+	}
+
+	@Override
+	public void printExperimentSetup() {
+		getLogger().info(getExperimentSetupString());
 	}
 
 }

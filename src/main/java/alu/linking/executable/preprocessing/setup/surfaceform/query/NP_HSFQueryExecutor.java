@@ -1,5 +1,6 @@
 package alu.linking.executable.preprocessing.setup.surfaceform.query;
 
+import org.apache.commons.logging.Log;
 import org.apache.log4j.Logger;
 
 import alu.linking.config.kg.EnumModelType;
@@ -7,7 +8,6 @@ import alu.linking.preprocessing.surfaceform.query.NP_HSFQuery;
 import alu.linking.structure.Executable;
 
 public class NP_HSFQueryExecutor implements Executable {
-	private Logger logger = getLogger();
 
 	@Override
 	public void init() {

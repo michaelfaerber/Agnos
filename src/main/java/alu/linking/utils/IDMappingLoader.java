@@ -21,6 +21,15 @@ public class IDMappingLoader<V> {
 	private final DualHashBidiMap<String, String> mappingHuman = new DualHashBidiMap<String, String>();
 	private final String tokenSeparator;
 
+	/**
+	 * @deprecated
+	 * TODO - Unfinished translation mechanism
+	 * @param to
+	 * @param inputFile
+	 * @param outputFile
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
 	public void translate(final IDMappingLoader<V> to, final File inputFile, final File outputFile) throws FileNotFoundException, IOException {
 
 		if (mappingRaw != null && mappingRaw.size() > 0) {

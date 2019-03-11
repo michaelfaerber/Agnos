@@ -136,4 +136,9 @@ public class SubPageRankPicker implements ClusterItemPicker, Loggable {
 		return 20;
 	}
 
+	@Override
+	public void printExperimentSetup() {
+		getLogger().info("SubPageRankPicker");
+	}
+
 }
