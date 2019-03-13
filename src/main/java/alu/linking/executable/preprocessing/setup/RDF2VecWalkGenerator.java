@@ -38,6 +38,7 @@ public class RDF2VecWalkGenerator implements Executable {
 	private final int minWalkDepth;
 	private List<String> predicateBlacklist;
 	private static final int DEFAULT_MIN_WALK_DEPTH = 1;
+	private final boolean loadPredicateMapper;
 
 	public RDF2VecWalkGenerator(EnumModelType KG) {
 		this(KG, 4);
@@ -49,16 +50,17 @@ public class RDF2VecWalkGenerator implements Executable {
 
 	public RDF2VecWalkGenerator(EnumModelType KG, int walkDepthMin, int walkDepthMax, final int threadCount) {
 		this(KG, walkDepthMin, walkDepthMax, threadCount,
-				Arrays.asList(new String[] { "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>" }));
+				Arrays.asList(new String[] { "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>" }), false);
 	}
 
 	public RDF2VecWalkGenerator(final EnumModelType KG, final int walkDepthMin, final int walkDepthMax,
-			final int threadCount, final List<String> predicateBlacklist) {
+			final int threadCount, final List<String> predicateBlacklist, final boolean loadPredicateMapper) {
 		this.kg = KG;
 		this.maxWalkDepth = walkDepthMax;
 		this.minWalkDepth = walkDepthMin;
 		this.threadCount = threadCount;
 		this.predicateBlacklist = predicateBlacklist;
+		this.loadPredicateMapper = loadPredicateMapper;
 	}
 
 	enum LIMITING_FACTOR {
@@ -111,9 +113,13 @@ public class RDF2VecWalkGenerator implements Executable {
 			// Take 'random' ones
 			final boolean ALL_VS_RANDOM = false;
 			final WalkResultProcessor resultProcessor;
-			try (final IDMappingGenerator<String> predicateMapper = new IDMappingGenerator<>(
-					new File(FilePaths.FILE_GRAPH_WALK_ID_MAPPING_PREDICATE_HUMAN.getPath(kg)),
-					true ? null : new File(FilePaths.FILE_GRAPH_WALK_ID_MAPPING_PREDICATE_MACHINE.getPath(kg)), true)) {
+			final String prefix = "";
+			final File idMappingFileHuman = new File(FilePaths.FILE_GRAPH_WALK_ID_MAPPING_PREDICATE_HUMAN.getPath(kg));
+			final File idMappingFileRaw = new File(FilePaths.FILE_GRAPH_WALK_ID_MAPPING_PREDICATE_MACHINE.getPath(kg));
+			try (final IDMappingGenerator<String> predicateMapper = this.loadPredicateMapper
+					? new IDMappingLoader<String>().loadHumanFile(idMappingFileHuman)
+							.createGenerator(idMappingFileHuman, true ? null : idMappingFileRaw, prefix)
+					: new IDMappingGenerator<>(idMappingFileHuman, true ? null : idMappingFileRaw, true)) {
 
 				if (ALL_VS_RANDOM) {
 					resultProcessor = new WalkResultProcessorAll(null, predicateMapper);

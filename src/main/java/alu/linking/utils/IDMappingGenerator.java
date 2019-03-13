@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
@@ -67,8 +68,7 @@ public class IDMappingGenerator<V> implements AutoCloseable {
 			if (key == null) {
 				// Doesn't exist yet -> create + output + return
 				key = prefix + counter.getAndIncrement();
-				mapping.put(key, val);
-				write(key, val);
+				addMapping(key, val);
 			}
 			// Else: simply return it
 			return key;
@@ -151,5 +151,32 @@ public class IDMappingGenerator<V> implements AutoCloseable {
 				this.machineOut.close();
 			}
 		}
+	}
+
+	/**
+	 * Inserts passed map's values (keys and each associated value) into this
+	 * instance's map, therewith practically adding already existing mappings<br>
+	 * Note: If the keys already exist in the map, they will be overwritten
+	 * 
+	 * @param map
+	 * @throws IOException
+	 */
+	public void insertValues(final Map<String, V> map) throws IOException {
+		for (Map.Entry<String, V> e : map.entrySet()) {
+			addMapping(e.getKey(), e.getValue());
+		}
+	}
+
+	/**
+	 * Adds the passed mapping to the map and outputs it to the defined file<br>
+	 * Note: Flushing is dependent on setup arguments
+	 * 
+	 * @param key
+	 * @param val
+	 * @throws IOException
+	 */
+	private void addMapping(String key, V val) throws IOException {
+		this.mapping.put(key, val);
+		write(key, val);
 	}
 }

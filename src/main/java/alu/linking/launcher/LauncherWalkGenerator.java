@@ -13,8 +13,9 @@ public class LauncherWalkGenerator implements Loggable {
 				MAG//
 		;
 		try {
-			final int startLength = 1, endLength = 2, threads = 20;
-			new RDF2VecWalkGenerator(KG, startLength, endLength, threads, null).exec();
+			final int startLength = 4, endLength = 4, threads = 30;
+			final boolean loadPredicateMapper = true;
+			new RDF2VecWalkGenerator(KG, startLength, endLength, threads, null, loadPredicateMapper).exec();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

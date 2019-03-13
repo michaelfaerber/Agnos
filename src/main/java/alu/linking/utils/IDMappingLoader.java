@@ -22,22 +22,20 @@ public class IDMappingLoader<V> {
 	private final String tokenSeparator;
 
 	/**
-	 * @deprecated
-	 * TODO - Unfinished translation mechanism
+	 * @deprecated TODO - Unfinished translation mechanism
 	 * @param to
 	 * @param inputFile
 	 * @param outputFile
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	public void translate(final IDMappingLoader<V> to, final File inputFile, final File outputFile) throws FileNotFoundException, IOException {
+	public void translate(final IDMappingLoader<V> to, final File inputFile, final File outputFile)
+			throws FileNotFoundException, IOException {
 
 		if (mappingRaw != null && mappingRaw.size() > 0) {
-			try (final BufferedReader br = new BufferedReader(new FileReader(inputFile)))
-			{
+			try (final BufferedReader br = new BufferedReader(new FileReader(inputFile))) {
 				String line = null;
-				while ((line=br.readLine())!=null)
-				{
+				while ((line = br.readLine()) != null) {
 					line.split(tokenSeparator);
 				}
 			}
@@ -49,7 +47,6 @@ public class IDMappingLoader<V> {
 		} else if (mappingHuman != null && mappingHuman.size() > 0) {
 
 		}
-
 	}
 
 	public IDMappingLoader() {
@@ -60,6 +57,22 @@ public class IDMappingLoader<V> {
 		this.tokenSeparator = separator;
 	}
 
+	public IDMappingGenerator<V> createGenerator(final File humanOutputFile, final File machineOutputFile,
+			final String prefix) throws FileNotFoundException, IOException {
+		final boolean alwaysFlush = true;
+		final IDMappingGenerator generator;
+		if (this.mappingHuman != null && this.mappingHuman.size() > 0) {
+			generator = new IDMappingGenerator<String>(humanOutputFile, machineOutputFile, alwaysFlush, prefix);
+			generator.insertValues(this.mappingHuman);
+		} else if (this.mappingRaw != null) {
+			generator = new IDMappingGenerator<V>(humanOutputFile, machineOutputFile, alwaysFlush, prefix);
+			generator.insertValues(this.mappingRaw);
+		} else {
+			generator = new IDMappingGenerator<V>(humanOutputFile, machineOutputFile, alwaysFlush, prefix);
+		}
+		return generator;
+	}
+
 	/**
 	 * Loads a human-readable mapping from the specified files
 	 * 
@@ -68,8 +81,7 @@ public class IDMappingLoader<V> {
 	 * @throws IOException
 	 */
 	public IDMappingLoader<V> loadHumanFile(final File humanMappingFile) throws IOException {
-		mappingRaw = null;
-		mappingHuman.clear();
+		reset();
 		logger.info("Loading human-readable ID Mapping from: " + humanMappingFile.getAbsolutePath());
 		try (final BufferedReader brIn = new BufferedReader(new FileReader(humanMappingFile))) {
 			String line = null;
@@ -95,8 +107,7 @@ public class IDMappingLoader<V> {
 	 * @throws ClassNotFoundException
 	 */
 	public IDMappingLoader<V> loadRawFile(final File rawMappingFile) throws ClassNotFoundException, IOException {
-		mappingRaw = null;
-		mappingHuman.clear();
+		reset();
 		logger.info("Loading RAW ID Mapping from: " + rawMappingFile.getAbsolutePath());
 		try (final ObjectInputStream ois = new ObjectInputStream(new FileInputStream(rawMappingFile))) {
 			this.mappingRaw = (DualHashBidiMap<String, V>) ois.readObject();
@@ -104,6 +115,14 @@ public class IDMappingLoader<V> {
 		logger.info("Finished loading raw ID Mapping(" + this.mappingRaw.size() + ")!");
 
 		return this;
+	}
+
+	/**
+	 * Resets the state of the maps
+	 */
+	private void reset() {
+		mappingRaw = null;
+		mappingHuman.clear();
 	}
 
 	/**
