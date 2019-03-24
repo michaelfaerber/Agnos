@@ -135,8 +135,9 @@ public enum FilePaths {
 
 	// Walk Generator Embeddings files
 
-	//FILE_GRAPH_WALK_OUTPUT(DIR_WALK_GENERATOR.path + "walk.txt"), //
-	FILE_GRAPH_WALK_OUTPUT("/mnt/maclusext/" + "walk.txt", true, EnumModelType.NONE), //
+	FILE_GRAPH_WALK_OUTPUT(DIR_WALK_GENERATOR.path + "walk.txt"), //
+	//Just use if you have to output walks somewhere completely different (e.g. due to space restrictions)
+	// FILE_GRAPH_WALK_OUTPUT("/mnt/maclusext/" + "walk.txt", true, EnumModelType.NONE), //
 	FILE_GRAPH_WALK_OUTPUT_SENTENCES(DIR_WALK_GENERATOR.path + "walk_sentences.txt"), //
 	FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS(DIR_WALK_GENERATOR.path + "graphwalk_entity_embeddings.txt",
 			"Proper output for computed entity embeddings"), //

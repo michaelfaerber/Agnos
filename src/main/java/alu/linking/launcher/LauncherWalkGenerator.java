@@ -9,11 +9,11 @@ public class LauncherWalkGenerator implements Loggable {
 		final EnumModelType KG = EnumModelType.
 		// DBPEDIA_FULL//
 		// MINI_MAG//
-		// CRUNCHBASE2//
-				MAG//
+				CRUNCHBASE2//
+							// MAG//
 		;
 		try {
-			final int startLength = 4, endLength = 4, threads = 30;
+			final int startLength = 6, endLength = 6, threads = 50;
 			final boolean loadPredicateMapper = true;
 			new RDF2VecWalkGenerator(KG, startLength, endLength, threads, null, loadPredicateMapper).exec();
 		} catch (Exception e) {
