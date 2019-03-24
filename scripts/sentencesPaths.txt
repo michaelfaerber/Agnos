@@ -1,1 +1,4 @@
-/home/noulletk/prog/bmw/./resources/data/walks/walk_sentences.txt
+#/home/noulletk/prog/bmw/./dbpedia_full/resources/data/walks/walk.txt
+/vol2/kris/walk_1_2.txt
+/mnt/maclusext/walk_3.txt
+#/mnt/maclusext/walk_1_2.txt

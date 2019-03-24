@@ -92,13 +92,18 @@ public class RDF2VecWalkGenerator implements Executable {
 
 	private void ram_friendly_walks() throws Exception {
 		// Just output the walks to a different spot than the rest
-		final String walkOutput = FilePaths.FILE_GRAPH_WALK_OUTPUT.getPath(
-				// kg
-				EnumModelType.NONE);
+		final String walkOutput = FilePaths.FILE_GRAPH_WALK_OUTPUT.getPath(this.kg
+		// EnumModelType.NONE
+		);
 		final String sentencesOut = FilePaths.FILE_GRAPH_WALK_OUTPUT_SENTENCES.getPath(kg);
 
-		try (final IterableEntity iterableEntities = new IterableFileEntity(
-				new File(FilePaths.FILE_NT_ENTITIES.getPath(kg)))) {
+		final boolean entitiesqueryVsFile = true;
+
+		try (final IterableEntity iterableEntities = entitiesqueryVsFile ?
+		// null, so it has to query it
+				null :
+				// else load from entities.nt file with NxParser
+				new IterableFileEntity(new File(FilePaths.FILE_NT_ENTITIES.getPath(kg)))) {
 
 			// Load the blacklist for predicates (e.g. rdf:Type or such)
 			final int offset = -1, limit = -1;
@@ -125,8 +130,8 @@ public class RDF2VecWalkGenerator implements Executable {
 					resultProcessor = new WalkResultProcessorAll(null, predicateMapper);
 				} else {
 					resultProcessor = new WalkResultprocessorRandomDecreasingDepth(
-							new float[] { 1.0f, 0.1f, 0.05f, 0.01f }).entityMapping(null)
-									.predicateMapper(predicateMapper).minWalks(20).maxWalks(1_000);
+							new float[] { 1.0f, 0.1f, 0.05f, 0.02f// , 0.01f
+							}).entityMapping(null).predicateMapper(predicateMapper).minWalks(50).maxWalks(1_000);
 				}
 
 				// Whether to use Jena or Virtuoso is defined in the EnumModelType

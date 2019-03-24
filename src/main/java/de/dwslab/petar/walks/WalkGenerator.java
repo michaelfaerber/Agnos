@@ -117,19 +117,26 @@ public abstract class WalkGenerator implements AutoCloseable {
 		System.out.println("Walk query(" + dpWalks + "):");
 		System.out.println(walkQuery);
 		Iterable<String> entities;
-		if ((entitiesCollection instanceof Collection)
-				&& (entitiesCollection == null || ((Collection) entitiesCollection).size() == 0)) {
+		if (entitiesCollection == null || ((entitiesCollection instanceof Collection)
+				&& (entitiesCollection == null || ((Collection) entitiesCollection).size() == 0))) {
+			// Passing an empty collection
 			System.out.println("SELECTING all entities from repo");
-			entities = selectAllEntities(offset, limit);
-			this.resultProcessor.updateEntityAmt(((Collection) entitiesCollection).size());
+			final List<String> listEntities = selectAllEntities(offset, limit);
+			entities = listEntities;
+			final int entityAmt = listEntities.size();
+			this.resultProcessor.updateEntityAmt(entityAmt);
 		} else if ((entitiesCollection instanceof Collection)) {
+			// Passing a non-empty collection
 			System.out.println("Using passed entities (" + ((Collection) entitiesCollection).size() + ")");
 			entities = entitiesCollection;
-			this.resultProcessor.updateEntityAmt(((Collection) entitiesCollection).size());
+			final int entityAmt = ((Collection) entitiesCollection).size();
+			this.resultProcessor.updateEntityAmt(entityAmt);
 		} else {
+			// Passing an otherwise iterable (e.g. FileIterable that reads line by line)
 			final long MAG_entity_count = 209792741l;
 			System.out.println("Using passed iterable[" + entitiesCollection.getClass() + "]:" + MAG_entity_count);
 			entities = entitiesCollection;
+			// Have to manually adjust it (it's just for displaying purposes)
 			this.resultProcessor.updateEntityAmt(MAG_entity_count);
 		}
 		System.out.println("Total number of entities to process: " + this.resultProcessor.getEntityAmt());

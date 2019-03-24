@@ -33,7 +33,7 @@ public class HillClimbingPicker implements ClusterItemPicker {
 	private final Random r = new Random(System.currentTimeMillis());
 
 	public static final PICK_SELECTION DEFAULT_FIRST_CHOICE = PICK_SELECTION.RANDOM;// .TOP_PAGERANK;// RANDOM;//
-	public static final int DEFAULT_PR_TOP_K = 20;//50;// 30;// 0;// 100;
+	public static final int DEFAULT_PR_TOP_K = 20;// 50;// 30;// 0;// 100;
 	public static final double DEFAULT_PR_MIN_THRESHOLD = 1d;// 0.16d;// 0.16d;// 1d;// 0.1d;
 	public static final int DEFAULT_REPEAT = 2000;// was 200 before, but due to long texts...
 	private static final double DEFAULT_PRUNE_MIN_SCORE_RATIO = 0.1;
@@ -371,7 +371,9 @@ public class HillClimbingPicker implements ClusterItemPicker {
 
 	/**
 	 * Method executing the wanted operation for grouping of entities for the
-	 * specified surface forms
+	 * specified surface forms<br>
+	 * Note: Pretty much fulfills the role of a reward function which in the end
+	 * determines which entity is disambiguated to
 	 * 
 	 * @param previousValue     previous value within map
 	 * @param pairSimilaritySum the cosine similarity that might want to be summed
@@ -382,7 +384,9 @@ public class HillClimbingPicker implements ClusterItemPicker {
 		// occurrence
 		// return previousValue + 1;
 		// summed similarity
-		return previousValue + pairSimilaritySum;
+		// return previousValue + pairSimilaritySum;
+		// square it to make a bigger impact, the better it is
+		return previousValue + Math.pow(pairSimilaritySum, 2f);
 	}
 
 	private void displayAllResultsMap(Map<String, List<Pair<String, Double>>> allResultsMap) {
