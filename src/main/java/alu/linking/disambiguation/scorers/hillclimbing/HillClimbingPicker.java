@@ -104,7 +104,7 @@ public class HillClimbingPicker implements ClusterItemPicker {
 		// Pagerank stuff - limits the items to the top PR_TOP_K and PR_MIN_THRESHOLD
 		final Map<String, Triple<AssignmentScore, AssignmentScore, Integer>> mapClusterPageRankItems = new HashMap<>();
 		final Map<String, String> clusterChoice = new HashMap<>();
-		final Map<String, List<String>> limitedClusters = limitTopPRClusters(this.pagerankLoader, clusters,
+		final Map<String, List<String>> limitedClusters = computePRLimitedClusters(this.pagerankLoader, clusters,
 				this.pagerankTopK, this.pagerankMinThreshold);
 		Iterator<String> itClusterNames = clusterNames.iterator();
 		while (itClusterNames.hasNext()) {
