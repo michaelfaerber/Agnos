@@ -49,27 +49,27 @@ public class PairwisePicker implements ClusterItemPicker {
 		// All the logic!
 		// This way we can keep track of surface forms, their respective entities and
 		// the entities' scores
-		final Map<String, Map<String, Number>> mapScore = computeInitScoreMap(this.context, 0f);
 		final Map<String, List<String>> clusters = computeClusters(this.context);
 
-		// Limit clusters to defined top K by PR score (reduces complexity)
-		final Map<String, List<String>> mapLimitedClusters = limitTopPRClusters(this.pagerankLoader, clusters,
-				this.pagerankTopK, this.pagerankMinThreshold);
+		// Limit clusters to defined top K by PR score (reduces overall complexity)
+		final Map<String, Map<String, Number>> mapLimitedClusters = computePRLimitedScoreClusters(this.pagerankLoader,
+				clusters, this.pagerankTopK, this.pagerankMinThreshold, 0f);
 
 		final boolean allowSelfConnection = true;
-		for (Map.Entry<String, List<String>> eOuter : mapLimitedClusters.entrySet()) {
+		for (Map.Entry<String, Map<String, Number>> eOuter : mapLimitedClusters.entrySet()) {
 			final String toSF = eOuter.getKey();
-			final Map<String, Number> toSFEntityScoreMap = mapScore.get(toSF);
-			for (Map.Entry<String, List<String>> eInner : mapLimitedClusters.entrySet()) {
+			final Map<String, Number> toSFEntityScoreMap = eOuter.getValue();
+			for (Map.Entry<String, Map<String, Number>> eInner : mapLimitedClusters.entrySet()) {
 				try {
 					if (eOuter.getKey().equals(eInner.getKey())) {
 						// Skip so we don't do similarities with ourselves...
 						continue;
 					}
-					final Collection<String> targets = eOuter.getValue();
+					final Collection<String> targets = eOuter.getValue().keySet();
 					final String fromSF = eInner.getKey();
-					final Map<String, Number> fromSFEntityScoreMap = mapScore.get(fromSF);
-					for (String fromEntity : eInner.getValue()) {
+					final Map<String, Number> fromSFEntityScoreMap = eInner.getValue();// mapScore.get(fromSF);
+					final Collection<String> sources = eInner.getValue().keySet();
+					for (String fromEntity : sources) {
 						// Get the best similarity from this entity for the other entities
 						final Pair<String, Double> bestTarget = this.similarityService.topSimilarity(fromEntity,
 								targets, allowSelfConnection);
@@ -97,7 +97,7 @@ public class PairwisePicker implements ClusterItemPicker {
 						fromSFEntityScoreMap.put(fromEntity, newFromScore);
 					}
 				} catch (NullPointerException npe) {
-					System.out.println("MapScore Keys: " + mapScore.keySet());
+					System.out.println("MapScore Keys: " + mapLimitedClusters.keySet());
 					System.out.println("toSF: " + toSF);
 					throw npe;
 				}

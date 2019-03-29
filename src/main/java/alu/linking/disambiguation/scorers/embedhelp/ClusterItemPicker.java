@@ -49,6 +49,7 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 			final String surfaceForm = mention.getMention();
 			Map<String, Number> sfMap = null;
 			if ((sfMap = retMap.get(surfaceForm)) == null) {
+				retMap.put(surfaceForm, sfMap);
 				sfMap = new HashMap<>();
 			}
 			for (PossibleAssignment assignment : mention.getPossibleAssignments()) {
@@ -89,7 +90,7 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 		return clusterMap;
 	}
 
-	default Map<String, List<String>> limitTopPRClusters(final PageRankLoader prLoader,
+	default Map<String, List<String>> computePRLimitedClusters(final PageRankLoader prLoader,
 			final Map<String, List<String>> clusters, final int PR_TOP_K, final double PR_MIN_THRESHOLD) {
 		final Map<String, List<String>> copyClusters = new HashMap<>();
 		for (final String clusterName : clusters.keySet()) {
@@ -119,7 +120,39 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 			copyClusters.put(clusterName, limitedEntities);
 		}
 		return copyClusters;
+	}
 
+	default Map<String, Map<String, Number>> computePRLimitedScoreClusters(final PageRankLoader prLoader,
+			final Map<String, List<String>> clusters, final int PR_TOP_K, final double PR_MIN_THRESHOLD,
+			final Number initVal) {
+		final Map<String, Map<String, Number>> copyClusters = new HashMap<>();
+		for (final String clusterName : clusters.keySet()) {
+			final List<String> entities = clusters.get(clusterName);
+			// log.info("SF[" + clusterName + "] - Entities[" + entities + "]");
+
+			List<AssignmentScore> rankedScores = prLoader.makeOrPopulateList(entities);
+			if (PR_TOP_K > 0) {
+				rankedScores = prLoader.getTopK(entities, PR_TOP_K);
+			}
+
+			if (PR_MIN_THRESHOLD > 0) {
+				prLoader.cutOff(entities, PR_MIN_THRESHOLD);
+			}
+
+			// final List<AssignmentScore> rankedScores = prLoader.cutOff(entities,
+			// PR_MIN_THRESHOLD);
+
+			final Map<String, Number> limitedEntities = new HashMap<>();
+			// Compute the list to disambiguate from
+			// rankedScores.stream().forEach(item -> limitedEntities.add(item.assignment));
+			for (AssignmentScore item : rankedScores) {
+				limitedEntities.put(item.assignment, initVal);
+			}
+
+			// Overwrite clusters, so disambiguation is only done on top PR scores
+			copyClusters.put(clusterName, limitedEntities);
+		}
+		return copyClusters;
 	}
 
 	/**
