@@ -292,8 +292,8 @@ public class MentionDetectorLSH implements MentionDetector, Loggable {
 			if (!terminated) {
 				getLogger().error("Executor has not finished terminating");
 			}
-			// Removes all Mention objects that have no associated mention
 
+			// Removes all Mention objects that have no associated mention
 			final Iterator<Mention> itMention = mentions.iterator();
 			while (itMention.hasNext()) {
 				final Mention mention = itMention.next();

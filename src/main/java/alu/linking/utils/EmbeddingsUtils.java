@@ -308,6 +308,18 @@ public class EmbeddingsUtils {
 
 		// return ((num.doubleValue() / den.doubleValue()) + 1d) / 2d;
 		return Math.abs((num.doubleValue() / den.doubleValue()));
+		//return (num.doubleValue() / den.doubleValue());
+	}
+
+	public static double dotProduct(List<Number> left, List<Number> right) {
+		double sum = 0;
+		for (int i = 0; i < left.size(); i++) {
+			sum += // Math.abs(
+					left.get(i).doubleValue() * right.get(i).doubleValue()
+			// )
+			;
+		}
+		return sum;
 	}
 
 	/**
@@ -322,7 +334,11 @@ public class EmbeddingsUtils {
 		final List<Number> list = Lists.newArrayList();
 		Number sum = 0d;
 		for (Number n : inputList) {
-			sum = sum.doubleValue() + n.doubleValue();
+			sum = sum.doubleValue() + // 
+//					Math.abs(//
+					n.doubleValue()//
+//			)//
+			;//
 		}
 
 		// Add prior values divided by their sum to the returned list

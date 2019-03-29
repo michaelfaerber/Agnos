@@ -86,7 +86,19 @@ public class InputProcessor {
 		return retList;
 	}
 
+	/**
+	 * Takes an original piece of text from the input and applies preprocessing
+	 * measures to get a potentially different form of it (e.g. without unnecessary
+	 * words etc), creating a mention that will attempt to be matched through
+	 * mention detection
+	 * 
+	 * @param original   original piece of text from input
+	 * @param startIndex which index it starts at
+	 * @param blacklist  list of words that are to be removed from the
+	 * @return
+	 */
 	private static Mention createMention(String original, int startIndex, Collection<String> blacklist) {
+		// Preprocess the original input to get a version without stopwords
 		final String processedInput = combineProcessedInput(processAndRemoveStopwords(original, blacklist));
 		if (processedInput == null || processedInput.length() == 0) {
 			return null;
@@ -94,6 +106,12 @@ public class InputProcessor {
 		return new Mention(null, null, startIndex, 0f, original, processedInput);
 	}
 
+	/**
+	 * Turns a string input into an array of tokens
+	 * 
+	 * @param input
+	 * @return
+	 */
 	public static String[] processToSingleWords(final String input) {
 		final List<TextOffset> tokens = process(input, EnumDetectionType.SINGLE_WORD);
 		final String[] retArr = new String[tokens.size()];
@@ -304,13 +322,19 @@ public class InputProcessor {
 			final InputProcessor inputProcessor) {
 		final HashMap<String, Collection<V>> ret = new HashMap<>(map.keySet().size());
 		for (Map.Entry<String, Collection<V>> e : map.entrySet()) {
-			final String key = InputProcessor
-					.combineProcessedInput(inputProcessor.processAndRemoveStopwords(e.getKey()));
-			final Collection<V> val = ret.get(key);
-			if (val == null) {
-				ret.put(e.getKey(), e.getValue());
-			} else {
-				val.addAll(e.getValue());
+			String key = null;
+			String[] toProcessArr = null;
+			try {
+				toProcessArr = inputProcessor.processAndRemoveStopwords(e.getKey());
+				key = InputProcessor.combineProcessedInput(toProcessArr);
+				final Collection<V> val = ret.get(key);
+				if (val == null) {
+					ret.put(e.getKey(), e.getValue());
+				} else {
+					val.addAll(e.getValue());
+				}
+			} catch (NullPointerException npe) {
+				throw npe;
 			}
 		}
 		return ret;

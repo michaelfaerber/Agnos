@@ -23,15 +23,16 @@ import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
 public class LauncherTestQuery {
 
 	public static void main(String[] args) {
-		final EnumModelType KG = EnumModelType.MAG;
+		final EnumModelType KG = EnumModelType.
+		// MAG
+				DBPEDIA_FULL;
 		System.out.println("Testing query for: " + KG.name());
 		Stopwatch.start(LauncherTestQuery.class.getName());
-		 final Dataset dataset =
-		 TDBFactory.createDataset(FilePaths.DATASET.getPath(KG));
-		 System.out.println("Finished loading!");
-			Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
-			
-		 final Model model = dataset.getDefaultModel();
+		final Dataset dataset = TDBFactory.createDataset(FilePaths.DATASET.getPath(KG));
+		System.out.println("Finished loading!");
+		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
+
+		final Model model = dataset.getDefaultModel();
 //		final String queryStr = "select distinct ?s (CONCAT(CONCAT(?fname, \" \"), ?lname) AS ?o) where {\r\n"
 //				+ "?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://ontologycentral.com/2010/05/cb/vocab#Person> .\r\n"
 //				+ "?s <http://ontologycentral.com/2010/05/cb/vocab#last_name> ?lname .\r\n"
@@ -39,14 +40,17 @@ public class LauncherTestQuery {
 		System.out.println("Executing query...");
 		// getABC(model);
 		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
-		getPredicates(model);
-		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
-		getTypes(model);
-		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
-		getPredicatesGroupCounts(model);
-		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
+		// getObjectsFor(model, "http://dbpedia.org/resource/Smartphone");
+		getObjectsForSubjectOfSFQuery(model, "http://dbpedia.org/resource/Smartphone");
+//		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
+//		getPredicates(model);
+//		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
+//		getTypes(model);
+//		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
+//		getPredicatesGroupCounts(model);
+//		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
 		// getRandom(model);
-		//testVirtuoso();
+		// testVirtuoso();
 		// getDBLPAuthors(model);
 
 		// getPredicatesAndTypes(model);
@@ -157,12 +161,29 @@ public class LauncherTestQuery {
 		System.out.println("---------------------------------------------");
 	}
 
-	
+	private static void getObjectsFor(Model model, final String subj) {
+		System.out.println("############################################");
+		System.out.println("# Objects For                              #");
+		System.out.println("############################################");
+		final StringBuilder sbSubj = new StringBuilder();
+		if (!subj.startsWith("<")) {
+			sbSubj.append("<");
+		}
+		sbSubj.append(subj);
+		if (!subj.endsWith(">")) {
+			sbSubj.append(">");
+		}
+		final String queryStr = "select distinct ?cObj where { \n" + sbSubj.toString() + " ?bPred ?cObj . \n" + "}";
+		execQuery(model, queryStr);
+		System.out.println("---------------------------------------------");
+	}
+
 	private static void getPredicatesGroupCounts(Model model) {
 		System.out.println("############################################");
 		System.out.println("# Predicate Counts                         #");
 		System.out.println("############################################");
-		final String queryStr = "select ?bPred (COUNT(?bPred) AS ?CT) where { \n" + "?aSubj ?bPred ?cObj . \n" + "} GROUP BY ?bPred";
+		final String queryStr = "select ?bPred (COUNT(?bPred) AS ?CT) where { \n" + "?aSubj ?bPred ?cObj . \n"
+				+ "} GROUP BY ?bPred";
 		execQuery(model, queryStr);
 		System.out.println("---------------------------------------------");
 	}
@@ -184,7 +205,46 @@ public class LauncherTestQuery {
 		System.out.println("---------------------------------------------");
 	}
 
+	private static void getObjectsForSubjectOfSFQuery(Model model, String subj) {
+		System.out.println("############################################");
+		System.out.println("# getObjectsForSubjectOfSFQuery            #");
+		System.out.println("############################################");
+		final StringBuilder sbSubj = new StringBuilder();
+		if (!subj.startsWith("<")) {
+			sbSubj.append("<");
+		}
+		sbSubj.append(subj);
+		if (!subj.endsWith(">")) {
+			sbSubj.append(">");
+		}
+		final String sfQuery = "SELECT DISTINCT ?s (STR(?obj) AS ?o) WHERE { \r\n"
+				+ " ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ?oType .\r\n" + " ?s ?p ?obj .\r\n" //
+				+ " FILTER( ?p IN (	<http://xmlns.com/foaf/0.1/givenName>, \r\n"
+				+ "					<http://dbpedia.org/property/name>, \r\n"
+				+ "					<http://xmlns.com/foaf/0.1/name>, \r\n"
+				+ "					<http://xmlns.com/foaf/0.1/surname>, \r\n"
+				+ "					<http://dbpedia.org/property/birthName>, \r\n"
+				+ "					<http://www.w3.org/2000/01/rdf-schema#label>,\r\n"
+				+ "					<http://xmlns.com/foaf/0.1/nick>,\r\n"
+				+ "					<http://dbpedia.org/property/q>,\r\n"
+				+ "					<http://dbpedia.org/property/n>\r\n" //
+				+ "				) \r\n" //
+				+ "		) .\r\n"//
+				+ " FILTER( isLiteral(?obj) ) .\r\n" //
+				+ " FILTER( STRLEN( STR(?obj) ) > 1 ) .\r\n"//
+				+ " FILTER( STRLEN( STR(?obj) ) < 8000 ) .\r\n" //
+				+ " FILTER( ?oType IN (<http://www.w3.org/2002/07/owl#Thing>, <http://www.w3.org/2004/02/skos/core#Concept>) ) .\r\n"//
+				+ " FILTER( ?s = " + sbSubj.toString() + ")" //
+				+ "}"//
+		;
+		execQuery(model, sfQuery);
+		System.out.println("---------------------------------------------");
+
+	}
+
 	private static void execQuery(Model model, String queryStr) {
+		System.out.println("Executing");
+		System.out.println(queryStr);
 		final Query query = QueryFactory.create(queryStr);
 		// Execute the query and obtain results
 		final QueryExecution qe = QueryExecutionFactory.create(query, model);

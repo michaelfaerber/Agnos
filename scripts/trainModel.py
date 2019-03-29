@@ -10,9 +10,33 @@ import logging, os, sys, gzip
 import datetime
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', filename='word2vec.out', level=logging.INFO)
+# Which setup models to train
+loadFirst = False
+loadFirstLocation = "./dbpedia_sg1_size200_mincount1_window5_neg15_iter10"
+trainFirst = True
+trainSecond = False
+trainThird = False
+trainFourth = True
+
+# Output variables
+# Whether to output the full vocabulary
+outputFullVocab = False
+# How to save the models
+kg = "DBpedia"
+
+# If another model is in memory/loaded, put it here after training
+loadedModel = None
+
 # Constants
 cbow = 0
 skipgram = 1
+
+# Mapping dict
+entity_mapping_dict = {}
+# Mapping file
+mapping_file = "/home/noulletk/prog/bmw/dbpedia_full/resources/data/walks/walk_entity_mapping.txt"
+mapping_sep = "\t"
+hasMapping = False
 
 # Path to a file that contains lines with the locations of files 
 # containing the sentences we want for our Word2Vec model
@@ -20,7 +44,7 @@ pathsLocator = "./sentencesPaths.txt"
 vocabPath = "./embeddings_vocabulary.txt"
 
 # Machine-based parameters
-threadCount = 40
+threadCount = 50
 
 # W2V Defaults ( https://radimrehurek.com/gensim/models/word2vec.html )
 # gensim.models.word2vec.Word2Vec(
@@ -37,6 +61,7 @@ threadCount = 40
 iterations = 10
 negSampling = 15
 windowContextSize = 5
+minCount = 1
 
 #What is the newline character on the machine
 newline = '\n'
@@ -46,6 +71,88 @@ walkSeparator = "\t"
 #What separates the single 'units' of a given walk?
 hopSeparator = '->'
 iterationCounter = {'val': 0}
+
+#Load mappings if there are any
+if hasMapping:
+    for mapping_line in open(mapping_file, mode='rt'):
+        mapping_tokens = mapping_line.rstrip(newline).split(mapping_sep)
+        if len(mapping_tokens) == 2:
+            entity_mapping_dict[mapping_tokens[0]] = mapping_tokens[1]
+    print("Loaded %s mappings!" % (len(entity_mapping_dict)))
+
+def outputVocab(outPath='embeddings_vocabulary', model = None):
+    outFile = open(vocabPath, "w")
+    print("Vocab keys size:",len(model.wv.vocab.keys()))
+    print("Outputting vocab to: ",vocabPath)
+    for key in model.wv.vocab.keys():
+        outFile.write("%s" % key)
+        for item in model.wv[key]:
+            outFile.write("\t%s" % item)
+        #outFile.write("\t%s" % value)
+        outFile.write("\n")
+    outFile.close()
+    print("Finished outputting vocabulary")
+    #print("Vocabulary keys:",model.wv.vocab.keys())
+    #print("Vocab size:",len(model.wv.vocab))
+    print("Vocab keys size:",len(model.wv.vocab.keys()))
+    #print("Embedding: ",model.wv["Service-->"])
+    #print("Most similar: ",model.most_similar(find_most_similar_to))
+    #print("PASSED!")
+
+
+def concatModelPath(kg='', sg='', size='', minCount='', window='', negSampling='', iterations='', alpha='', cbow_mean='') -> str:
+    outPath = kg + "_sg" + str(skipgram) + "_size" + str(size) + "_minCount" + str(minCount) + "_window" + str(windowContextSize) \
+    + "_neg" + str(negSampling) + "_iter" + str(iterations)  + "_alpha" + str(alpha) + "_cbowMean" + str(cbow_mean)
+
+    print("Outpath: %s" % (outPath) )
+    #return 'DB2Vec_sg_200_5_5_15_2_500'
+    return outPath
+
+
+def trainOrLoad(loadedModel=None, kg=kg, vectSize=200, minCt=minCount, windowSize=windowContextSize, workerCt=threadCount, 
+    sgOrCBOW=skipgram, neg=negSampling, cbow_mean=1, alpha=0.025, iters=iterations, save=True) -> Word2Vec:
+    iterationCounter['val'] = 0
+    currModel = None
+
+    # Concatenating here to make sure that we don't waste computation time for it to fail at it
+    currModelOutPath = concatModelPath(kg=kg, sg=sgOrCBOW, size=vectSize, minCount=minCt, window=windowSize, negSampling=neg, iterations=iters, alpha=alpha, cbow_mean=cbow_mean)
+
+    if loadedModel is not None:
+        print("Training model based on passed model")
+        currModel = Word2Vec(
+        size=vectSize, 
+        workers=workerCt, 
+        min_count=minCt,
+        window=windowSize, 
+        sg=sgOrCBOW, 
+        negative=neg, 
+        iter=iters,
+        alpha=alpha,
+        cbow_mean=cbow_mean
+        )
+        currModel.reset_from(loadedModel)
+        currModel.train(MySentences(iterationCounter), epochs=currModel.iter, total_examples=currModel.corpus_count)
+
+    else:
+        print("Training model from scratch")
+        currModel = Word2Vec(
+        sentences=MySentences(iterationCounter),
+        size=vectSize, 
+        min_count=minCt,
+        workers=workerCt, 
+        window=windowSize, 
+        sg=sgOrCBOW, 
+        negative=neg, 
+        iter=iters,
+        alpha=alpha,
+        cbow_mean=cbow_mean
+        )
+
+    if save:
+        currModel.save(currModelOutPath)
+
+    return currModel
+
 
 class MySentences:
     def __init__(self, iterationCounter):
@@ -76,6 +183,9 @@ class MySentences:
                     else:
                         # If you're NOT grouping the walks and separating them by tabs
                         sentence = line.rstrip(newline).split(hopSeparator)
+                        entity = sentence[0]
+                        # Give the proper URL for the entity IF it exists, otherwise return the entity itself
+                        sentence[0] = entity_mapping_dict.get(entity, entity) 
                         #print(sentence)
                         yield sentence
                         
@@ -85,83 +195,92 @@ class MySentences:
 
 # sg 500
 #sentencez = grab_sentences()
-model = Word2Vec(sentences=MySentences(iterationCounter), 
-size=200, 
-workers=threadCount, 
-window=windowContextSize, 
-sg=skipgram, 
-negative=negSampling, 
-iter=iterations)
 
-#model.build_vocab(MySentences())
-#model.train(MySentences())
 
-outFile = open(vocabPath, "w")
-print("Vocab keys size:",len(model.wv.vocab.keys()))
-print("Outputting vocab to: ",vocabPath)
-for key in model.wv.vocab.keys():
-    outFile.write("%s" % key)
-    for item in model.wv[key]:
-        outFile.write("\t%s" % item)
-    #outFile.write("\t%s" % value)
-    outFile.write("\n")
-outFile.close()
-print("Finished outputting vocabulary")
-#print("Vocabulary keys:",model.wv.vocab.keys())
-#print("Vocab size:",len(model.wv.vocab))
-print("Vocab keys size:",len(model.wv.vocab.keys()))
-#print("Embedding: ",model.wv["Service-->"])
-#print("Most similar: ",model.most_similar(find_most_similar_to))
-#print("PASSED!")
-
-# sg/cbow features iterations window negative hops random walks
-model.save('MAG_sg1_size200_mincount1_window5_neg15_iter15')
-
-if False:
-    # sg 200
-    model1 = Word2Vec(size=200, 
+if trainFirst:
+    print("Training first model (from scratch)")
+    currModelOutPath = concatModelPath(kg=kg, sg=skipgram, size=500, minCount=minCount, window=windowContextSize, negSampling=negSampling, iterations=iterations)
+    model = Word2Vec(sentences=MySentences(iterationCounter), 
+    size=500, 
+    min_count=minCount,
     workers=threadCount, 
-    window=5, 
+    window=windowContextSize, 
     sg=skipgram, 
     negative=negSampling, 
     iter=iterations)
+
+    #model.build_vocab(MySentences())
+    #model.train(MySentences())
+
+    # sg/cbow features iterations window negative hops random walks
+    model.save(currModelOutPath)
+    loadedModel = model
+else:
+    print("Not training first model")
+
+
+if loadFirst:
+    print("Loading first model...")
+    print("Loading model from: ",loadFirstLocation)
+    loadedModel = Word2Vec.load(loadFirstLocation)
+
+
+if trainSecond:
+    print("Training model #2")
+    model2 = trainOrLoad(loadedModel=loadedModel, 
+    vectSize=200, 
+    sgOrCBOW=skipgram, 
+    save=True)    
     
-    model1.reset_from(model)
-
-    # cbow 500
-    model2 = Word2Vec(size=500, 
-    workers=threadCount, 
-    window=windowContextSize, 
-    sg=cbow, 
-    iter=iterations, 
-    cbow_mean=1, 
-    alpha=0.05)
+    if loadedModel is None:
+        loadedModel = model2
     
-    model2.reset_from(model)
 
-    # cbow 200
-    model3 = Word2Vec(size=200, 
-    workers=threadCount, 
-    window=windowContextSize, 
-    sg=cbow, 
-    iter=iterations, 
+if trainThird:
+    print("Training model #3")
+    model3 = trainOrLoad(loadedModel=loadedModel,
+        vectSize=500, 
+        sgOrCBOW=cbow, 
+        save=True,
+        cbow_mean=1, 
+        alpha=0.05)
+        
+    if loadedModel is None:
+        loadedModel = model3
+
+
+if trainFourth:
+    print("Training model #4")
+    model4 = trainOrLoad(loadedModel=loadedModel, 
+    vectSize=200, 
+    sgOrCBOW=cbow, 
     cbow_mean=1, 
-    alpha=0.05)
-    model3.reset_from(model)
+    alpha=0.05,
+    save=True)    
 
-    del model
+    if loadedModel is None:
+        loadedModel = model4
 
-    model1.train(sentences)
-    model1.save('DB2Vec_sg_200_5_5_15_2_500')
 
-    del model1
+if outputFullVocab:
+    outputVocab(outPath=vocabPath, model=loadedModel)
+else:
+    print("Not outputting vocab")
 
-    model2.train(sentences)
-    model2.save('DB2Vec_cbow_500_5_5_2_500')
 
-    del model2
+#del model
 
-    model3.train(sentences)
-    model3.save('DB2Vec_cbow_200_5_5_2_500')
+#model1.train(sentences)
+#model1.save('DB2Vec_sg_200_5_5_15_2_500')
 
-    del model3
+#del model1
+
+#model2.train(sentences)
+#model2.save('DB2Vec_cbow_500_5_5_2_500')
+
+#del model2
+
+#model3.train(sentences)
+#model3.save('DB2Vec_cbow_200_5_5_2_500')
+
+#del model3

@@ -26,23 +26,14 @@ import alu.linking.mentiondetection.Mention;
 import alu.linking.utils.Stopwatch;
 
 public class HillClimbingPicker implements ClusterItemPicker {
-	public enum PICK_SELECTION {
-		TOP_PAGERANK, RANDOM, OPTIMAL_CALC
-	}
 
 	private final Random r = new Random(System.currentTimeMillis());
 
-	public static final PICK_SELECTION DEFAULT_FIRST_CHOICE = PICK_SELECTION.RANDOM;// .TOP_PAGERANK;// RANDOM;//
-	public static final int DEFAULT_PR_TOP_K = 20;// 50;// 30;// 0;// 100;
-	public static final double DEFAULT_PR_MIN_THRESHOLD = 1d;// 0.16d;// 0.16d;// 1d;// 0.1d;
-	public static final int DEFAULT_REPEAT = 2000;// was 200 before, but due to long texts...
-	private static final double DEFAULT_PRUNE_MIN_SCORE_RATIO = 0.1;
-	public static final boolean allowSelfConnection = false;
-	// Whether to remove assignments when there is only one possibility (due to high
-	// likelihood of distortion)
-	private static final boolean REMOVE_SINGLE_ASSIGNMENTS = false;
-	// 0.16d due to MANY rarely-referenced 0.15d endpoints existing
-	private static final int MIN_REPEAT = 1;
+	public static final PICK_SELECTION DEFAULT_FIRST_CHOICE = PICK_SELECTION//
+			.TOP_PAGERANK
+	// .RANDOM
+	//
+	;
 
 	// Instance variables
 	public final int REPEAT;
@@ -367,26 +358,6 @@ public class HillClimbingPicker implements ClusterItemPicker {
 	 */
 	private Double computeMinScore() {
 		return ((double) REPEAT) * this.pruneThreshold;
-	}
-
-	/**
-	 * Method executing the wanted operation for grouping of entities for the
-	 * specified surface forms<br>
-	 * Note: Pretty much fulfills the role of a reward function which in the end
-	 * determines which entity is disambiguated to
-	 * 
-	 * @param previousValue     previous value within map
-	 * @param pairSimilaritySum the cosine similarity that might want to be summed
-	 * @return value resulting of the operation
-	 */
-	private Double applyOperation(Double previousValue, Double pairSimilaritySum) {
-		// Either sum them or just add +1
-		// occurrence
-		// return previousValue + 1;
-		// summed similarity
-		// return previousValue + pairSimilaritySum;
-		// square it to make a bigger impact, the better it is
-		return previousValue + Math.pow(pairSimilaritySum, 2f);
 	}
 
 	private void displayAllResultsMap(Map<String, List<Pair<String, Double>>> allResultsMap) {

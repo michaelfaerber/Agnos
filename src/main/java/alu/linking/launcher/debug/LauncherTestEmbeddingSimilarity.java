@@ -55,7 +55,7 @@ public class LauncherTestEmbeddingSimilarity {
 			getLogger().info("Loading embeddings from: " + embedFile.getAbsolutePath());
 			Stopwatch.start(LauncherContinuousMentionDetector.class.getName());
 			Map<String, List<Number>> entityEmbeddingsMap = EmbeddingsUtils.readEmbeddings(embedFile, entityMapping,
-					true);
+					false);
 			getLogger().info("Finished(" + Stopwatch.endOutput(LauncherContinuousMentionDetector.class.getName())
 					+ " ms.) loading embeddings from: " + embedFile.getAbsolutePath());
 

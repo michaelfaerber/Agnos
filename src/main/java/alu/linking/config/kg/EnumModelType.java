@@ -6,7 +6,7 @@ import alu.linking.config.constants.Strings;
 public enum EnumModelType {
 	NONE("", null), //
 	DBPEDIA(Strings.ROOTPATH.val + "dbpedia/", EntityQuery.DEFAULT), //
-	DBPEDIA_FULL(Strings.ROOTPATH.val + "dbpedia_full/", EntityQuery.DEFAULT, EnumConnection.SHETLAND_VIRTUOSO, true,
+	DBPEDIA_FULL(Strings.ROOTPATH.val + "dbpedia_full/", EntityQuery.DEFAULT, EnumConnection.SHETLAND_VIRTUOSO, false,
 			"http://dbpedia.org"), //
 	FREEBASE(Strings.ROOTPATH.val + "freebase/", EntityQuery.DEFAULT), //
 	CRUNCHBASE(Strings.ROOTPATH.val + "crunchbase/", EntityQuery.CRUNCHBASE2), //

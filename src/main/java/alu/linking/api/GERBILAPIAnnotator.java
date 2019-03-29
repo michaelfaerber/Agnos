@@ -102,8 +102,12 @@ public class GERBILAPIAnnotator implements Executable {
 		}
 	}
 
-	@SuppressWarnings("unused")
-	public String annotateNIFInputStream(final InputStream inputStream) {
+	/**
+	 * Do not change unless you have changed the call on the WEB API
+	 * @param inputStream NIFInputStream
+	 * @return
+	 */
+	public String annotate(final InputStream inputStream) {
 		if (false) {
 			try (final BufferedReader brIn = new BufferedReader(new InputStreamReader(inputStream))) {
 				String line = null;
@@ -344,7 +348,7 @@ public class GERBILAPIAnnotator implements Executable {
 		// Mention Detection
 		// ########################################################
 		mentions = md.detect(text);
-		if (markings != null) {
+		if (markings != null && markings.size() != 0) {
 			mentions = restrictMentionsToMarkings(mentions, markings, text);
 		}
 
@@ -522,7 +526,7 @@ public class GERBILAPIAnnotator implements Executable {
 				}
 			}
 			if (inputReader != null) {
-				return annotateNIFInputStream(inputReader);
+				return annotate(inputReader);
 			}
 		}
 		return null;
