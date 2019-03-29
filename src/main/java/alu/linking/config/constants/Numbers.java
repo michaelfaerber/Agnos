@@ -26,7 +26,7 @@ public enum Numbers {
 	MENTION_DETECTION_WINDOW_SIZE(2, "Size of the sliding window for mention detection when using "
 			+ EnumDetectionType.BOUND_DYNAMIC_WINDOW.name()
 			+ " mode. Note that this number generally represents the (maximum) 'number of words' used for word detection"), //
-	MENTION_DETECTION_THREAD_AMT(8, "Number of threads used for mention detection"), //
+	MENTION_DETECTION_THREAD_AMT(20, "Number of threads used for mention detection"), //
 	MENTION_DETECTION_DEFAULT_THRESHOLD(0.85,
 			"Default threshold for mention detection. Exists just out of ease of use in case unsure of good choice of threshold."), //
 	MENTION_MIN_SIZE(2, "Total size lower-bound # of chars required to create a mention"), //

@@ -12,8 +12,9 @@ import java.util.Set;
 import org.aksw.gerbil.io.nif.impl.TurtleNIFParser;
 import org.aksw.gerbil.transfer.nif.Document;
 import org.aksw.gerbil.transfer.nif.Marking;
+import org.aksw.gerbil.transfer.nif.Meaning;
+import org.aksw.gerbil.transfer.nif.Span;
 import org.aksw.gerbil.transfer.nif.TurtleNIFDocumentParser;
-import org.aksw.gerbil.transfer.nif.data.NamedEntity;
 import org.apache.jena.ext.com.google.common.collect.Lists;
 
 import alu.linking.api.GERBILAPIAnnotator;
@@ -28,7 +29,13 @@ public class LauncherEvaluateKORE implements Loggable {
 	}
 
 	public void run() {
-		final File fileKORE50 = new File("./evaluation/kore50-nif.ttl");
+		final String inPath = //
+				"./evaluation/" + //
+						"kore50-nif.ttl"
+		// "dbpedia-spotlight-nif.ttl"
+		//
+		;
+		final File fileKORE50 = new File(inPath);
 		// final String inputDir = "./evaluation/min_example.ttl";
 		// final String outputDir = "./evaluation/annotated/";
 		final GERBILAPIAnnotator annotator = new GERBILAPIAnnotator(EnumModelType.DBPEDIA_FULL);
@@ -114,7 +121,19 @@ public class LauncherEvaluateKORE implements Loggable {
 		displayTruthValues(EvaluationResult.globalTP, EvaluationResult.globalTN, EvaluationResult.globalFP,
 				EvaluationResult.globalFN);
 		getLogger().info("Finished successfully!");
-		getLogger().info("Missing PR values:" + PageRankLoader.setPRNotFound);
+		final StringBuilder sbMissingPR = new StringBuilder();
+		int missingPRCounter = 0;
+		final int displayPR = 50;
+		for (String s : PageRankLoader.setPRNotFound) {
+			sbMissingPR.append(s);
+			sbMissingPR.append("; ");
+			missingPRCounter++;
+			if (missingPRCounter >= displayPR) {
+				break;
+			}
+		}
+		getLogger().info(
+				"Missing PR values(" + PageRankLoader.setPRNotFound.size() + "): [" + sbMissingPR.toString() + "]");
 	}
 
 	private void displayEvaluation(final List<EvaluationResult> evaluationResults) {
@@ -197,7 +216,7 @@ public class LauncherEvaluateKORE implements Loggable {
 			if (setInputMarkings.contains(m)) {
 				// tp++;
 			} else {
-				//It's in the found markings but not in the ground truth
+				// It's in the found markings but not in the ground truth
 				fp++;
 			}
 		}
@@ -254,9 +273,14 @@ public class LauncherEvaluateKORE implements Loggable {
 	private Set<TestMarking> transformToTestMarkings(Collection<Marking> markings, final String inputText) {
 		final Set<TestMarking> ret = new HashSet<>();
 		for (Marking mark : markings) {
-			final NamedEntity ne = (NamedEntity) mark;
+			final Span ne = (Span) mark;
 			final String text = inputText.substring(ne.getStartPosition(), ne.getStartPosition() + ne.getLength());
-			final Set<String> uris = ne.getUris();
+			final Set<String> uris;
+			if (mark instanceof Meaning) {
+				uris = ((Meaning) mark).getUris();
+			} else {
+				uris = new HashSet<>();
+			}
 			if (uris.size() == 0) {
 				getLogger().warn("No URI passed...");
 			} else if (uris.size() > 1) {

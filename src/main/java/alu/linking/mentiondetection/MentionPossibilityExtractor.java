@@ -405,8 +405,7 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 	 * @param source what the word belongs to
 	 */
 	private void addPossibility(final Map<String, Collection<String>> map, String word, String source) {
-		word = Normalizer.normalize(word, Normalizer.Form.NFD)//.replaceAll("[^\\p{ASCII}]", "")
-				.toLowerCase();
+		word = Normalizer.normalize(word, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "").toLowerCase();
 		// source = source;// .toLowerCase();
 		if (!passesRequirements(word))
 			return;

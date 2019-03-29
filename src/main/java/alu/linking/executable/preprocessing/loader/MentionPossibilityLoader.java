@@ -47,12 +47,19 @@ public class MentionPossibilityLoader implements Executable {
 				this.mpe = new MentionPossibilityExtractor(this.KG);
 			}
 			try {
-				this.inputProcessor = new InputProcessor(this.stopwordsLoader.getStopwords());
+				Collection<String> stopwords;
+				if (this.stopwordsLoader != null) {
+					stopwords = this.stopwordsLoader.getStopwords();
+				} else {
+					stopwords = null;
+				}
+				this.inputProcessor = new InputProcessor(stopwords);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		} else {
 			this.mpe = new MentionPossibilityExtractor(this.KG);
+			this.inputProcessor = new InputProcessor(null);
 		}
 	}
 
@@ -73,14 +80,11 @@ public class MentionPossibilityLoader implements Executable {
 				// linked to
 				// Returned map is of the sort Map<O, Set<S>>
 				mpe.populateBlacklist((File) (o[0]));
-				ret = this.inputProcessor.processCollection(mpe.addPossibilities((File) (o[1])), this.inputProcessor);
+				ret = InputProcessor.processCollection(mpe.addPossibilities((File) (o[1])), this.inputProcessor);
 			} else if (o.length == 1 && o[0] instanceof File) {
 				// Takes the blacklist from the default location
 				mpe.populateBlacklist(new File(FilePaths.FILE_MENTIONS_BLACKLIST.getPath(KG)));
-				ret = this.inputProcessor.processCollection(
-						mpe.addPossibilities((File) (o[0]))
-						, this.inputProcessor)
-				;
+				ret = InputProcessor.processCollection(mpe.addPossibilities((File) (o[0])), this.inputProcessor);
 			}
 		}
 
