@@ -3,10 +3,6 @@ package alu.linking.launcher.debug;
 import java.util.Iterator;
 
 import org.apache.jena.query.Dataset;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QueryExecutionFactory;
-import org.apache.jena.query.QueryFactory;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.rdf.model.Model;
@@ -15,6 +11,7 @@ import org.apache.jena.tdb.TDBFactory;
 import alu.linking.config.constants.EnumConnection;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
+import alu.linking.utils.RDFUtils;
 import alu.linking.utils.Stopwatch;
 import virtuoso.jena.driver.VirtGraph;
 import virtuoso.jena.driver.VirtuosoQueryExecution;
@@ -245,10 +242,7 @@ public class LauncherTestQuery {
 	private static void execQuery(Model model, String queryStr) {
 		System.out.println("Executing");
 		System.out.println(queryStr);
-		final Query query = QueryFactory.create(queryStr);
-		// Execute the query and obtain results
-		final QueryExecution qe = QueryExecutionFactory.create(query, model);
-		final ResultSet results = qe.execSelect();
+		final ResultSet results = RDFUtils.execQuery(model, queryStr);
 		displayQuery(results);
 	}
 

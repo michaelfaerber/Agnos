@@ -24,6 +24,9 @@ public enum EntityQuery {
 			+ "				)\r\n" //
 			+ "		)\r\n"//
 			+ "}"), //
+	WIKIDATA("SELECT DISTINCT ?s WHERE "//
+			+ "{ ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://wikiba.se/ontology#Item> }"//
+	), //
 	DEFAULT("Select ?s Where { ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Thing>}") //
 	;
 	public final String query;

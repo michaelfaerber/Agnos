@@ -34,23 +34,37 @@ public class EmbeddingsUtils {
 		return readEmbeddings(intputFile, null, true);
 	}
 
+	public static Map<String, List<Number>> readEmbeddings(final File intputFile,
+			final IDMappingLoader<String> mappingLoader, final boolean normalize)
+			throws FileNotFoundException, IOException {
+//		final String delim = Strings.EMBEDDINGS_TRAINED_DELIM.val;
+//		final boolean stripArrows = false;
+		final String delim = " ";
+		final boolean stripArrows = true;
+		return readEmbeddings(intputFile, mappingLoader, normalize, delim, stripArrows);
+	}
+
 	/**
 	 * Reads a python embeddings file and loads it into a Map&lt;String,
 	 * List&lt;Number&gt;&gt; structure<br>
 	 * <b>Note</b>: If a vocabulary word appears multiple times, the latter will
 	 * replace the existing one
 	 * 
-	 * @param intputFile input file containing embeddings
-	 * @return populated map
-	 * @throws FileNotFoundException
-	 * @throws IOException
+	 * @param intputFile    input file containing embeddings
+	 * @param mappingLoader NULLABLE; used IDMappingLoader (if applicable)
+	 * @param normalize     whether to normalize the embeddings vectors
+	 * @param delim         what delimiter was used to output the embeddings
+	 * @param stripArrows   whether to strip arrows from the entity
+	 * @return populated embeddings map
+	 * @throws FileNotFoundException if file was not found
+	 * @throws IOException           if any IO exception happens, most likely due to
+	 *                               file reading
 	 */
 	public static Map<String, List<Number>> readEmbeddings(final File intputFile,
-			final IDMappingLoader<String> mappingLoader, final boolean normalize)
-			throws FileNotFoundException, IOException {
+			final IDMappingLoader<String> mappingLoader, final boolean normalize, final String delim,
+			final boolean stripArrows) throws FileNotFoundException, IOException {
 		// Embeddings format: vocabularyWord <delim> List<Double>
 		final Map<String, List<Number>> embeddings = new HashMap<>();
-		final String delim = Strings.EMBEDDINGS_TRAINED_DELIM.val;
 		String line = null;
 		try (final BufferedReader brIn = new BufferedReader(new FileReader(intputFile))) {
 			while ((line = brIn.readLine()) != null) {
@@ -62,6 +76,15 @@ public class EmbeddingsUtils {
 					final String associatedWord = mappingLoader.getMapping(vocab);
 					if (associatedWord != null) {
 						vocab = associatedWord;
+					}
+				}
+
+				if (stripArrows) {
+					if (vocab.startsWith("<") && vocab.length() > 2) {
+						vocab = vocab.substring(1);
+					}
+					if (vocab.endsWith(">") && vocab.length() > 1) {
+						vocab = vocab.substring(0, vocab.length() - 1);
 					}
 				}
 
@@ -308,7 +331,7 @@ public class EmbeddingsUtils {
 
 		// return ((num.doubleValue() / den.doubleValue()) + 1d) / 2d;
 		return Math.abs((num.doubleValue() / den.doubleValue()));
-		//return (num.doubleValue() / den.doubleValue());
+		// return (num.doubleValue() / den.doubleValue());
 	}
 
 	public static double dotProduct(List<Number> left, List<Number> right) {
@@ -334,7 +357,7 @@ public class EmbeddingsUtils {
 		final List<Number> list = Lists.newArrayList();
 		Number sum = 0d;
 		for (Number n : inputList) {
-			sum = sum.doubleValue() + // 
+			sum = sum.doubleValue() + //
 //					Math.abs(//
 					n.doubleValue()//
 //			)//
