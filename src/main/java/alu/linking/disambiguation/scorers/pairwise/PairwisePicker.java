@@ -107,7 +107,7 @@ public class PairwisePicker implements ClusterItemPicker {
 
 		// Now that things have been chosen, let's just get the best ones!
 		final List<Pair<String, Number>> bestScores = Lists.newArrayList();
-		for (Map.Entry<String, Map<String, Number>> eSF : mapScore.entrySet()) {
+		for (Map.Entry<String, Map<String, Number>> eSF : mapLimitedClusters.entrySet()) {
 			// Reuse the same object rather than re-instantiating for performance
 			// Initialising w/ the assumption that the minimal score is 0
 			final MutablePair<String, Number> bestEntity = new MutablePair<String, Number>(null, 0d);

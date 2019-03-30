@@ -16,7 +16,7 @@ loadFirstLocation = "./dbpedia_sg1_size200_mincount1_window5_neg15_iter10"
 trainFirst = True
 trainSecond = False
 trainThird = False
-trainFourth = True
+trainFourth = False
 
 # Output variables
 # Whether to output the full vocabulary
@@ -43,9 +43,6 @@ hasMapping = False
 pathsLocator = "./sentencesPaths.txt"
 vocabPath = "./embeddings_vocabulary.txt"
 
-# Machine-based parameters
-threadCount = 50
-
 # W2V Defaults ( https://radimrehurek.com/gensim/models/word2vec.html )
 # gensim.models.word2vec.Word2Vec(
 # sentences=None, corpus_file=None, size=100, alpha=0.025, 
@@ -58,10 +55,12 @@ threadCount = 50
 # )
 
 # W2V Hyperparameters
-iterations = 10
 negSampling = 15
 windowContextSize = 5
-minCount = 1
+iterations = 5
+minCount = 5
+# Machine-based parameters
+threadCount = 60
 
 #What is the newline character on the machine
 newline = '\n'
@@ -102,7 +101,7 @@ def outputVocab(outPath='embeddings_vocabulary', model = None):
 
 def concatModelPath(kg='', sg='', size='', minCount='', window='', negSampling='', iterations='', alpha='', cbow_mean='') -> str:
     outPath = kg + "_sg" + str(skipgram) + "_size" + str(size) + "_minCount" + str(minCount) + "_window" + str(windowContextSize) \
-    + "_neg" + str(negSampling) + "_iter" + str(iterations)  + "_alpha" + str(alpha) + "_cbowMean" + str(cbow_mean)
+    + "_neg" + str(negSampling) + "_iter" + str(iterations)
 
     print("Outpath: %s" % (outPath) )
     #return 'DB2Vec_sg_200_5_5_15_2_500'
@@ -198,10 +197,11 @@ class MySentences:
 
 
 if trainFirst:
+    firstSize = 128
     print("Training first model (from scratch)")
-    currModelOutPath = concatModelPath(kg=kg, sg=skipgram, size=500, minCount=minCount, window=windowContextSize, negSampling=negSampling, iterations=iterations)
+    currModelOutPath = concatModelPath(kg=kg, sg=skipgram, size=firstSize, minCount=minCount, window=windowContextSize, negSampling=negSampling, iterations=iterations)
     model = Word2Vec(sentences=MySentences(iterationCounter), 
-    size=500, 
+    size=firstSize, 
     min_count=minCount,
     workers=threadCount, 
     window=windowContextSize, 
@@ -268,6 +268,7 @@ else:
     print("Not outputting vocab")
 
 
+print("Successfully finished training!")
 #del model
 
 #model1.train(sentences)

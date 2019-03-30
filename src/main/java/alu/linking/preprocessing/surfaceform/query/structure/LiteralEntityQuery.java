@@ -131,7 +131,7 @@ public abstract class LiteralEntityQuery {
 	 * @param writers  Writers outputting query results to appropriate files
 	 * @throws IOException
 	 */
-	protected void execSelectQuery(final String queryStr, Model model, final List<BufferedWriter> writers)
+	public void execSelectQuery(final String queryStr, Model model, final List<BufferedWriter> writers)
 			throws IOException {
 		final Query query = QueryFactory.create(queryStr);
 		// Execute the query and obtain results
@@ -151,7 +151,7 @@ public abstract class LiteralEntityQuery {
 	 * @param writers   Writers outputting query results to appropriate files
 	 * @throws IOException
 	 */
-	protected void execSelectQuery(final String queryStr, VirtGraph virtGraph, final List<BufferedWriter> writers)
+	public void execSelectQuery(final String queryStr, VirtGraph virtGraph, final List<BufferedWriter> writers)
 			throws IOException {
 		final VirtuosoQueryExecution qe = VirtuosoQueryExecutionFactory.create(queryStr, virtGraph);
 		selectProcessResults(qe, writers);

@@ -14,6 +14,7 @@ public enum EnumModelType {
 	MINI_MAG(Strings.ROOTPATH.val + "mini_mag/", EntityQuery.MAG), //
 	MAG(Strings.ROOTPATH.val + "mag/", EntityQuery.MAG), //
 	DBLP(Strings.ROOTPATH.val + "dblp/", EntityQuery.DBLP), //
+	WIKIDATA(Strings.ROOTPATH.val + "wikidata/", EntityQuery.WIKIDATA),//
 	DEFAULT(Strings.ROOTPATH.val, EntityQuery.DEFAULT) //
 	;
 	public final String root;
