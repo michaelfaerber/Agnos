@@ -276,7 +276,7 @@ public class InputProcessor {
 	 * @return split tokens excluding any defined stopwords
 	 */
 	public static String[] processAndRemoveStopwords(final String input, final Collection<String> blacklist) {
-		final String[] inputArr = processToSingleWords(input);// to lower case, space splitting etc.
+		final String[] inputArr = processToSingleWords(input);//space splitting etc.
 		final List<String> ret = Lists.newArrayList();
 		if (blacklist == null) {
 			// No blacklist, so jump out with the normal-processed words
