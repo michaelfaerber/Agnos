@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import com.beust.jcommander.internal.Lists;
 
@@ -37,6 +38,8 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 	public double getPickerWeight();
 
 	public void printExperimentSetup();
+
+	public BiFunction<Double, Double, Double> getCombinationOperation();
 
 	default Map<String, Map<String, Number>> computeInitScoreMap(final Collection<Mention> context,
 			final Number initValue) {
@@ -165,16 +168,32 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 	 * @param pairSimilaritySum the cosine similarity that might want to be summed
 	 * @return value resulting of the operation
 	 */
-	default Double applyOperation(Double previousValue, Double pairSimilaritySum) {
+	public static Double applyOperation(Double previousValue, Double pairSimilaritySum) {
 		// Either sum them or just add +1
 		// occurrence
-		// return previousValue + 1;
+		return previousValue + 1;
 		// summed similarity
 		// return previousValue + pairSimilaritySum;
 		// square it to make a bigger impact, the better it is
-		return previousValue + Math.pow(pairSimilaritySum, 2f);
+		// return previousValue + Math.pow(pairSimilaritySum, 2f);
 		// Highest of both - Result: terrible
 		// return Math.max(previousValue, pairSimilaritySum);
+	}
+
+	public static Double occurrenceOperation(Double previousValue, Double pairSimilaritySum) {
+		return previousValue + 1;
+	}
+
+	public static Double similarityOperation(Double previousValue, Double pairSimilaritySum) {
+		return previousValue + pairSimilaritySum;
+	}
+
+	public static Double similaritySquaredOperation(Double previousValue, Double pairSimilaritySum) {
+		return previousValue + Math.pow(pairSimilaritySum, 2f);
+	}
+
+	public static Double maxedOperation(Double previousValue, Double pairSimilaritySum) {
+		return Math.max(previousValue, pairSimilaritySum);
 	}
 
 }

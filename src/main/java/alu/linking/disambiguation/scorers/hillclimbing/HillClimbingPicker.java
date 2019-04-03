@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -20,12 +21,13 @@ import com.github.jsonldjava.shaded.com.google.common.collect.Lists;
 import alu.linking.config.constants.Comparators;
 import alu.linking.disambiguation.pagerank.AssignmentScore;
 import alu.linking.disambiguation.pagerank.PageRankLoader;
+import alu.linking.disambiguation.scorers.embedhelp.AbstractClusterItemPicker;
 import alu.linking.disambiguation.scorers.embedhelp.ClusterItemPicker;
 import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.utils.Stopwatch;
 
-public class HillClimbingPicker implements ClusterItemPicker {
+public class HillClimbingPicker extends AbstractClusterItemPicker {
 
 	private final Random r = new Random(System.currentTimeMillis());
 
@@ -34,6 +36,7 @@ public class HillClimbingPicker implements ClusterItemPicker {
 	// .RANDOM
 	//
 	;
+	public final static BiFunction<Double, Double, Double> DEFAULT_OPERATION = ClusterItemPicker::occurrenceOperation;
 
 	// Instance variables
 	public final int REPEAT;
@@ -51,13 +54,20 @@ public class HillClimbingPicker implements ClusterItemPicker {
 	}
 
 	public HillClimbingPicker(final EntitySimilarityService similarityService, final PageRankLoader pagerankLoader) {
-		this(similarityService, DEFAULT_REPEAT, pagerankLoader, DEFAULT_PR_TOP_K, DEFAULT_PR_MIN_THRESHOLD,
-				DEFAULT_FIRST_CHOICE, DEFAULT_PRUNE_MIN_SCORE_RATIO);
+		this(DEFAULT_OPERATION, similarityService, pagerankLoader);
 	}
 
-	public HillClimbingPicker(final EntitySimilarityService similarityService, final int repeat,
-			final PageRankLoader pagerankLoader, final int pagerankTopK, final double pagerankMinThreshold,
-			final PICK_SELECTION initStrategy, final double pruneThreshold) {
+	public HillClimbingPicker(final BiFunction<Double, Double, Double> combineOperation,
+			final EntitySimilarityService similarityService, final PageRankLoader pagerankLoader) {
+		this(combineOperation, similarityService, DEFAULT_REPEAT, pagerankLoader, DEFAULT_PR_TOP_K,
+				DEFAULT_PR_MIN_THRESHOLD, DEFAULT_FIRST_CHOICE, DEFAULT_PRUNE_MIN_SCORE_RATIO);
+	}
+
+	public HillClimbingPicker(final BiFunction<Double, Double, Double> combineOperation,
+			final EntitySimilarityService similarityService, final int repeat, final PageRankLoader pagerankLoader,
+			final int pagerankTopK, final double pagerankMinThreshold, final PICK_SELECTION initStrategy,
+			final double pruneThreshold) {
+		super(combineOperation);
 		this.similarityService = similarityService;
 		// How many times to repeat hillclimbing
 		this.REPEAT = Math.max(MIN_REPEAT, repeat);

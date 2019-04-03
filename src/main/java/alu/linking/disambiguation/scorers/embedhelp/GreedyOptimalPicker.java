@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 import com.beust.jcommander.internal.Lists;
 
@@ -11,12 +12,15 @@ import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 import alu.linking.utils.EmbeddingsUtils;
 
-public class GreedyOptimalPicker implements ClusterItemPicker, Loggable {
+public class GreedyOptimalPicker extends AbstractClusterItemPicker implements Loggable {
 
 	private Map<String, List<Number>> entityEmbeddingsMap;
 	private Collection<Mention> context;
+	private static final BiFunction<Double, Double, Double> DEFAULT_OPERATION = ClusterItemPicker::occurrenceOperation;
 
-	public GreedyOptimalPicker(Map<String, List<Number>> entityEmbeddingMap) {
+	public GreedyOptimalPicker(final BiFunction<Double, Double, Double> operation,
+			Map<String, List<Number>> entityEmbeddingMap) {
+		super(operation);
 		this.entityEmbeddingsMap = entityEmbeddingMap;
 	}
 

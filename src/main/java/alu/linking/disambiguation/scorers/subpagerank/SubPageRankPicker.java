@@ -4,19 +4,21 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import com.google.common.collect.Lists;
 
 import alu.linking.disambiguation.pagerank.AssignmentScore;
+import alu.linking.disambiguation.scorers.embedhelp.AbstractClusterItemPicker;
 import alu.linking.disambiguation.scorers.embedhelp.ClusterItemPicker;
 import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 import alu.linking.utils.Stopwatch;
 
-public class SubPageRankPicker implements ClusterItemPicker, Loggable {
+public class SubPageRankPicker extends AbstractClusterItemPicker implements Loggable {
 
 	enum PageRankAlgorithm {
 		SCORER_GRAPH_MAP, // Probably best
@@ -30,21 +32,26 @@ public class SubPageRankPicker implements ClusterItemPicker, Loggable {
 	private final EntitySimilarityService similarityService;
 	private final double minSimilarityThreshold;
 	private final PageRankAlgorithm algorithm;
+	private static final BiFunction<Double, Double, Double> DEFAULT_OPERATION = ClusterItemPicker::occurrenceOperation;
 
 	public SubPageRankPicker(final Map<String, List<Number>> entityEmbeddings) {
-		this(new EntitySimilarityService(entityEmbeddings));
+		this(DEFAULT_OPERATION, new EntitySimilarityService(entityEmbeddings));
 	}
 
-	public SubPageRankPicker(final EntitySimilarityService similarityService) {
-		this(similarityService, 0.5d);
+	public SubPageRankPicker(final BiFunction<Double, Double, Double> combinationOperation,
+			final EntitySimilarityService similarityService) {
+		this(combinationOperation, similarityService, 0.5d);
 	}
 
-	public SubPageRankPicker(final EntitySimilarityService similarityService, final double minEdgeThreshold) {
-		this(similarityService, minEdgeThreshold, PageRankAlgorithm.SCORER_GRAPH_MAP);
+	public SubPageRankPicker(final BiFunction<Double, Double, Double> combinationOperation,
+			final EntitySimilarityService similarityService, final double minEdgeThreshold) {
+		this(combinationOperation, similarityService, minEdgeThreshold, PageRankAlgorithm.SCORER_GRAPH_MAP);
 	}
 
-	public SubPageRankPicker(final EntitySimilarityService similarityService, final double minEdgeThreshold,
+	public SubPageRankPicker(final BiFunction<Double, Double, Double> combinationOperation,
+			final EntitySimilarityService similarityService, final double minEdgeThreshold,
 			final PageRankAlgorithm algorithm) {
+		super(combinationOperation);
 		this.similarityService = similarityService;
 		this.algorithm = algorithm;
 		this.minSimilarityThreshold = minEdgeThreshold;

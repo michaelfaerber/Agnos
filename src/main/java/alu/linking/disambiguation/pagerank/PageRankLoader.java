@@ -172,7 +172,7 @@ public class PageRankLoader implements Executable {
 			} else {
 				Number foundScore = getScore(possAss.toString());
 				if (foundScore == null) {
-					getLogger().error("[" + possAss.toString() + "] No PR score.");
+					//getLogger().error("[" + possAss.toString() + "] No PR score.");
 					setPRNotFound.add(possAss.toString());
 					foundScore = 0d;
 				}
