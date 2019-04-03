@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -15,13 +16,15 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.github.jsonldjava.shaded.com.google.common.collect.Lists;
 
 import alu.linking.config.constants.Comparators;
+import alu.linking.utils.DecoderUtils;
 import alu.linking.utils.EmbeddingsUtils;
 
 public class EntitySimilarityService {
 	private final Map<String, List<Number>> embeddings;
 	private final Map<String, Number> distCache = new HashMap<>();
 	public final Set<String> notFoundIRIs = new HashSet<>();
-
+	public final AtomicInteger recovered = new AtomicInteger();
+	
 	public EntitySimilarityService(final Map<String, List<Number>> embeddings) {
 		this.embeddings = embeddings;
 	}
@@ -33,16 +36,40 @@ public class EntitySimilarityService {
 			retVal = this.distCache.get(keyStr);
 		}
 		if (retVal == null) {
-			final List<Number> left = this.embeddings.get(entity1);
-			final List<Number> right = this.embeddings.get(entity2);
+			List<Number> left = this.embeddings.get(entity1);
+			List<Number> right = this.embeddings.get(entity2);
 			if (left == null || right == null) {
+				// Try with percentage decoding!
+				// Attempt left recovery - if required
 				if (left == null) {
-					notFoundIRIs.add(entity1);
+					final String decodedEntity1 = DecoderUtils.escapePercentage(entity1);
+					if (decodedEntity1 != null && decodedEntity1.length() > 0) {
+						left = this.embeddings.get(decodedEntity1);
+					}
 				}
+
+				// Attempt right recovery - if required
 				if (right == null) {
-					notFoundIRIs.add(entity2);
+					final String decodedEntity2 = DecoderUtils.escapePercentage(entity2);
+					if (decodedEntity2 != null && decodedEntity2.length() > 0) {
+						right = this.embeddings.get(decodedEntity2);
+					}
 				}
-				return 0F;
+
+				if (left == null || right == null) {
+					// -> couldn't be (completely) recovered
+					if (left == null) {
+						notFoundIRIs.add(entity1);
+					}
+					if (right == null) {
+						notFoundIRIs.add(entity2);
+					}
+					return 0F;
+				}
+				else
+				{
+					recovered.incrementAndGet();
+				}
 			}
 			retVal = EmbeddingsUtils.cosineSimilarity(left, right, true);
 			synchronized (this.distCache) {

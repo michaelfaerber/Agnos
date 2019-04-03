@@ -1,5 +1,8 @@
 package alu.linking.utils;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+
 import org.semanticweb.yars.nx.util.NxUtil;
 
 public class DecoderUtils {
@@ -50,6 +53,19 @@ public class DecoderUtils {
 	 */
 	public static String unescapeFromOutput(final String out) {
 		return NxUtil.unescape(out, true);
+	}
+	
+	public static String escapePercentage(final String textPercentageEncoded)
+	{
+		String decoded = null;
+		try {
+			decoded = URLDecoder.decode(textPercentageEncoded, "UTF8");
+		} catch (UnsupportedEncodingException uee) {
+			// #WeTried
+			decoded = null;
+		}
+		return decoded;
+
 	}
 
 }

@@ -2,6 +2,7 @@ package alu.linking.mentiondetection.exact;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +12,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.collections4.bidimap.DualHashBidiMap;
+import org.apache.commons.lang3.StringUtils;
+
 import alu.linking.config.constants.Numbers;
 import alu.linking.mentiondetection.EnumDetectionType;
 import alu.linking.mentiondetection.InputProcessor;
@@ -19,18 +23,29 @@ import alu.linking.mentiondetection.MentionDetector;
 import alu.linking.structure.Loggable;
 
 public class MentionDetectorMap implements MentionDetector, Loggable {
-	private final Set<String> keys;
+	private final Set<String> keys = new HashSet<>();
+	private final Set<String> processedKeys = new HashSet<>();
 	private final String tokenSeparator = " ";// space
 	private final EnumDetectionType detectionType = EnumDetectionType.BOUND_DYNAMIC_WINDOW;
 	private final String mentionLock = "mentionsList";
 	private final InputProcessor inputProcessor;
+	private final DualHashBidiMap<String, String> originalMentions = new DualHashBidiMap<>();
 
 	public MentionDetectorMap(final Map<String, Collection<String>> map, final InputProcessor inputProcessor) {
 		Set<String> inKeys = map.keySet();
 		// Adds everything in lower case
-		this.keys = new HashSet<>();
+
 		for (String key : inKeys) {
-			this.keys.add(InputProcessor.combineProcessedInput(InputProcessor.processToSingleWords(key)));
+			final String surfaceForm = InputProcessor.combineProcessedInput(
+					// InputProcessor.processToSingleWords(key)
+					inputProcessor.processAndRemoveStopwords(key));
+			if (surfaceForm != null && surfaceForm.length() > 0) {
+				final String processedSF = processKey(surfaceForm);
+				this.keys.add(key);
+				this.processedKeys.add(processedSF);
+				// put(Angelina, angelina)
+				originalMentions.put(key, processedSF);
+			}
 		}
 		this.inputProcessor = inputProcessor;
 	}
@@ -75,6 +90,16 @@ public class MentionDetectorMap implements MentionDetector, Loggable {
 			if (!terminated) {
 				getLogger().error("Executor has not finished terminating");
 			}
+
+			// Removes all Mention objects that have no associated mention
+			final Iterator<Mention> itMention = mentions.iterator();
+			while (itMention.hasNext()) {
+				final Mention mention = itMention.next();
+				if (mention == null || mention.getMention() == null || mention.getMention().length() == 0) {
+					itMention.remove();
+				}
+			}
+
 			return mentions;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -96,14 +121,36 @@ public class MentionDetectorMap implements MentionDetector, Loggable {
 		executor.submit(new Callable<Integer>() {
 			@Override
 			public Integer call() throws Exception {
-				final boolean found = find(mention.getOriginalWithoutStopwords());
-				if (found) {
-					mention.setMention(mention.getOriginalMention());
-					mention.setDetectionConfidence(1d);
+				final String toFindText = mention.getOriginalWithoutStopwords();
+				if (toFindText != null && toFindText.length() != 0) {
+					final boolean found = find(toFindText, keys);
+					if (found) {
+						// Found the mention as-is within the object
+
+						// mention.setMention(mention.getOriginalMention());
+						// System.out.println("Found: ToFind(" + toFindText + "), Mapped("+
+						// originalMentions.getKey(toFindText) + ")");
+						// mention.setMention(originalMentions.getKey(toFindText));
+						mention.setMention(toFindText);
+						mention.setDetectionConfidence(1d);
+					} else {
+						// Cannot find the given text as-is, so let's try to potentially recover e.g. by
+						// taking a processed version of it
+						final String processedSF = processKey(toFindText);
+						final boolean foundProcessed = find(processedSF, processedKeys);
+						if (foundProcessed) {
+							mention.setMention(originalMentions.getKey(processedSF));
+							mention.setDetectionConfidence(1d);
+						}
+					}
 				}
 				return doneCounter.incrementAndGet();
 			}
 		});
+	}
+
+	private boolean find(final String input) {
+		return find(input, this.keys);
 	}
 
 	/**
@@ -115,21 +162,25 @@ public class MentionDetectorMap implements MentionDetector, Loggable {
 	 * @return mention with the closest possible mate
 	 * 
 	 */
-	public boolean find(final String input) {
-		if (!this.keys.contains(input)) {
-			System.out.println("Could not match w/:" + input);
-			final int showAmt = 100;
-			int showCounter = 0;
-			System.out.println("Number of keys:" + this.keys.size());
-			for (String key : this.keys) {
-				if (showCounter++ < showAmt) {
-					System.out.println("Key:'" + key.toLowerCase() + "'");
-				}
-			}
-			return false;
-		}
-		// Create a mention with the best-found word
-		return true;
+	public boolean find(final String input, final Set<String> set) {
+		/*
+		 * System.out.println("Could not match w/:" + input); final int showAmt = 100;
+		 * int showCounter = 0; System.out.println("Number of keys:" +
+		 * this.keys.size()); for (String key : this.keys) { if (showCounter++ <
+		 * showAmt) { System.out.println("Key:'" + key.toLowerCase() + "'"); } }
+		 */
+		return set.contains(input);
+	}
+
+	/**
+	 * Mention detector-specific processing, e.g. everything to lowercase or
+	 * uppercase etc.
+	 * 
+	 * @param input
+	 * @return
+	 */
+	private String processKey(final String input) {
+		return StringUtils.strip(input.toLowerCase());
 	}
 
 	@Override

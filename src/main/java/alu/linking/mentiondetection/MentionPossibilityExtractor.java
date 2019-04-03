@@ -11,7 +11,6 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -147,14 +146,15 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 		boolean ONLY_STRING = true;
 		if (ONLY_STRING) {
 			// Assumes that it's just plain strings and no RDF fanciness
+			final boolean ignoreLowerCaseSpacedWords = true;
 			while ((line = brIn.readLine()) != null) {
 				final String[] tokens = line.split(delim);
 				if (tokens.length == 2) {
 					addPossibility(mentionPossibilities, tokens[1], tokens[0]);
-					addSpacedPossibilities(mentionPossibilities, tokens[1], tokens[0], true);
+					addSpacedPossibilities(mentionPossibilities, tokens[1], tokens[0], ignoreLowerCaseSpacedWords);
 				} else if (tokens.length == 3) {
 					addPossibility(mentionPossibilities, tokens[2], tokens[0]);
-					addSpacedPossibilities(mentionPossibilities, tokens[2], tokens[0], true);
+					addSpacedPossibilities(mentionPossibilities, tokens[2], tokens[0], ignoreLowerCaseSpacedWords);
 				} else if (tokens.length != 0) {
 					getLogger().error("Invalid line...: " + line);
 				}
@@ -336,6 +336,8 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 	 */
 	private void addSpacedPossibilities(HashMap<String, Collection<String>> mentionPossibilities, String words,
 			String source, final boolean ignoreLowercase) {
+		if (true)
+			return;
 		// Add pattern Matcher for proper processing
 		// final String[] multiWordTokens = words.split("\\p{Space}");
 		final String[] multiWordTokens = InputProcessor.processToSingleWords(words);
@@ -402,10 +404,12 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 	 * 
 	 * @param map    map to be populated
 	 * @param word   word to be added to the map
-	 * @param source what the word belongs to
+	 * @param entity what the word belongs to
 	 */
-	private void addPossibility(final Map<String, Collection<String>> map, String word, String source) {
-		word = Normalizer.normalize(word, Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "").toLowerCase();
+	private void addPossibility(final Map<String, Collection<String>> map, String word, String entity) {
+		// word = Normalizer.normalize(word,
+		// Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "");
+		// .toLowerCase();
 		// source = source;// .toLowerCase();
 		if (!passesRequirements(word))
 			return;
@@ -414,7 +418,7 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 			s = new HashSet<String>();
 			map.put(word, s);
 		}
-		s.add(source);
+		s.add(entity);
 	}
 
 	private String stripArrowSigns(final String line) {
@@ -433,7 +437,7 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 	 */
 	private boolean passesRequirements(String word) {
 		boolean ret = ((word != null) && (word.length() > lengthMinThreshold) && (word.length() < lengthMaxThreshold)
-				&& (!blackList.contains(word)));
+				&& (blackList != null && (!blackList.contains(word))));
 		return ret;
 	}
 

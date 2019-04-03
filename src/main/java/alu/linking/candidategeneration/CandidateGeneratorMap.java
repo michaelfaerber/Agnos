@@ -37,8 +37,10 @@ public class CandidateGeneratorMap implements CandidateGenerator<String>, Loggab
 		}
 		final List<PossibleAssignment> ret = Lists.newArrayList();
 		for (String entity : possibleEntities) {
+			// System.out.println("Mention["+mention.getMention()+"]: "+entity);
 			ret.add(PossibleAssignment.createNew(entity, mention.getMention()));
 		}
+
 		return ret;
 	}
 }

@@ -25,6 +25,7 @@ import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Executable;
+import alu.linking.utils.DecoderUtils;
 
 public class PageRankLoader implements Executable {
 	private final EnumModelType KG;
@@ -76,7 +77,15 @@ public class PageRankLoader implements Executable {
 				}
 			}
 		}
-		return this.pagerankScores.get(processKey(entity));
+		final String entityURL = processKey(entity);
+		Number ret = this.pagerankScores.get(entityURL);
+		if (ret == null) {
+			final String decoded = DecoderUtils.escapePercentage(entityURL);
+			if (decoded != null && decoded.length() > 0) {
+				ret = this.pagerankScores.get(decoded);
+			}
+		}
+		return ret;
 	}
 
 	/**

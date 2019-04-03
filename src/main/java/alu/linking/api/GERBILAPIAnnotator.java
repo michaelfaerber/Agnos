@@ -51,6 +51,8 @@ public class GERBILAPIAnnotator implements Executable {
 	private final boolean PROCESS_JUST_MARKINGS = false;
 	private static final boolean detailed = false;
 	private static int docCounter = 0;
+	private final boolean preRestrictToMarkings = false;
+	private final boolean postRestrictToMarkings = true;
 	// No touchy
 	private Boolean init = false;
 	private final Comparator<Mention> offsetComparator = Comparators.mentionOffsetComp;
@@ -104,6 +106,7 @@ public class GERBILAPIAnnotator implements Executable {
 
 	/**
 	 * Do not change unless you have changed the call on the WEB API
+	 * 
 	 * @param inputStream NIFInputStream
 	 * @return
 	 */
@@ -242,7 +245,7 @@ public class GERBILAPIAnnotator implements Executable {
 
 		List<Mention> mentions = linking(markingsText, markings);
 
-		if (markings != null) {
+		if (postRestrictToMarkings && markings != null) {
 			// If we're just using markings, we need to readjust the offsets for the output
 			// fixMentionMarkingOffsets(mentions, markings, origText);
 			// Limit to just the wanted markings to increase precision...
@@ -348,7 +351,9 @@ public class GERBILAPIAnnotator implements Executable {
 		// Mention Detection
 		// ########################################################
 		mentions = md.detect(text);
-		if (markings != null && markings.size() != 0) {
+		System.out.println("Found mentions:");
+		System.out.println(mentions);
+		if (preRestrictToMarkings && markings != null && markings.size() != 0) {
 			mentions = restrictMentionsToMarkings(mentions, markings, text);
 		}
 
@@ -371,7 +376,7 @@ public class GERBILAPIAnnotator implements Executable {
 			// Update possible assignments w/ possible candidates
 			m.updatePossibleAssignments(candidateGenerator.generate(m));
 		}
-
+		
 		if (REMOVE_OVERLAP) {
 			removeOverlapping(mentions);
 		}
