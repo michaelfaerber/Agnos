@@ -3,6 +3,7 @@ package alu.linking.disambiguation.scorers.pairwise;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -10,11 +11,11 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.google.common.collect.Lists;
 
 import alu.linking.disambiguation.pagerank.PageRankLoader;
-import alu.linking.disambiguation.scorers.embedhelp.ClusterItemPicker;
+import alu.linking.disambiguation.scorers.embedhelp.AbstractClusterItemPicker;
 import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
 import alu.linking.mentiondetection.Mention;
 
-public class PairwisePicker implements ClusterItemPicker {
+public class PairwisePicker extends AbstractClusterItemPicker {
 
 	private Collection<Mention> context = null;
 	private final EntitySimilarityService similarityService;
@@ -22,12 +23,15 @@ public class PairwisePicker implements ClusterItemPicker {
 	public final int pagerankTopK;
 	public final double pagerankMinThreshold;
 
-	public PairwisePicker(final EntitySimilarityService similarityService, final PageRankLoader pagerankLoader) {
-		this(similarityService, pagerankLoader, DEFAULT_PR_TOP_K, DEFAULT_PR_MIN_THRESHOLD);
+	public PairwisePicker(final BiFunction<Double, Double, Double> combinationOperation,
+			final EntitySimilarityService similarityService, final PageRankLoader pagerankLoader) {
+		this(combinationOperation, similarityService, pagerankLoader, DEFAULT_PR_TOP_K, DEFAULT_PR_MIN_THRESHOLD);
 	}
 
-	public PairwisePicker(final EntitySimilarityService similarityService, final PageRankLoader pagerankLoader,
+	public PairwisePicker(final BiFunction<Double, Double, Double> combinationOperation,
+			final EntitySimilarityService similarityService, final PageRankLoader pagerankLoader,
 			final int pagerankTopK, final double pagerankMinThreshold) {
+		super(combinationOperation);
 		this.similarityService = similarityService;
 		this.pagerankLoader = pagerankLoader;
 		this.pagerankTopK = pagerankTopK;
@@ -58,6 +62,7 @@ public class PairwisePicker implements ClusterItemPicker {
 		final boolean allowSelfConnection = true;
 		for (Map.Entry<String, Map<String, Number>> eOuter : mapLimitedClusters.entrySet()) {
 			final String toSF = eOuter.getKey();
+			System.out.println("Outer:" + toSF);
 			final Map<String, Number> toSFEntityScoreMap = eOuter.getValue();
 			for (Map.Entry<String, Map<String, Number>> eInner : mapLimitedClusters.entrySet()) {
 				try {

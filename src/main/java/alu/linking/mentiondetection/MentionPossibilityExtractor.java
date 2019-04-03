@@ -336,8 +336,6 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 	 */
 	private void addSpacedPossibilities(HashMap<String, Collection<String>> mentionPossibilities, String words,
 			String source, final boolean ignoreLowercase) {
-		if (true)
-			return;
 		// Add pattern Matcher for proper processing
 		// final String[] multiWordTokens = words.split("\\p{Space}");
 		final String[] multiWordTokens = InputProcessor.processToSingleWords(words);
