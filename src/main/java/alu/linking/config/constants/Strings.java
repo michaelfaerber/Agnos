@@ -5,9 +5,11 @@ public enum Strings {
 	// From most-common to most-specific
 	// ROOTPATH("/vol1/tomcat/webapps/AgnosNIFAPI/project_files/"), //
 	SHETLAND_DIR("/home/noulletk/prog/bmw/"), //
-	SEELAND_DIR("/vol1/data_faerberm/kris/prog/"), //
-	LOCAL_DIR("./"),//
-	ROOTPATH(SHETLAND_DIR.val), //
+	SEELAND_DIR(
+			// "/vol1/data_faerberm/kris/prog/"
+			"/vol2/kris/"), //
+	LOCAL_DIR("./"), //
+	ROOTPATH(SEELAND_DIR.val), //
 	NEWLINE(System.getProperty("line.separator")), //
 	CSV_DELIM(";"), //
 	CRM_PRED_NEWS("http://km.aifb.kit.edu/services/crunchbase/api-vocab#news",

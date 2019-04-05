@@ -13,7 +13,8 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', filename
 # containing the sentences we want for our Word2Vec model
 pathsLocator = "./sentencesPaths.txt"
 outputPath = "./entity_embeddings.txt"
-to_load = 'dbpedia_sg1_size200_mincount1_window5_neg15_iter10'
+to_load = 'MAG_sg1_size128_minCount5_window5_neg15_iter5'
+#'dbpedia_sg1_size200_mincount1_window5_neg15_iter10'
 #'RDF2Vec_sg1_size200_mincount1_window5_neg15_iter20'
 #'MAG_sg1_size200_mincount1_window5_neg15_iter15'
 
@@ -30,7 +31,7 @@ entity_mapping_dict = {}
 # Mapping file
 mapping_file = "/home/noulletk/prog/bmw/dbpedia_full/resources/data/walks/walk_entity_mapping.txt"
 mapping_sep = "\t"
-hasMapping = True
+hasMapping = False
 
 iterationCounter = {'val': 0}
 

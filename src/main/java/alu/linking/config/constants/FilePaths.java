@@ -131,18 +131,19 @@ public enum FilePaths {
 	FILE_TAGTOG_DEFAULT_OUTPUT(DIR_TAGTOG_OUTPUT.path + "tagtog_output.txt"), //
 	// FILE_BABELFY_DEFAULT_OUTPUT(DIR_BABELFY_OUTPUT.path +
 	// "babelfy_default_output.json"), //
-	FILE_ENTITY_SURFACEFORM_LINKING(DIR_DATA.path + "links_surfaceForms.txt"), //
+	FILE_ENTITY_SURFACEFORM_LINKING(DIR_DATA.path + "links_surfaceForms.txt_shetland"), //
 
 	// Walk Generator Embeddings files
 
 	FILE_GRAPH_WALK_OUTPUT(DIR_WALK_GENERATOR.path + "walk.txt"), //
-	//Just use if you have to output walks somewhere completely different (e.g. due to space restrictions)
-	// FILE_GRAPH_WALK_OUTPUT("/mnt/maclusext/" + "walk.txt", true, EnumModelType.NONE), //
+	// Just use if you have to output walks somewhere completely different (e.g. due
+	// to space restrictions)
+	// FILE_GRAPH_WALK_OUTPUT("/mnt/maclusext/" + "walk.txt", true,
+	// EnumModelType.NONE), //
 	FILE_GRAPH_WALK_OUTPUT_SENTENCES(DIR_WALK_GENERATOR.path + "walk_sentences.txt"), //
-	FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS(DIR_WALK_GENERATOR.path 
-			//+ "DBpediaVecotrs200_20Shuffle.txt",
-			+ "graphwalk_entity_embeddings.txt",
-			"Proper output for computed entity embeddings"), //
+	FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS(DIR_WALK_GENERATOR.path
+			// + "DBpediaVecotrs200_20Shuffle.txt",
+			+ "graphwalk_entity_embeddings.txt", "Proper output for computed entity embeddings"), //
 	FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS_RAWMAP(DIR_WALK_GENERATOR.path + "graphwalk_entity_embeddings_map.raw",
 			"RAW dump of the used hashmap (should be faster for loading rather than using line-by-line logic)"), //
 

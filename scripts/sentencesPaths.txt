@@ -3,8 +3,8 @@
 #Shetland DBpedia training:
 #/home/noulletk/prog/bmw/dbpedia_full/resources/data/walks/walk.txt
 #On Shetland for MAG training:
-/vol2/kris/walk_1_2.txt
-/vol2/kris/walk_3.txt
+#/vol2/kris/walk_1_2.txt
+#/vol2/kris/walk_3.txt
 #Network MAG training:
-#/mnt/maclusext/walk_3.txt
-#/mnt/maclusext/walk_1_2.txt
+/mnt/maclusext/walk_3.txt
+/mnt/maclusext/walk_1_2.txt

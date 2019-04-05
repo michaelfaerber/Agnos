@@ -123,7 +123,7 @@ public class LauncherEvaluateKORE implements Loggable {
 		getLogger().info("Finished successfully!");
 		final StringBuilder sbMissingPR = new StringBuilder();
 		int missingPRCounter = 0;
-		final int displayPR = 50;
+		final int displayPR = 10;
 		for (String s : PageRankLoader.setPRNotFound) {
 			sbMissingPR.append(s);
 			sbMissingPR.append("; ");
