@@ -38,11 +38,13 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 	;
 	public final static BiFunction<Double, Double, Double> DEFAULT_OPERATION = ClusterItemPicker::occurrenceOperation;
 
+	protected boolean prune = false;
+
 	// Instance variables
 	public final int REPEAT;
-	private Collection<Mention> context;
-	private final EntitySimilarityService similarityService;
-	private final PageRankLoader pagerankLoader;
+	protected Collection<Mention> context;
+	protected final EntitySimilarityService similarityService;
+	protected final PageRankLoader pagerankLoader;
 	public final int pagerankTopK;
 	public final double pagerankMinThreshold;
 	public final PICK_SELECTION initStrategy;
@@ -90,6 +92,35 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 
 	@Override
 	public List<String> combine() {
+
+		// --------------------------------------------------
+		// Order list by natural occurring order of words
+		// (enforces intuition of words close to each other being about similar topics)
+		// --------------------------------------------------
+		final List<Mention> contextList = Lists.newArrayList(context);
+		// Sorts them for the sake of initialisation picking based on word order
+		Collections.sort(contextList, Comparators.mentionOffsetComparator);
+		// Compute clusters with the strings for simplicity of calls
+		final Map<String, List<String>> clusters = computeClusters(contextList);
+
+		Map<String, Pair<String, Double>> finalChoiceMap = pickItems(contextList, clusters);
+
+		final List<String> retList = Lists.newArrayList();
+		for (Pair<String, Double> pair : finalChoiceMap.values()) {
+			retList.add(pair.getKey());
+		}
+
+		getLogger().info("FINAL CHOICES[" + retList.size() + "]: " + retList);
+		return retList;
+	}
+
+	/**
+	 * Does all the computations and calls to get
+	 * 
+	 * @return
+	 */
+	protected Map<String, Pair<String, Double>> pickItems(final List<Mention> contextList,
+			final Map<String, List<String>> clusters) {
 		// Choose an initial combination and improve on it at every step until it can no
 		// longer be improved
 		// Try making it with a chain-like minimal distance logic
@@ -98,14 +129,6 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 		// Map to keep the final choices in our eye
 		// Map<SurfaceForm, List<Pair<Entity, SimilaritySum>>>
 		final Map<String, List<Pair<String, Double>>> disambiguationResultsMap = new HashMap<>();
-
-		// Order list by natural occurring order of words (enforces intuition of words
-		// close to each other being about the same stuff)
-		final List<Mention> contextList = Lists.newArrayList(this.context);
-		Collections.sort(contextList, Comparators.mentionOffsetComparator);
-
-		// Compute clusters with the strings for simplicity of calls
-		final Map<String, List<String>> clusters = computeClusters(contextList);
 
 		// Use clusterNames as the shuffling mechanism
 		final List<String> clusterNames = Lists.newArrayList(clusters.keySet());
@@ -123,8 +146,7 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 			if (rankedScores == null || rankedScores.size() == 0
 					|| (REMOVE_SINGLE_ASSIGNMENTS && rankedScores.size() == 1)) {
 				// ALSO: Remove it from HillClimbing consideration when there's only one...
-				// If the PR score is too low for this, make sure no more disambiguation is done
-				// on it
+				// If the PR score is too low, make sure no more disambiguation is done on it
 				// getLogger().info("Removing CLUSTER[" + clusterName + "]");
 				// Removes in case it exists there... which it shouldn't
 				clusterChoice.remove(clusterName);
@@ -150,15 +172,27 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 		for (int hillClimbExec = 0; hillClimbExec < REPEAT; ++hillClimbExec) {
 			hillClimb(disambiguationResultsMap, contextList, clusters, Lists.newArrayList(clusterNames), clusterChoice);
 		}
-
 		// -------------------------------------------
 		// HillClimbing Disambigation - END
 		// -------------------------------------------
 
-		// ---------------------
-		// Grouping - Start
-		// ---------------------
+		// -------------------------
+		// Group results
+		// -------------------------
+		final Map<String, Pair<String, Double>> finalChoiceMap = group(disambiguationResultsMap);
 
+		// ---------------
+		// Pruning
+		// ---------------
+		if (prune) {
+			prune(finalChoiceMap);
+		}
+
+		return finalChoiceMap;
+	}
+
+	public final Map<String, Pair<String, Double>> group(
+			Map<String, List<Pair<String, Double>>> disambiguationResultsMap) {
 		// Now that it has been executed as many times as we want it to, we should group
 		// the similar entities and possibly do something with the similaritySum values
 		// (e.g. disambiguate over them?), OTHERWISE: just take the number of times they
@@ -172,15 +206,8 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 			groupMap.clear();
 			final String surfaceForm = e.getKey();
 			// Group all pairs for this specific surface form
-			for (Pair<String, Double> pair : e.getValue()) {
-				Double existingPairValue = groupMap.get(pair.getLeft());
-				if (existingPairValue == null) {
-					existingPairValue = 0D;
-				}
-				// Sums up over the stuffz
-				// key = entity; value = summed score
-				groupMap.put(pair.getLeft(), applyOperation(existingPairValue, pair.getRight()));
-			}
+			combineForSF(groupMap, e.getValue());
+
 			// displayAllResultsMap(allResultsMap);
 			// displayScoredChoices(surfaceForm, groupMap);
 
@@ -194,18 +221,26 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 				}
 			}
 		}
+		return finalChoiceMap;
+	}
 
-		// ---------------
-		// Pruning
-		// ---------------
-		prune(finalChoiceMap);
-
-		final List<String> retList = Lists.newArrayList();
-		for (Pair<String, Double> pair : finalChoiceMap.values()) {
-			retList.add(pair.getKey());
+	/**
+	 * Combines pairs from toCombinePairs as defined in the operation through
+	 * {@link #applyOperation(Double, Double)}, storing the result in groupMap
+	 * 
+	 * @param groupMap       map storing the results
+	 * @param toCombinePairs pairs which are to be combined if they have a surface
+	 *                       form in common
+	 */
+	protected void combineForSF(final Map<String, Double> groupMap, List<Pair<String, Double>> toCombinePairs) {
+		for (Pair<String, Double> pair : toCombinePairs) {
+			Double existingPairValue = groupMap.get(pair.getLeft());
+			if (existingPairValue == null) {
+				existingPairValue = 0D;
+			}
+			// key = entity; value = combined score
+			groupMap.put(pair.getLeft(), applyOperation(existingPairValue, pair.getRight()));
 		}
-		getLogger().info("FINAL CHOICES[" + retList.size() + "]: " + retList);
-		return retList;
 	}
 
 	/**
@@ -592,7 +627,7 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 
 	@Override
 	public double getPickerWeight() {
-		return 50d;
+		return 20d;
 	}
 
 	public String getExperimentSetupString() {

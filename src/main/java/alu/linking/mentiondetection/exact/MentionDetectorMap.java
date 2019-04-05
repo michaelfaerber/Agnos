@@ -100,7 +100,17 @@ public class MentionDetectorMap implements MentionDetector, Loggable {
 				}
 			}
 
-			return mentions;
+			List<Mention> retMentions = mentions;
+			// Removes longer mentions
+			final boolean reduceMentions = false;
+			if (reduceMentions) {
+				final boolean removeStartOffset = true, removeEndOffset = true;
+				retMentions = removeLongerCollisions(mentions, removeStartOffset, removeEndOffset);
+//				System.out.println("Prior(" + mentions.size() + ") to removing:" + mentions);
+//				System.out.println("After(" + retMentions.size() + ") removing:" + retMentions);
+			}
+			// return mentions;
+			return retMentions;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
