@@ -10,10 +10,12 @@ import alu.linking.structure.Loggable;
 public class IterableFileEntity extends IterableEntity implements Loggable {
 	private File ntFile = null;
 	private IteratorFileEntity iterator = null;
-
-	public IterableFileEntity(final File ntFile) throws FileNotFoundException, IOException {
+	private boolean skipDuplicates;
+	
+	public IterableFileEntity(final File ntFile, final boolean skipDuplicates) throws FileNotFoundException, IOException {
 		// Pass a .NT file
 		this.ntFile = ntFile;
+		this.skipDuplicates = skipDuplicates;
 	}
 
 	@Override
@@ -36,7 +38,7 @@ public class IterableFileEntity extends IterableEntity implements Loggable {
 					getLogger().error("IOException while closing file-based entity iterator ", e);
 				}
 			}
-			this.iterator = new IteratorFileEntity(ntFile);
+			this.iterator = new IteratorFileEntity(ntFile, skipDuplicates);
 			return this.iterator;
 		} catch (FileNotFoundException e) {
 			getLogger().error("FNFE while initialising file-based entity iterator ", e);

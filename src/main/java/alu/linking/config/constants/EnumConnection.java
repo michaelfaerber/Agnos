@@ -4,8 +4,8 @@ import virtuoso.jena.driver.VirtGraph;
 
 public enum EnumConnection {
 	// Connecting for downloading / uploading annotation files
-	TAGTOG(EnumUserAccounts.TAGTOG_CONNECTION, "https", "www.tagtog.net", "/-api/documents/v1"), //
-	TAGTOG_TEST(EnumUserAccounts.TAGTOG_CONNECTION_TEST, "https", "www.tagtog.net", "/-api/documents/v1"), //
+	//TAGTOG(EnumUserAccounts.TAGTOG_CONNECTION, "https", "www.tagtog.net", "/-api/documents/v1"), //
+	//TAGTOG_TEST(EnumUserAccounts.TAGTOG_CONNECTION_TEST, "https", "www.tagtog.net", "/-api/documents/v1"), //
 	// KIT SPARQL Endpoint
 	KIT(null, "http", "km.aifb.kit.edu", "/services/crunchbase-sparql"), //
 	// TUCO/CELEBES SPARQL Endpoint

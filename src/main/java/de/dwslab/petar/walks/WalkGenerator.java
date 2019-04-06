@@ -1,6 +1,7 @@
 package de.dwslab.petar.walks;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -45,9 +46,10 @@ public abstract class WalkGenerator implements AutoCloseable {
 	private final String prefixObject = "o";
 	private final WalkResultProcessor resultProcessor;
 	private final String logEntities;
+	private final String entitiesOutputPath;
 
 	public WalkGenerator(Collection<String> predicateBlacklist, final String entityQueryStr, final String logEntities,
-			final WalkResultProcessor resultProcessor) {
+			final WalkResultProcessor resultProcessor, final String entitiesOutputPath) {
 		this.predicateBlacklist = predicateBlacklist;
 		if (entityQueryStr != null && entityQueryStr.length() > 0) {
 			this.entityQueryStr = entityQueryStr;
@@ -57,6 +59,7 @@ public abstract class WalkGenerator implements AutoCloseable {
 
 		this.logEntities = logEntities;
 		this.resultProcessor = resultProcessor;
+		this.entitiesOutputPath = entitiesOutputPath;
 	}
 
 	protected abstract QueryExecution queryCreate(final String query);
@@ -122,6 +125,8 @@ public abstract class WalkGenerator implements AutoCloseable {
 			// Passing an empty collection
 			System.out.println("SELECTING all entities from repo");
 			final List<String> listEntities = selectAllEntities(offset, limit);
+			// the entities were not passed, so we should output them
+			outputEntities(listEntities, false);
 			entities = listEntities;
 			final int entityAmt = listEntities.size();
 			this.resultProcessor.updateEntityAmt(entityAmt);
@@ -133,13 +138,19 @@ public abstract class WalkGenerator implements AutoCloseable {
 			this.resultProcessor.updateEntityAmt(entityAmt);
 		} else {
 			// Passing an otherwise iterable (e.g. FileIterable that reads line by line)
-			final long MAG_entity_count = 209792741l;
-			System.out.println("Using passed iterable[" + entitiesCollection.getClass() + "]:" + MAG_entity_count);
+			// final long MAG_entity_count = 209_792_741l;
+			final long DBpedia_entity_count = 4_218_238;// 28_031_876l;
+			final long entity_count = DBpedia_entity_count;
+			System.out.println(
+					"Using passed iterable[" + entitiesCollection.getClass() + "] Entity count: " + entity_count);
 			entities = entitiesCollection;
 			// Have to manually adjust it (it's just for displaying purposes)
-			this.resultProcessor.updateEntityAmt(MAG_entity_count);
+			this.resultProcessor.updateEntityAmt(entity_count);
 		}
 		System.out.println("Total number of entities to process: " + this.resultProcessor.getEntityAmt());
+		// Keepalivetime makes only sense to be high if the core number of threads is
+		// smaller compared to the max (as it kills off as many as it can between the
+		// max. and the core when they're idle)
 		final ThreadPoolExecutor pool = new ThreadPoolExecutor(nmThreads, nmThreads, 0, TimeUnit.SECONDS,
 				new java.util.concurrent.LinkedBlockingQueue<Runnable>());
 
@@ -165,7 +176,7 @@ public abstract class WalkGenerator implements AutoCloseable {
 				// Thread which will compute the hops for this particular entity
 				pool.execute(th.createNew(it.next()));
 			}
-			Thread.sleep(100l);
+			Thread.sleep(10l);
 		} while (it.hasNext());
 		entities = null;
 		pool.shutdown();
@@ -174,6 +185,32 @@ public abstract class WalkGenerator implements AutoCloseable {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private void outputEntities(final List<String> listEntities, final boolean throwException) throws IOException {
+		outputEntities(listEntities, throwException, this.entitiesOutputPath);
+	}
+
+	public static void outputEntities(final List<String> listEntities, final boolean throwException,
+			final String outputPath) throws IOException {
+		if (outputPath == null || outputPath.length() == 0)
+			return;
+		try (BufferedWriter bw = new BufferedWriter(new FileWriter(new File(outputPath)))) {
+			Iterator<String> it = listEntities.iterator();
+			while (it.hasNext()) {
+				bw.write(it.next());
+				if (it.hasNext()) {
+					bw.newLine();
+				}
+			}
+		} catch (IOException ioe) {
+			if (throwException) {
+				throw ioe;
+			} else {
+				ioe.printStackTrace();
+			}
+		}
+
 	}
 
 	/**

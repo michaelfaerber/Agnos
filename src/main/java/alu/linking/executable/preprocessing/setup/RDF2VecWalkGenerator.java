@@ -97,13 +97,13 @@ public class RDF2VecWalkGenerator implements Executable {
 		);
 		final String sentencesOut = FilePaths.FILE_GRAPH_WALK_OUTPUT_SENTENCES.getPath(kg);
 
-		final boolean entitiesqueryVsFile = true;
+		final boolean entitiesqueryVsFile = false;
 
 		try (final IterableEntity iterableEntities = entitiesqueryVsFile ?
 		// null, so it has to query it
 				null :
 				// else load from entities.nt file with NxParser
-				new IterableFileEntity(new File(FilePaths.FILE_NT_ENTITIES.getPath(kg)))) {
+				new IterableFileEntity(new File(FilePaths.FILE_NT_ENTITIES.getPath(kg)), true)) {
 
 			// Load the blacklist for predicates (e.g. rdf:Type or such)
 			final int offset = -1, limit = -1;
@@ -144,12 +144,14 @@ public class RDF2VecWalkGenerator implements Executable {
 							new String(connVirtuoso.userAcc.getBytesPassword()));
 
 					wg = new WalkGeneratorVirtuoso(virtGraph, uniqueBlacklist, kg.query.query,
-							FilePaths.FILE_GRAPH_WALK_LOG_ENTITY.getPath(kg), resultProcessor);
+							FilePaths.FILE_GRAPH_WALK_LOG_ENTITY.getPath(kg), resultProcessor,
+							FilePaths.FILE_TXT_ENTITIES.getPath(kg));
 				} else {
 					// Use Jena for graph walks
 					getLogger().info("Executing graph walks through [JENA]");
 					wg = new WalkGeneratorJena(FilePaths.DATASET.getPath(kg), uniqueBlacklist, kg.query.query,
-							FilePaths.FILE_GRAPH_WALK_LOG_ENTITY.getPath(kg), resultProcessor);
+							FilePaths.FILE_GRAPH_WALK_LOG_ENTITY.getPath(kg), resultProcessor,
+							FilePaths.FILE_TXT_ENTITIES.getPath(kg));
 				}
 
 				executeWalks(wg, walkOutput, iterableEntities, offset, limit);
@@ -176,7 +178,7 @@ public class RDF2VecWalkGenerator implements Executable {
 				"e")) {
 			if (ITERABLE_VS_SFLINKS) {
 				try (final IterableEntity iterableEntities = new IterableFileEntity(
-						new File(FilePaths.FILE_NT_ENTITIES.getPath(kg)))) {
+						new File(FilePaths.FILE_NT_ENTITIES.getPath(kg)), true)) {
 					for (String entity : iterableEntities) {
 						// Generate mapping for this given entity (if it doesn't exist yet)
 						entityMapper.generateMapping(entity);
@@ -237,12 +239,14 @@ public class RDF2VecWalkGenerator implements Executable {
 						new String(connVirtuoso.userAcc.getBytesPassword()));
 
 				wg = new WalkGeneratorVirtuoso(virtGraph, uniqueBlacklist, kg.query.query,
-						FilePaths.FILE_GRAPH_WALK_LOG_ENTITY.getPath(kg), resultProcessor);
+						FilePaths.FILE_GRAPH_WALK_LOG_ENTITY.getPath(kg), resultProcessor,
+						FilePaths.FILE_TXT_ENTITIES.getPath(kg));
 			} else {
 				// Use Jena for graph walks
 				getLogger().info("Executing graph walks through [JENA]");
 				wg = new WalkGeneratorJena(FilePaths.DATASET.getPath(kg), uniqueBlacklist, kg.query.query,
-						FilePaths.FILE_GRAPH_WALK_LOG_ENTITY.getPath(kg), resultProcessor);
+						FilePaths.FILE_GRAPH_WALK_LOG_ENTITY.getPath(kg), resultProcessor,
+						FilePaths.FILE_TXT_ENTITIES.getPath(kg));
 			}
 			// Load the entities from the walk generator - assuming there is enough space
 			// for all entities in RAM
@@ -283,8 +287,9 @@ public class RDF2VecWalkGenerator implements Executable {
 
 	private void executeWalks(WalkGenerator wg, final String walkOutput, final Iterable<String> uniqueEntities,
 			final int offset, final int limit) throws IOException, InterruptedException {
-		try (final BufferedWriter wrtWalkOutput = new BufferedWriter(new FileWriter(walkOutput), 8192 * 20)) {
-			for (int depth = Math.max(minWalkDepth, 1); depth <= this.maxWalkDepth; ++depth) {
+		for (int depth = Math.max(minWalkDepth, 1); depth <= this.maxWalkDepth; ++depth) {
+			try (final BufferedWriter wrtWalkOutput = new BufferedWriter(new FileWriter(walkOutput + "_" + depth),
+					1_024 * 1_024 * 1_000)) {
 				getLogger().info("Doing depth(" + depth + ")");
 				// Chunk it into separate files
 				// Generate the walks

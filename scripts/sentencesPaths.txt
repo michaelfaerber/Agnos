@@ -6,5 +6,6 @@
 #/vol2/kris/walk_1_2.txt
 #/vol2/kris/walk_3.txt
 #Network MAG training:
-/mnt/maclusext/walk_3.txt
-/mnt/maclusext/walk_1_2.txt
+#/mnt/maclusext/walk_3.txt
+#/mnt/maclusext/walk_1_2.txt
+/home/noulletk/prog/bmw/crunchbase2/resources/data/entities.txt

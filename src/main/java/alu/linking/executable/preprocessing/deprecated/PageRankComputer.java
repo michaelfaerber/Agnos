@@ -19,9 +19,15 @@ import eu.wdaqua.pagerank.PageRankRDF;
 public class PageRankComputer implements Executable {
 
 	final EnumModelType KG;
+	final boolean caseSensitive;
 
 	public PageRankComputer(final EnumModelType KG) {
+		this(KG, true);
+	}
+
+	public PageRankComputer(final EnumModelType KG, final boolean caseSensitive) {
 		this.KG = KG;
+		this.caseSensitive = caseSensitive;
 	}
 
 	@Override
@@ -54,7 +60,8 @@ public class PageRankComputer implements Executable {
 				}
 			}
 		}
-		final PageRankRDF pageRankRDF = new PageRankRDF(inFiles, 0.85, 1.0, 50, false);
+
+		final PageRankRDF pageRankRDF = new PageRankRDF(inFiles, 0.85, 1.0, 50, false, this.caseSensitive);
 		pageRankRDF.compute();
 		try (PrintWriter wrt = new PrintWriter(new BufferedWriter(new FileWriter(new File(out))))) {
 			pageRankRDF.printPageRankScoresRDF(wrt);
