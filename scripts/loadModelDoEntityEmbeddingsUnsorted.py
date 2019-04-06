@@ -11,9 +11,13 @@ import datetime
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', filename='word2vec.out', level=logging.INFO)
 # Path to a file that contains lines with the locations of files 
 # containing the sentences we want for our Word2Vec model
+# Also works with entities that are just stacked line by line
 pathsLocator = "./sentencesPaths.txt"
 outputPath = "./entity_embeddings.txt"
-to_load = 'MAG_sg1_size128_minCount5_window5_neg15_iter5'
+# Model to load
+to_load = '/vol2/cb/crunchbase-201806/embeddings/dim200-iter10-win5/CB_sg1_size200_mincount1_window5_neg15_iter10'
+#'MAG_sg1_size128_minCount5_window5_neg15_iter5'
+
 #'dbpedia_sg1_size200_mincount1_window5_neg15_iter10'
 #'RDF2Vec_sg1_size200_mincount1_window5_neg15_iter20'
 #'MAG_sg1_size200_mincount1_window5_neg15_iter15'

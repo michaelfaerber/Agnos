@@ -15,13 +15,13 @@ import org.apache.jena.tdb.TDBFactory;
 public class WalkGeneratorJena extends WalkGenerator {
 
 	public WalkGeneratorJena(final String repoLocation, List<String> predicateBlacklist, String entityQueryStr,
-			WalkResultProcessor resultProcessor) {
-		this(repoLocation, predicateBlacklist, entityQueryStr, null, resultProcessor);
+			WalkResultProcessor resultProcessor, final String entitiesOutputPath) {
+		this(repoLocation, predicateBlacklist, entityQueryStr, null, resultProcessor, entitiesOutputPath);
 	}
 
 	public WalkGeneratorJena(final String repoLocation, Collection<String> predicateBlacklist, String entityQueryStr,
-			String logEntities, final WalkResultProcessor resultProcessor) {
-		super(predicateBlacklist, entityQueryStr, logEntities, resultProcessor);
+			String logEntities, final WalkResultProcessor resultProcessor, final String entitiesOutputPath) {
+		super(predicateBlacklist, entityQueryStr, logEntities, resultProcessor, entitiesOutputPath);
 		this.dataset = TDBFactory.createDataset(repoLocation);
 		this.model = dataset.getDefaultModel();
 		// dataset, model,

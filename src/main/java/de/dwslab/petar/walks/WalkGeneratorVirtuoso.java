@@ -12,8 +12,8 @@ public class WalkGeneratorVirtuoso extends WalkGenerator {
 	private final VirtGraph virtGraph;
 
 	public WalkGeneratorVirtuoso(VirtGraph virtGraph, Collection<String> predicateBlacklist, String entityQueryStr,
-			String logEntities, WalkResultProcessor resultProcessor) {
-		super(predicateBlacklist, entityQueryStr, logEntities, resultProcessor);
+			String logEntities, WalkResultProcessor resultProcessor, final String entitiesOutputPath) {
+		super(predicateBlacklist, entityQueryStr, logEntities, resultProcessor, entitiesOutputPath);
 		this.virtGraph = virtGraph;
 	}
 

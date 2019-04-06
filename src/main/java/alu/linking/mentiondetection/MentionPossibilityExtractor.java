@@ -409,7 +409,7 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 		// Normalizer.Form.NFD).replaceAll("[^\\p{ASCII}]", "");
 		// .toLowerCase();
 		// source = source;// .toLowerCase();
-		if (!passesRequirements(word))
+		if (!passesRequirements(entity, word))
 			return;
 		Collection<String> s;
 		if ((s = map.get(word)) == null) {
@@ -433,9 +433,12 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 	 * @param word the word that should be added as a possibly found mention
 	 * @return whether it passes threshold and blacklist requirements
 	 */
-	private boolean passesRequirements(String word) {
+	private boolean passesRequirements(String entity, String word) {
 		boolean ret = ((word != null) && (word.length() > lengthMinThreshold) && (word.length() < lengthMaxThreshold)
 				&& (blackList != null && (!blackList.contains(word))));
+		// Remove all kinds of lists... they're a pain
+		ret &= !entity.contains("List");
+		ret &= !entity.contains("Category:");
 		return ret;
 	}
 

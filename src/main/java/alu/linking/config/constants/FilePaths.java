@@ -110,6 +110,7 @@ public enum FilePaths {
 	FILE_OUT_HSFURL_MAPPING(DIR_DATA.path + "url_mapping_log.txt",
 			"Log file keeping track where each website is stored locally so we can easily retrieve the appropriate URL's contents!"), //
 
+	FILE_TXT_ENTITIES(DIR_DATA.path + "entities.txt", "TXT File containing all entities"), //
 	FILE_NT_ENTITIES(DIR_DATA.path + "entities.nt", "NT File containing all entities"), //
 
 	// "Corrected" RDF Graph files

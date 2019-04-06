@@ -11,9 +11,9 @@ public enum EnumProperty {
 	// ##################################
 	// # User Data (i.e. basic client authentication)
 	// ##################################
-	AUTHENTICATE_TAGTOG(Strings.ROOTPATH.val + "config/tagtog.properties"), //
-	AUTHENTICATE_TAGTOG_TESTING(Strings.ROOTPATH.val + "config/tagtog_testing.properties"), //
-	AUTHENTICATE_BABELFY(Strings.ROOTPATH.val + "config/babelfy.properties"), //
+	//AUTHENTICATE_TAGTOG(Strings.ROOTPATH.val + "config/tagtog.properties"), //
+	//AUTHENTICATE_TAGTOG_TESTING(Strings.ROOTPATH.val + "config/tagtog_testing.properties"), //
+	//AUTHENTICATE_BABELFY(Strings.ROOTPATH.val + "config/babelfy.properties"), //
 	AUTHENTICATE_VIRTUOSO(Strings.ROOTPATH.val + "config/virtuoso.properties"),//
 	;
 

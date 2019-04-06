@@ -18,37 +18,43 @@ public class PageRankRDF implements PageRank {
 	public static Double DEFAULT_DAMPING = 0.85D;
 	public static Double DEFAULT_START_VALUE = 0.1D;
 	public static int DEFAULT_ITERATION = 40;
+	public static boolean DEFAULT_LITERALS = false;
+	public static boolean DEFAULT_CASE_SENSITIVE = true;
 	private double dampingFactor = DEFAULT_DAMPING;
 	private double startValue = DEFAULT_START_VALUE;
 	private int numberOfIterations = DEFAULT_ITERATION;
 	private Collection<String> dumps;
 	private HashMap<String, Double> pageRankScores = new HashMap<>();
-	private boolean literals;
+	private boolean literals = DEFAULT_LITERALS;
+	private boolean caseSensitive = DEFAULT_CASE_SENSITIVE;
 
 	public PageRankRDF(String dump) {
 		this.dumps = Lists.newArrayList(dump);
 	}
 
-	public PageRankRDF(String dump, double dampingFactor, double startValue, int numberOfIterations, boolean literals) {
-		this(Lists.newArrayList(dump), dampingFactor, startValue, numberOfIterations, literals);
+	public PageRankRDF(String dump, double dampingFactor, double startValue, int numberOfIterations, boolean literals,
+			boolean caseSensitive) {
+		this(Lists.newArrayList(dump), dampingFactor, startValue, numberOfIterations, literals, caseSensitive);
 	}
 
-	public PageRankRDF(String dump, double dampingFactor, double startValue, int numberOfIterations) {
-		this(Lists.newArrayList(dump), dampingFactor, startValue, numberOfIterations, false);
+	public PageRankRDF(String dump, double dampingFactor, double startValue, int numberOfIterations,
+			boolean caseSensitive) {
+		this(Lists.newArrayList(dump), dampingFactor, startValue, numberOfIterations, false, caseSensitive);
 	}
 
 	public PageRankRDF(String[] dumps, double dampingFactor, double startValue, int numberOfIterations,
-			boolean literals) {
-		this(Arrays.asList(dumps), dampingFactor, startValue, numberOfIterations, literals);
+			boolean literals, boolean caseSensitive) {
+		this(Arrays.asList(dumps), dampingFactor, startValue, numberOfIterations, literals, caseSensitive);
 	}
 
 	public PageRankRDF(Collection<String> dumps, double dampingFactor, double startValue, int numberOfIterations,
-			boolean literals) {
+			boolean literals, boolean caseSensitive) {
 		this.dumps = dumps;
 		this.dampingFactor = dampingFactor;
 		this.startValue = startValue;
 		this.numberOfIterations = numberOfIterations;
 		this.literals = literals;
+		this.caseSensitive = caseSensitive;
 	}
 
 	public void compute() {
@@ -93,7 +99,13 @@ public class PageRankRDF implements PageRank {
 		System.err.println("Iteration ...");
 		for (int i = 0; i < numberOfIterations; i++) {
 			System.err.print(i + " ");
-			for (final String incoming : incomingPerPage.keySet()) {
+			for (final String incomingKey : incomingPerPage.keySet()) {
+				final String incoming;
+				if (caseSensitive) {
+					incoming = incomingKey;
+				} else {
+					incoming = incomingKey.toLowerCase();
+				}
 				final List<String> incomingLinks = incomingPerPage.get(incoming);
 
 				double pageRank = 1.0d - dampingFactor;

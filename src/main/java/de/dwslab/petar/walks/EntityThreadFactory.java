@@ -53,6 +53,8 @@ class EntityThreadFactory {
 	 * @param queryStr
 	 */
 	public void executeQuery(String entity) {
+		if (entity == null)
+			return;
 		wg.beginREAD();
 		final StringBuilder sbQuery = new StringBuilder(queryStart);
 		sbQuery.append("<");

@@ -6,8 +6,8 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 
 public enum EnumUserAccounts {
-	TAGTOG_CONNECTION_TEST(EnumProperty.AUTHENTICATE_TAGTOG_TESTING), //
-	TAGTOG_CONNECTION(EnumProperty.AUTHENTICATE_TAGTOG), //
+	//TAGTOG_CONNECTION_TEST(EnumProperty.AUTHENTICATE_TAGTOG_TESTING), //
+	//TAGTOG_CONNECTION(EnumProperty.AUTHENTICATE_TAGTOG), //
 	VIRTUOSO_DBA(EnumProperty.AUTHENTICATE_VIRTUOSO),//
 	;
 	private transient final char[] username, password;

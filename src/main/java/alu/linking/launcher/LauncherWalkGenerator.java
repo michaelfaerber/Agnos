@@ -6,14 +6,14 @@ import alu.linking.structure.Loggable;
 
 public class LauncherWalkGenerator implements Loggable {
 	public static void main(String[] args) {
-		final EnumModelType KG = EnumModelType.
-		// DBPEDIA_FULL//
+		final EnumModelType KG = EnumModelType.//
+				DBPEDIA_FULL//
 		// MINI_MAG//
-				CRUNCHBASE2//
-							// MAG//
+		// CRUNCHBASE2//
+		// MAG//
 		;
 		try {
-			final int startLength = 6, endLength = 6, threads = 50;
+			final int startLength = 1, endLength = 6, threads = 60;
 			final boolean loadPredicateMapper = true;
 			new RDF2VecWalkGenerator(KG, startLength, endLength, threads, null, loadPredicateMapper).exec();
 		} catch (Exception e) {

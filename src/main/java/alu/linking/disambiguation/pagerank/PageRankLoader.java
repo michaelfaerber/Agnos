@@ -204,6 +204,7 @@ public class PageRankLoader implements Executable {
 					if ((val = map.get(key)) == null) {
 						val = 0f;
 					}
+					//Sums up PR values if there's multiple variations of the same entity, e.g. uppercase and lowercase
 					map.put(key, val.floatValue() + Float.valueOf(nodes[2].toString()));
 				} catch (ArrayIndexOutOfBoundsException aiooe) {
 					getLog().error("Error appeared with: " + Arrays.toString(nodes));
