@@ -11,7 +11,10 @@ public class LauncherSetup {
 	public static void main(String[] args) {
 		final boolean t = true;
 		final boolean f = false;
-		final EnumModelType KG = EnumModelType.DBPEDIA_FULL;
+		final EnumModelType KG = EnumModelType.//
+				CRUNCHBASE2//
+		// DBPEDIA_FULL//
+		;
 		try {
 			final Pipeline pipeline = new Pipeline();
 			Logger.getLogger(LauncherSetup.class).info("Setting up precomputation structures");
@@ -23,7 +26,9 @@ public class LauncherSetup {
 			// Combine transformed RDF files into a single graph
 			// pipeline.queue(new BMWGraphCombiner(), null);
 			// Computed Pagerank for the given RDF graph
-			pipeline.queue(new PageRankComputer(KG), "./dbpedia_ttl");
+			pipeline.queue(new PageRankComputer(KG), //
+					// "./dbpedia_ttl"//
+					"/vol2/cb/crunchbase-201806/dumps/crunchbase-dump-2018-06.nt");//
 			// Have to replace tab characters by space character for N3 compliance
 
 			// pipeline.queue(new EntitySFLinkingFromFile(), null);
