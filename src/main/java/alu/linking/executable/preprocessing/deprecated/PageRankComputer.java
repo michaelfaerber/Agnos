@@ -92,6 +92,7 @@ public class PageRankComputer implements Executable {
 					}
 				}
 			}
+			getLogger().info("PR w/ " + files);
 			pagerank(files);
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -22,7 +22,9 @@ public class LauncherTestQuery {
 	public static void main(String[] args) {
 		final EnumModelType KG = EnumModelType.
 		// MAG
-				DBPEDIA_FULL;
+		//DBPEDIA_FULL
+				CRUNCHBASE2//
+				;
 		System.out.println("Testing query for: " + KG.name());
 		Stopwatch.start(LauncherTestQuery.class.getName());
 		final Dataset dataset = TDBFactory.createDataset(FilePaths.DATASET.getPath(KG));
@@ -38,14 +40,14 @@ public class LauncherTestQuery {
 		// getABC(model);
 		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
 		// getObjectsFor(model, "http://dbpedia.org/resource/Smartphone");
-		getObjectsForSubjectOfSFQuery(model, "http://dbpedia.org/resource/Smartphone");
+		// getObjectsForSubjectOfSFQuery(model, "http://dbpedia.org/resource/Smartphone");
 //		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
-//		getPredicates(model);
-//		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
-//		getTypes(model);
-//		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
-//		getPredicatesGroupCounts(model);
-//		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
+		getPredicates(model);
+		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
+		getTypes(model);
+		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
+		getPredicatesGroupCounts(model);
+		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
 		// getRandom(model);
 		// testVirtuoso();
 		// getDBLPAuthors(model);

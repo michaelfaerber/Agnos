@@ -47,6 +47,7 @@ if hasMapping:
             entity_mapping_dict[mapping_tokens[0]] = mapping_tokens[1]
     print("Loaded %s mappings!" % (len(entity_mapping_dict)))
 
+
 class MySentences:
     def __init__(self, iterationCounter):
         self.iterationCounter = iterationCounter
@@ -65,22 +66,14 @@ class MySentences:
             try:
                 # Go through all paths
                 for line in open(sentencesPath, mode='rt'):
-                    if False:
-                        # If you are GROUPING the paths and separating them by TABs
-                        lineTokens = line.rstrip(newline).split(walkSeparator)
-                        # No need to split on tab characters as paths are not grouped right now
-                        #
-                        for token in lineTokens:
-                            sentence = token.split(hopSeparator)
-                            yield sentence
-                    else:
-                        # If you're NOT grouping the walks and separating them by tabs
-                        sentence = line.rstrip(newline).split(hopSeparator)
-                        entity = sentence[0]
-                        # Give the proper URL for the entity IF it exists, otherwise return the entity itself
-                        sentence[0] = entity_mapping_dict.get(entity, entity) 
-                        #print(sentence)
-                        yield sentence
+					# If you're NOT grouping the walks and separating them by tabs
+					sentence = line.rstrip(newline).split(hopSeparator)
+					for tokenPos in range(len(sentence)):
+						token = sentence[tokenPos]
+						# Give the proper URL for the entity IF it exists, otherwise return the entity itself
+						sentence[tokenPos] = entity_mapping_dict.get(token, token)
+					#print(sentence)
+					yield sentence
                         
             except Exception:
                 print("Failed reading file:")

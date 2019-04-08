@@ -6,20 +6,23 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 
 public enum EnumUserAccounts {
-	//TAGTOG_CONNECTION_TEST(EnumProperty.AUTHENTICATE_TAGTOG_TESTING), //
-	//TAGTOG_CONNECTION(EnumProperty.AUTHENTICATE_TAGTOG), //
+	// TAGTOG_CONNECTION_TEST(EnumProperty.AUTHENTICATE_TAGTOG_TESTING), //
+	// TAGTOG_CONNECTION(EnumProperty.AUTHENTICATE_TAGTOG), //
 	VIRTUOSO_DBA(EnumProperty.AUTHENTICATE_VIRTUOSO),//
 	;
 	private transient final char[] username, password;
+	private transient final EnumProperty property;
 
 	EnumUserAccounts(final char[] username, final char[] password) {
 		this.username = username;
 		this.password = password;
+		this.property = null;
 	}
 
 	EnumUserAccounts(final EnumProperty property) {
-		this.username = property.get("user");
-		this.password = property.get("password");
+		this.username = null;// property.get("user");
+		this.password = null;// property.get("password");
+		this.property = property;
 	}
 
 	EnumUserAccounts(final String username, final char[] password) {
@@ -27,11 +30,23 @@ public enum EnumUserAccounts {
 	}
 
 	public byte[] getBytesPassword() {
-		return getBytes(this.password);
+		if (this.password == null && this.property != null) {
+			return getBytes(property.get("password"));
+		}
+		if (this.password != null) {
+			return getBytes(this.password);
+		}
+		return null;
 	}
 
 	public byte[] getBytesUsername() {
-		return getBytes(this.username);
+		if (this.username == null && this.property != null) {
+			return getBytes(property.get("user"));
+		}
+		if (this.username != null) {
+			return getBytes(this.username);
+		}
+		return null;
 	}
 
 	/**

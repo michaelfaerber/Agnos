@@ -13,7 +13,9 @@ import org.apache.jena.riot.lang.PipedRDFIterator;
 
 import com.beust.jcommander.internal.Lists;
 
-public class PageRankRDF implements PageRank {
+import alu.linking.structure.Loggable;
+
+public class PageRankRDF implements PageRank, Loggable {
 
 	public static Double DEFAULT_DAMPING = 0.85D;
 	public static Double DEFAULT_START_VALUE = 0.1D;
@@ -58,7 +60,7 @@ public class PageRankRDF implements PageRank {
 	}
 
 	public void compute() {
-
+		getLogger().info("Computing pagerank for dumps:" + dumps);
 		// Compute the number of outgoing edges
 		final HashMap<String, Integer> numberOutgoing = new HashMap<>();
 		final HashMap<String, ArrayList<String>> incomingPerPage = new HashMap<String, ArrayList<String>>();

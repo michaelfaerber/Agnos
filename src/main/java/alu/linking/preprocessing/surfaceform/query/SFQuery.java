@@ -60,10 +60,13 @@ public class SFQuery extends LiteralEntityQuery {
 	protected void outputAlternateChannels(String varName, String value, boolean hasNext, List<BufferedWriter> writers)
 			throws IOException {
 		varName = varName.toLowerCase();
-		if ((entityVarNames.contains(varName)) || surfaceFormVarNames.contains(varName)) {
-			final String dynamicDelimLinking = ((hasNext && entityVarNames.contains(varName)) ? delimLinking : newline);
-			writers.get(0).write(value + dynamicDelimLinking);
-		}
+//		if ((entityVarNames.contains(varName)) || surfaceFormVarNames.contains(varName)) {
+//			final String dynamicDelimLinking = ((hasNext && entityVarNames.contains(varName)) ? delimLinking : newline);
+//			writers.get(0).write(value + dynamicDelimLinking);
+//		}
+
+		final String dynamicDelimLinking = (hasNext ? delimLinking : newline);
+		writers.get(0).write(value + dynamicDelimLinking);
 
 	}
 }
