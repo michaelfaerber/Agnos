@@ -1,5 +1,6 @@
 package alu.linking.disambiguation.scorers.hillclimbing;
 
+import java.text.DecimalFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,6 +31,8 @@ import alu.linking.utils.Stopwatch;
 public class HillClimbingPicker extends AbstractClusterItemPicker {
 
 	private final Random r = new Random(System.currentTimeMillis());
+	private final boolean CREATE_TABLE = false;
+	private final boolean ENTITY_TABLE = true;
 
 	public static final PICK_SELECTION DEFAULT_FIRST_CHOICE = PICK_SELECTION//
 			.TOP_PAGERANK
@@ -103,7 +106,8 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 		// Compute clusters with the strings for simplicity of calls
 		final Map<String, List<String>> clusters = computeClusters(contextList);
 
-		Map<String, Pair<String, Double>> finalChoiceMap = pickItems(contextList, clusters);
+		removeInvalidEmbeddings(clusters);
+		final Map<String, Pair<String, Double>> finalChoiceMap = pickItems(clusters);
 
 		final List<String> retList = Lists.newArrayList();
 		for (Pair<String, Double> pair : finalChoiceMap.values()) {
@@ -115,12 +119,39 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 	}
 
 	/**
+	 * Removes invalid (non-existing) embeddings from clusters and removes the
+	 * clusters if they are left without entity
+	 * 
+	 * @param clusters
+	 */
+	protected void removeInvalidEmbeddings(Map<String, List<String>> clusters) {
+//		if (true) {
+//			return;
+//		}
+		// ------------------------------------------------
+		// Remove non-existing embedding entities - Start
+		final List<Map.Entry<String, List<String>>> toRemove = Lists.newArrayList();
+		for (Map.Entry<String, List<String>> cluster : clusters.entrySet()) {
+			// Removes non-existing values
+			this.similarityService.ascertainSimilarityExistence(cluster.getValue());
+			if (cluster.getValue().size() < 1) {
+				toRemove.add(cluster);
+			}
+		}
+		// If there are no entities left, remove the entire cluster
+		for (Map.Entry<String, List<String>> cluster : toRemove) {
+			clusters.remove(cluster.getKey());
+		}
+		// Remove non-existing embedding entities - End
+		// ------------------------------------------------
+	}
+
+	/**
 	 * Does all the computations and calls to get
 	 * 
 	 * @return
 	 */
-	protected Map<String, Pair<String, Double>> pickItems(final List<Mention> contextList,
-			final Map<String, List<String>> clusters) {
+	protected Map<String, Pair<String, Double>> pickItems(final Map<String, List<String>> clusters) {
 		// Choose an initial combination and improve on it at every step until it can no
 		// longer be improved
 		// Try making it with a chain-like minimal distance logic
@@ -136,10 +167,13 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 
 		// Pagerank stuff - limits the items to the top PR_TOP_K and PR_MIN_THRESHOLD
 		final Map<String, Triple<AssignmentScore, AssignmentScore, Integer>> mapClusterPageRankItems = new HashMap<>();
-		final Map<String, String> clusterChoice = new HashMap<>();
+		final Map<String, String> topPRChoices = new HashMap<>();
+		// Computes PageRank scores and filters out the ones that are too low either in
+		// rank or score (based on parameters passed)
 		final Map<String, List<String>> limitedClusters = computePRLimitedClusters(this.pagerankLoader, clusters,
 				this.pagerankTopK, this.pagerankMinThreshold);
-		Iterator<String> itClusterNames = clusterNames.iterator();
+		final Iterator<String> itClusterNames = clusterNames.iterator();
+		// Remove clusters that should not be disambiguated on
 		while (itClusterNames.hasNext()) {
 			final String clusterName = itClusterNames.next();
 			final List<String> rankedScores = limitedClusters.get(clusterName);
@@ -149,28 +183,25 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 				// If the PR score is too low, make sure no more disambiguation is done on it
 				// getLogger().info("Removing CLUSTER[" + clusterName + "]");
 				// Removes in case it exists there... which it shouldn't
-				clusterChoice.remove(clusterName);
+				topPRChoices.remove(clusterName);
+				// Remove the cluster altogether
 				itClusterNames.remove();
-				// clusterNames.remove(clusterName);
 				clusters.remove(clusterName);
 				continue;
 			}
 			// Overwrite clusters, so disambiguation is only done on top PR scores
+			// rather than on all candidates
 			clusters.put(clusterName, rankedScores);
-			clusterChoice.put(clusterName, rankedScores.get(0));
+			topPRChoices.put(clusterName, rankedScores.get(0));
 		}
-		// log.info("Remaining Surface Forms (CLUSTERNAMES[" + clusterNames.size() +
-		// "]):" + clusterNames);
-		// Display the min/max ones
-//		for (Map.Entry<String, Triple<AssignmentScore, AssignmentScore, Integer>> e : mapClusterPageRankItems
-//				.entrySet()) {
-//			log.info("SF[" + e.getKey() + "]: Out of[" + e.getValue().getRight() + "] Best: " + e.getValue().getLeft()
-//					+ " / Worst: " + e.getValue().getMiddle());
-//		}
+
+		println("Initialised choices - Start");
+		displayClusterChoices(topPRChoices, "picker init");
+		println("Initialised choices - End");
 
 		// Execute hillclimbing multiple times
 		for (int hillClimbExec = 0; hillClimbExec < REPEAT; ++hillClimbExec) {
-			hillClimb(disambiguationResultsMap, contextList, clusters, Lists.newArrayList(clusterNames), clusterChoice);
+			hillClimb(disambiguationResultsMap, clusters, Lists.newArrayList(clusterNames), topPRChoices);
 		}
 		// -------------------------------------------
 		// HillClimbing Disambigation - END
@@ -189,6 +220,17 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 		}
 
 		return finalChoiceMap;
+	}
+
+	/**
+	 * Displays the clusters and clusters they belong to
+	 * 
+	 * @param clusterChoices
+	 */
+	private void displayClusterChoices(Map<? extends Object, ? extends Object> clusterChoices, final String prefix) {
+		for (Entry<? extends Object, ? extends Object> e : clusterChoices.entrySet()) {
+			println("[" + prefix + "] - Cluster[" + e.getKey() + "]: Choice[" + e.getValue() + "]");
+		}
 	}
 
 	public final Map<String, Pair<String, Double>> group(
@@ -252,15 +294,20 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 	private void prune(final Map<String, Pair<String, Double>> choiceMap) {
 		final Iterator<Entry<String, Pair<String, Double>>> finalChoicesIterator = choiceMap.entrySet().iterator();
 		final Double MIN_SCORE = computeMinScore();
-		// getLogger().info("Min score THRESHOLD:" + MIN_SCORE);
-		// getLogger().info("PRUNING/ABSTAINING PROCEDURE - START");
+		getLogger().info("Min score THRESHOLD:" + MIN_SCORE);
+		getLogger().info("PRUNING/ABSTAINING PROCEDURE - START");
 		while (finalChoicesIterator.hasNext()) {
 			final Entry<String, Pair<String, Double>> entry = finalChoicesIterator.next();
 			// getLogger().info("Entry:" + entry.getKey() + " - " + entry.getValue());
+			getLogger().info("PRUNING: Min_SCORE(" + MIN_SCORE + "): KEY-SF:" + entry.getKey() + ", Entity/Score:"
+					+ entry.getValue());
 			if (entry.getValue().getRight() < MIN_SCORE) {
 				// getLogger().info("[" + MIN_SCORE + "] ->Pruning:" + entry.getKey() + " - " +
 				// entry.getValue());
 				finalChoicesIterator.remove();
+				getLogger().info("-> PRUNING: REMOVED");
+			} else {
+				getLogger().info("-> PRUNING: KEEPING");
 			}
 		}
 		// getLogger().info("PRUNING/ABSTAINING PROCEDURE - END");
@@ -268,9 +315,9 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 	}
 
 	private Map<String, List<Pair<String, Double>>> hillClimb(
-			final Map<String, List<Pair<String, Double>>> disambiguationResultsMap, final List<Mention> contextList,
+			final Map<String, List<Pair<String, Double>>> disambiguationResultsMap,
 			final Map<String, List<String>> clusters, final List<String> clusterNames,
-			final Map<String, String> pagerankClusterTopEntityMap) {
+			final Map<String, String> topPRClusterMap) {
 		// Adds to clusterNames with the initial order
 		// contextList.stream().forEach(mention ->
 		// clusterNames.add(mention.getMention()));
@@ -290,6 +337,7 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 			switch (this.initStrategy) {
 			case RANDOM:
 				if (true) {
+					// IF clause for IDE scope pickup
 					Collections.shuffle(clusterNames);
 					final String fromClusterName = clusterNames.get(0);
 					final String toClusterName = clusterNames.get(1);
@@ -308,6 +356,7 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 				break;
 			case OPTIMAL_CALC:
 				if (true) {
+					// IF clause for IDE scope pickup
 					// First CHECK ALL THE BEST connections between the first two, then just check
 					// best target
 					chooseOptimalStart(clusterNames.get(0), clusterNames.get(1), chosenClusterEntityMap, clusters);
@@ -316,12 +365,13 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 				break;
 			case TOP_PAGERANK:
 				if (true) {
+					// IF clause for IDE scope pickup
 					// Add the choices and their scores
 					for (int i = 0; i < clusterNames.size() - 1; ++i) {
 						final String fromClusterName = clusterNames.get(i);
 						final String toClusterName = clusterNames.get(i + 1);
-						final String fromClusterEntity = pagerankClusterTopEntityMap.get(fromClusterName);
-						final String toClusterEntity = pagerankClusterTopEntityMap.get(toClusterName);
+						final String fromClusterEntity = topPRClusterMap.get(fromClusterName);
+						final String toClusterEntity = topPRClusterMap.get(toClusterName);
 						chosenClusterEntityMap.put(fromClusterName,
 								new ImmutablePair<String, Double>(fromClusterEntity, Double.MIN_VALUE));
 						chosenClusterEntityMap.put(toClusterName, new ImmutablePair<String, Double>(toClusterEntity,
@@ -347,6 +397,12 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 		// Initial path choice - END
 		// ##############################
 
+		println("########################");
+		println("Initialised path - Start");
+		displayClusterChoices(chosenClusterEntityMap, "init hillClimb");
+		println("Initialised path - End");
+		println("########################");
+
 		// ##############################
 		// Randomized best-choice - START
 		// ##############################
@@ -356,6 +412,7 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 		Set<String> currentChoices = null;
 		final int maxIterations = 200;
 		int iterCounter = 0;
+		println("%Started");
 		do {
 			previousChoices = currentChoices;
 			for (int i = 0; i < iterations; ++i) {
@@ -363,6 +420,35 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 				Collections.shuffle(clusterNames);
 				// This is the hillclimbing part of it which takes the best local choice in
 				// order to maximize the reward of the overall similarity sum
+				if (CREATE_TABLE) {
+					println("%Shuffled clusters");
+					println("\\hline");
+					println("%Table header");
+					final String lastCluster = clusterNames.get(clusterNames.size() - 1);
+					// print("From/To");
+					for (String clustername : clusterNames) {
+						print(bolden(clustername));
+						print(" & ");
+					}
+//					print(" & ");
+					print(bolden("Similarity"));
+					print(" & ");
+					print(bolden("Sum Score"));
+
+					println(" \\\\ \\hline");
+					println("%Initialised entities");
+					for (String clustername : clusterNames) {
+						final String shortEntity = shortenDBpResource(
+								chosenClusterEntityMap.get(clustername).getLeft());
+						print(shortEntity);
+						print(" & ");
+					}
+					// print(" & ");
+					print("/");// N/A sim score
+					print(" & ");
+					print("/");// N/A overall score
+					println(" \\\\ \\hline");
+				}
 				iterativelyPickLocalBest(clusters, chosenClusterEntityMap, clusterNames);
 			}
 			currentChoices = mapToValueSet(chosenClusterEntityMap);
@@ -375,6 +461,7 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 				break;
 			}
 		} while (!equals(previousChoices, currentChoices));
+
 		// ##############################
 		// Randomized best-choice - END
 		// ##############################
@@ -391,7 +478,33 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 			sfEntities.add(e.getValue());
 		}
 
+		println("Stabilized Maximum - Start");
+		displayClusterChoices(chosenClusterEntityMap, "stabilised results");
+		println("Stabilized Maximum - End");
+		println("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+
 		return disambiguationResultsMap;
+	}
+
+	private String bolden(String shortEntity) {
+		return "\\textbf{" + shortEntity + "}";
+	}
+
+	private String shortenDBpResource(String string) {
+		String ret = string;
+		ret = ret.replace("http://dbpedia.org/resource/", "dbr:");
+		ret = ret.replace("Thee_Silver_Mt._Zion_Memorial_Orchestra", "Mem_Orchestra");
+		ret = ret.replace("Battle_of_Britain_Memorial_Flight", "Mem_Battle");
+		ret = ret.replace("Ponce,_Puerto_Rico", "Ponce_Puerto");
+		ret = ret.replace("Late_of_the_Pier", "Late_Pier");
+		ret = ret.replace("Bill_Walsh_(American_football_coach)", "Bill_Walsh");
+		ret = ret.replace("Wood_Memorial_Stakes", "Mem_Wood");
+		ret = ret.replace("Lucas_Oil_Late_Model_Dirt_Series", "Lucas_Oil");
+		ret = ret.replace("Stanford_Graduate_School_of_Business", "Stanford_Business");
+		ret = ret.replace("Late_Night_with_Jimmy_Fallon", "Late_Night");
+		ret = ret.replace("", "");
+		ret = ret.replace("_", "\\_");
+		return ret;
 	}
 
 	/**
@@ -491,17 +604,82 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 //					+ " - CURRENT SIM: " + oldSimilaritySum);
 			// Intuition: If I like my choice more than anyone dislikes it, it is worth it!
 			// So if the new similarity sum is higher, we'll take it
-			if (newSimilaritySum > oldSimilaritySum) {
+			final Pair<String, Double> chosenEntity;
+			final Number chosenSimValue;
+
+			if (newSimilaritySum >= oldSimilaritySum) {
 //				log.info("CHOICE DONE: NEW SIMILARITY SUM");
 				chosenClusterEntityMap.put(nextClusterName, bestNext);
+				chosenEntity = bestNext;
+				chosenSimValue = newSimilaritySum;
 			} else {
 //				log.info("CHOICE DONE: CURRENT SIMILARITY SUM");
+				// Update the value if initialization didn't take care of it
+				final Pair<String, Double> oldChoiceUpdatedSimilarity = new ImmutablePair<>(previousChoice.getLeft(),
+						this.similarityService.similarity(chosenClusterEntityMap.get(currClusterName).getLeft(), //
+								previousChoice.getKey()//
+						).doubleValue()//
+				);
 				// Has to be added again for the likely-updated similarity (as other entities
 				// might have changed since this was last set)
-				chosenClusterEntityMap.put(nextClusterName, previousChoice);
+				// chosenClusterEntityMap.put(nextClusterName, previousChoice);
+				chosenClusterEntityMap.put(nextClusterName, oldChoiceUpdatedSimilarity);
+				chosenEntity = oldChoiceUpdatedSimilarity;
+				chosenSimValue = oldSimilaritySum;
 			}
+
+			if (!CREATE_TABLE) {
+				final boolean switched = (newSimilaritySum >= oldSimilaritySum);
+				final String fromEntity = chosenClusterEntityMap.get(currClusterName).getLeft();
+				println("------------------------------------------------------------");
+				println("FROM[" + currClusterName + "] -> TO[" + nextClusterName + "]");
+				println("From Entity: " + fromEntity);
+				println("[" + (switched ? "switchedFrom" : "keeping") + "] Score[" + oldSimilaritySum + "] "
+						+ (switched ? "Switched from:" : "Keeping old:") + previousChoice);
+				println("[" + (switched ? "switchedTo" : "ignored") + "] Score[" + newSimilaritySum + "] "
+						+ (switched ? "Switched   to:" : "'Ignoring' :") + bestNext);
+			} else if (CREATE_TABLE) {
+				if (ENTITY_TABLE) {
+					final DecimalFormat format = new DecimalFormat("##.000000");
+					// print(currClusterName + "\t->\t" + nextClusterName //
+//							+ " (Sum Old:" + format.format(oldSimilaritySum) //
+//							+ "; New:" + format.format(newSimilaritySum) //
+//							+ ", Sim Old:" + format.format(previousChoice.getValue()) //
+//							+ "; New:" + format.format(bestNext.getValue()) //
+//							+ ")" //
+//					);
+					for (int i = 0; i < clusterNameIndex; ++i) {
+						// Spacing for table
+						print(" & ");
+					}
+
+					print(shortenDBpResource(chosenEntity.getKey()));
+					for (int i = clusterNameIndex; i < clusterNames.size() - 1; ++i) {
+						// Spacing for table
+						print(" & ");
+					}
+					print(" & ");
+					print(format.format(chosenEntity.getValue()));// similarity score of choice
+					// println("%" + chosenEntity.toString());
+					// println("%" + chosenClusterEntityMap.get(currClusterName) + "->"+
+					// chosenClusterEntityMap.get(nextClusterName));
+					print(" & ");
+					print(format.format(chosenSimValue));// entire path's score
+					print("\\\\ ");
+					println("\\hline");
+				}
+			}
+
 		}
 
+	}
+
+	private void println(String str) {
+		print(str + System.getProperty("line.separator"));
+	}
+
+	private void print(String str) {
+		//System.out.print(str);
 	}
 
 	/**
@@ -587,9 +765,6 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 				chosenClusterEntityMap.put(toClusterName, entitySimPair);
 				similaritySum += entitySimPair.getRight();
 			}
-//			Logger.getLogger(getClass().getName())
-//					.info("Cluster[" + toClusterName + "]: Found a top-similar item(" + entitySimPair.getLeft() + ", "
-//							+ entitySimPair.getRight() + ") in " + Stopwatch.endDiffStart("topSimilarity") + " ms!");
 		}
 
 		// # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -620,7 +795,9 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 			final String sourceEntity) {
 		Double sum = 0D;
 		for (Map.Entry<String, Pair<String, Double>> e : chosenClusterEntityMap.entrySet()) {
-			sum += this.similarityService.similarity(sourceEntity, e.getValue().getKey()).doubleValue();
+			if (!sourceEntity.equals(e.getValue().getKey())) {
+				sum += this.similarityService.similarity(sourceEntity, e.getValue().getKey()).doubleValue();
+			}
 		}
 		return sum;
 	}

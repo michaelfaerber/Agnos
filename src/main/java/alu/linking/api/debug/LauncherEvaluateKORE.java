@@ -31,7 +31,8 @@ public class LauncherEvaluateKORE implements Loggable {
 	public void run() {
 		final String inPath = //
 				"./evaluation/" + //
-						"kore50-nif.ttl"
+						//"kore50-nif_steve_jobs.ttl"
+		 "kore50-nif.ttl"
 		// "dbpedia-spotlight-nif.ttl"
 		//
 		;

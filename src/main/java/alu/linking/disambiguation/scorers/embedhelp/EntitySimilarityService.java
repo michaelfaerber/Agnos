@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,7 +25,7 @@ public class EntitySimilarityService {
 	private final Map<String, Number> distCache = new HashMap<>();
 	public final Set<String> notFoundIRIs = new HashSet<>();
 	public final AtomicInteger recovered = new AtomicInteger();
-	
+
 	public EntitySimilarityService(final Map<String, List<Number>> embeddings) {
 		this.embeddings = embeddings;
 	}
@@ -65,15 +66,15 @@ public class EntitySimilarityService {
 						notFoundIRIs.add(entity2);
 					}
 					return 0F;
-				}
-				else
-				{
+				} else {
 					recovered.incrementAndGet();
 				}
 			}
 			retVal = EmbeddingsUtils.cosineSimilarity(left, right, true);
 			synchronized (this.distCache) {
-				this.distCache.put(keyStr, retVal);
+				if (this.distCache.get(keyStr) != null) {
+					this.distCache.put(keyStr, retVal);
+				}
 			}
 		}
 		return retVal;
@@ -109,7 +110,7 @@ public class EntitySimilarityService {
 			final Set<String> copyTargets = new HashSet<String>(targets);
 			copyTargets.remove(source);
 			List<Pair<String, Double>> pairs = computeSortedSimilarities(source, copyTargets,
-					Comparators.pairRightComparator);
+					Comparators.pairRightComparator.reversed());
 			if (pairs != null && pairs.size() > 0) {
 				return pairs.get(0);
 			} else {
@@ -117,7 +118,7 @@ public class EntitySimilarityService {
 			}
 		} else {
 			List<Pair<String, Double>> pairs = computeSortedSimilarities(source, targets,
-					Comparators.pairRightComparator);
+					Comparators.pairRightComparator.reversed());
 			if (pairs != null && pairs.size() > 0) {
 				return pairs.get(0);
 			} else {
@@ -129,7 +130,7 @@ public class EntitySimilarityService {
 	public List<Pair<String, Double>> computeSortedSimilarities(final String source, final Collection<String> targets,
 			final Comparator<Pair<? extends Comparable, ? extends Comparable>> comparator) {
 		final List<Pair<String, Double>> retList = computeSimilarities(source, targets);
-		Collections.sort(retList, comparator.reversed());
+		Collections.sort(retList, comparator);
 		return retList;
 	}
 
@@ -147,6 +148,22 @@ public class EntitySimilarityService {
 			retList.add(new ImmutablePair<String, Double>(target, similarity(source, target).doubleValue()));
 		}
 		return retList;
+	}
+
+	/**
+	 * Check that the passed iterable's items really have associated embeddings.
+	 * Removes item from collection otherwise.
+	 * 
+	 * @param collection
+	 */
+	public void ascertainSimilarityExistence(final Iterable<String> collection) {
+		final Iterator<String> iter = collection.iterator();
+		while (iter.hasNext()) {
+			final String key = iter.next();
+			if (!this.embeddings.containsKey(key)) {
+				iter.remove();
+			}
+		}
 	}
 
 }

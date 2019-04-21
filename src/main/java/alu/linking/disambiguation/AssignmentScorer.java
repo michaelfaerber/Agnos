@@ -25,7 +25,7 @@ import alu.linking.disambiguation.scorers.GraphWalkEmbeddingScorer;
 import alu.linking.disambiguation.scorers.PageRankScorer;
 import alu.linking.disambiguation.scorers.embedhelp.ClusterItemPicker;
 import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
-import alu.linking.disambiguation.scorers.hillclimbing.ContinuousHillClimbingPicker;
+import alu.linking.disambiguation.scorers.hillclimbing.HillClimbingPicker;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 
@@ -38,6 +38,7 @@ import alu.linking.structure.Loggable;
 public class AssignmentScorer<N> implements Loggable {
 	private static Logger logger = Logger.getLogger(AssignmentScorer.class);
 	private final HashSet<Mention> context = new HashSet<>();
+	private final EntitySimilarityService similarityService;
 
 	public AssignmentScorer(final EnumModelType KG) throws FileNotFoundException, ClassNotFoundException, IOException {
 		// Determines how everything is scored!
@@ -56,14 +57,24 @@ public class AssignmentScorer<N> implements Loggable {
 		final Map<String, List<Number>> entityEmbeddingsMap = GraphWalkEmbeddingScorer.humanload(
 				FilePaths.FILE_GRAPH_WALK_ID_MAPPING_ENTITY_HUMAN.getPath(KG),
 				FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG));
-		final EntitySimilarityService similarityService = new EntitySimilarityService(entityEmbeddingsMap);
-		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new ContinuousHillClimbingPicker(
-				ClusterItemPicker::occurrenceOperation, similarityService, pagerankLoader)));
-//		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new HillClimbingPicker(ClusterItemPicker::occurrenceOperation, similarityService, pagerankLoader)));
-//		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new HillClimbingPicker(ClusterItemPicker::maxedOperation, similarityService, pagerankLoader)));
-//		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new HillClimbingPicker(ClusterItemPicker::similaritySquaredOperation, similarityService, pagerankLoader)));
-//		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new HillClimbingPicker(ClusterItemPicker::similarityOperation, similarityService, pagerankLoader)));
-//		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new PairwisePicker(ClusterItemPicker::occurrenceOperation, similarityService, pagerankLoader)));
+		this.similarityService = new EntitySimilarityService(entityEmbeddingsMap);
+//		int displayCounter = 0;
+//		for (Entry<String, List<Number>> e : entityEmbeddingsMap.entrySet()) {
+//			System.out.println(e.getKey());
+//			displayCounter++;
+//			if (displayCounter > 50) {
+//				System.out.println("printed 50");
+//				break;
+//			}
+//		}
+		// PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new
+		// ContinuousHillClimbingPicker(
+		// ClusterItemPicker::occurrenceOperation, similarityService, pagerankLoader)));
+		//PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new HillClimbingPicker(ClusterItemPicker::occurrenceOperation, similarityService, pagerankLoader)));
+		//PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new HillClimbingPicker(ClusterItemPicker::maxedOperation, similarityService, pagerankLoader)));
+		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new HillClimbingPicker(ClusterItemPicker::similaritySquaredOperation, similarityService, pagerankLoader)));
+		//PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new HillClimbingPicker(ClusterItemPicker::similarityOperation, similarityService, pagerankLoader)));
+		//PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new PairwisePicker(ClusterItemPicker::occurrenceOperation, similarityService, pagerankLoader)));
 
 		// PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new
 		// SubPageRankPicker(similarityService, 0.5d)));
@@ -132,5 +143,9 @@ public class AssignmentScorer<N> implements Loggable {
 		for (PostScorer postScorer : PossibleAssignment.getPostScorers()) {
 			postScorer.updateContext();
 		}
+	}
+
+	public EntitySimilarityService getSimilarityService() {
+		return this.similarityService;
 	}
 }

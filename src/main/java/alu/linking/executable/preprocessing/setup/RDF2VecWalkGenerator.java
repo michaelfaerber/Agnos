@@ -97,7 +97,7 @@ public class RDF2VecWalkGenerator implements Executable {
 		);
 		final String sentencesOut = FilePaths.FILE_GRAPH_WALK_OUTPUT_SENTENCES.getPath(kg);
 
-		final boolean entitiesqueryVsFile = false;
+		final boolean entitiesqueryVsFile = true;
 
 		try (final IterableEntity iterableEntities = entitiesqueryVsFile ?
 		// null, so it has to query it

@@ -37,9 +37,9 @@ public class EmbeddingsUtils {
 	public static Map<String, List<Number>> readEmbeddings(final File intputFile,
 			final IDMappingLoader<String> mappingLoader, final boolean normalize)
 			throws FileNotFoundException, IOException {
-//		final String delim = Strings.EMBEDDINGS_TRAINED_DELIM.val;
+		final String delim = Strings.EMBEDDINGS_TRAINED_DELIM.val;
 //		final boolean stripArrows = false;
-		final String delim = " ";
+		//final String delim = " ";
 		final boolean stripArrows = true;
 		return readEmbeddings(intputFile, mappingLoader, normalize, delim, stripArrows);
 	}
@@ -329,9 +329,11 @@ public class EmbeddingsUtils {
 
 		final Number den = (denLeft.doubleValue() * denRight.doubleValue());
 
+		final Number ret;
 		// return ((num.doubleValue() / den.doubleValue()) + 1d) / 2d;
-		return Math.abs((num.doubleValue() / den.doubleValue()));
+		ret = Math.abs((num.doubleValue() / den.doubleValue()));
 		// return (num.doubleValue() / den.doubleValue());
+		return ret;
 	}
 
 	public static double dotProduct(List<Number> left, List<Number> right) {
