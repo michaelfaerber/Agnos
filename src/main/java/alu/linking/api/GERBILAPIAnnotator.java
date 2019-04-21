@@ -22,11 +22,13 @@ import org.aksw.gerbil.transfer.nif.TurtleNIFDocumentCreator;
 import org.aksw.gerbil.transfer.nif.TurtleNIFDocumentParser;
 import org.aksw.gerbil.transfer.nif.data.ScoredNamedEntity;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import com.beust.jcommander.internal.Lists;
 
 import alu.linking.candidategeneration.CandidateGenerator;
 import alu.linking.candidategeneration.CandidateGeneratorMap;
+import alu.linking.candidategeneration.PossibleAssignment;
 import alu.linking.config.constants.Comparators;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.AssignmentChooser;
@@ -48,10 +50,10 @@ public class GERBILAPIAnnotator implements Executable {
 	private final String detectionWatch = MentionDetector.class.getName();
 	private final String linking = "Linking (Watch)";
 	private final boolean REMOVE_OVERLAP = false;
-	private final boolean PROCESS_JUST_MARKINGS = false;
+
 	private static final boolean detailed = false;
 	private static int docCounter = 0;
-	private final boolean preRestrictToMarkings = false;
+	private final boolean preRestrictToMarkings = true;
 	private final boolean postRestrictToMarkings = true;
 	// No touchy
 	private Boolean init = false;
@@ -158,41 +160,20 @@ public class GERBILAPIAnnotator implements Executable {
 		init();
 		final int MIN_MARKINGS = 1;
 
-		final String text;
+		final String text = nifDocument.getText();
 
 		// Ordered markings required to reconciliate the markings' detected mentions'
 		// offsets
 		final List<Marking> orderedMarkings = getSortedMarkings(nifDocument);
-		// Whether to process just for the markings or all the entire document
-		if (PROCESS_JUST_MARKINGS) {
-			// Gets the markings - if there are any, it will annotate with them (making it a
-			// lot faster),
-			// otherwise it will fall back to processing the plain text (e.g. in the case
-			// GERBIL does not actually pass markings text)
 
-			if (orderedMarkings != null && orderedMarkings.size() > 0 // && orderedMarkings.size() > MIN_MARKINGS
-			) {
-				text = markingsToText(nifDocument, orderedMarkings);
-				getLogger().info("Using [Markings]:" + smallText(text));
-			} else {
-				text = nifDocument.getText();
-				// orderedMarkings = null;
-				getLogger().info("No markings; Using [plain text]:" + smallText(text));
-			}
-		} else {
-			// Processes the entire input text
-			text = nifDocument.getText();
-			getLogger().info("Using [plain text]:" + smallText(text));
-			// orderedMarkings = null;
-		}
+		getLogger().info("Input [plain text]:" + smallText(text));
 
 		// 3. use the text and maybe some Markings sent by GERBIL to generate your
 		// Markings
 		// (a.k.a annotations) depending on the task you want to solve
 		// 4. Add your generated Markings to the document
 		try {
-			nifDocument.setMarkings(
-					new ArrayList<Marking>(annotatePlainText(text, orderedMarkings, nifDocument.getText())));
+			nifDocument.setMarkings(new ArrayList<Marking>(annotatePlainText(text, orderedMarkings)));
 			// Not really necessary methinks?
 			// nifDocument.setText(text);
 			// nifDocument.setDocumentURI("http://informatik.uni-freiburg.de/document#" +
@@ -230,26 +211,24 @@ public class GERBILAPIAnnotator implements Executable {
 
 	/**
 	 * 
-	 * @param markingsText plain string text to be annotated
-	 * @param markings     markings that are wanted
-	 * @param origText     original text (may vary from markingsText IF markings are
-	 *                     passed, otherwise they should be the same)
+	 * @param inputText plain string text to be annotated
+	 * @param markings  markings that are wanted
 	 * @return annotations
 	 * @throws InterruptedException
 	 */
-	private Collection<? extends Marking> annotatePlainText(final String markingsText, final List<Marking> markings,
-			final String origText) throws InterruptedException {
+	private Collection<? extends Marking> annotatePlainText(final String inputText, final List<Marking> markings)
+			throws InterruptedException {
 		final List<Marking> retList = Lists.newArrayList();
 		// new ScoredNamedEntity(startPosition, length, uris, confidence);
 		// new Mention()... transform mention into a scored named entity
 
-		List<Mention> mentions = linking(markingsText, markings);
+		List<Mention> mentions = linking(inputText, markings);
 
 		if (postRestrictToMarkings && markings != null) {
 			// If we're just using markings, we need to readjust the offsets for the output
 			// fixMentionMarkingOffsets(mentions, markings, origText);
 			// Limit to just the wanted markings to increase precision...
-			mentions = restrictMentionsToMarkings(mentions, markings, origText);
+			mentions = restrictMentionsToMarkings(mentions, markings, inputText);
 		}
 
 		// Transform mentions into GERBIL's wanted markings
@@ -285,19 +264,20 @@ public class GERBILAPIAnnotator implements Executable {
 //			getLogger().info("Not added to ResultSet (" + copyMentions.size() + "): " + m.getOffset() + "+["
 //					+ m.getOriginalMention().length() + "] = " + m.getOriginalMention());
 //		}
-		final boolean displayMarkingsDebug = false;
-		if (displayMarkingsDebug) {
-			for (Marking m : markings) {
-				final Span spanM = ((Span) m);
-				getLogger().info("Wanted markings: InputSet(" + markings.size() + "): " + spanM.getStartPosition()
-						+ "+[" + spanM.getLength() + "] = "
-						+ origText.substring(spanM.getStartPosition(), spanM.getStartPosition() + spanM.getLength()));
-			}
-			for (Mention m : retMentions) {
-				getLogger().info("Filtered FOUND mentions(" + mentions.size() + "->" + retMentions.size() + "):"
-						+ m.getOffset() + "+[" + m.getOriginalMention().length() + "] = " + m.getOriginalMention());
-			}
-		}
+//
+//		final boolean displayMarkingsDebug = false;
+//		if (displayMarkingsDebug) {
+//			for (Marking m : markings) {
+//				final Span spanM = ((Span) m);
+//				getLogger().info("Wanted markings: InputSet(" + markings.size() + "): " + spanM.getStartPosition()
+//						+ "+[" + spanM.getLength() + "] = "
+//						+ origText.substring(spanM.getStartPosition(), spanM.getStartPosition() + spanM.getLength()));
+//			}
+//			for (Mention m : retMentions) {
+//				getLogger().info("Filtered FOUND mentions(" + mentions.size() + "->" + retMentions.size() + "):"
+//						+ m.getOffset() + "+[" + m.getOriginalMention().length() + "] = " + m.getOriginalMention());
+//			}
+//		}
 		return retMentions;
 	}
 
@@ -372,11 +352,39 @@ public class GERBILAPIAnnotator implements Executable {
 		// Candidate Generation (update for mentions)
 		// ########################################################
 		Collections.sort(mentions, offsetComparator);
+
+		List<String> blacklistedCandidates = Lists.newArrayList();
+		blacklistedCandidates.add("Thee_Silver_Mt._Zion_Memorial_Orchestra");
+
 		for (Mention m : mentions) {
 			// Update possible assignments w/ possible candidates
-			m.updatePossibleAssignments(candidateGenerator.generate(m));
+			final Collection<PossibleAssignment> candidateEntities = candidateGenerator.generate(m);
+//			System.out.println("##################################################");
+//			System.out.println("Mention: " + m);
+//			System.out.println("Candidates: " + candidateEntities);
+
+//			// Remove some blacklisted entities - Start
+//			Iterator<PossibleAssignment> itCandidates = candidateEntities.iterator();
+//			while (itCandidates.hasNext()) {
+//				boolean remove = false;
+//				for (String blacklistedCandidate : blacklistedCandidates) {
+//					if (itCandidates.next().getAssignment().contains(blacklistedCandidate)) {
+//						remove = true;
+//						break;
+//					}
+//				}
+//				if (remove) {
+//					itCandidates.remove();
+//					break;
+//				}
+//			}
+//			// Remove some blacklisted entities - End
+
+			m.updatePossibleAssignments(candidateEntities);
 		}
-		
+
+		// displaySimilarities(mentions);
+
 		if (REMOVE_OVERLAP) {
 			removeOverlapping(mentions);
 		}
@@ -408,6 +416,31 @@ public class GERBILAPIAnnotator implements Executable {
 		}
 
 		return mentions;
+	}
+
+	private void displaySimilarities(List<Mention> mentions) {
+		// Get all similarities
+		for (int i = 0; i < mentions.size(); ++i) {
+			for (int j = i + 1; j < mentions.size(); ++j) {
+				if (mentions.get(i).getMention().equals(mentions.get(j).getMention())) {
+					continue;
+				}
+				List<String> targets = Lists.newArrayList();
+				for (PossibleAssignment ass : mentions.get(j).getPossibleAssignments()) {
+					targets.add(ass.getAssignment());
+				}
+
+				System.out.println("Mention:" + mentions.get(i) + "->" + mentions.get(j));
+				for (PossibleAssignment ass : mentions.get(i).getPossibleAssignments()) {
+					// Sorted similarities
+					final List<Pair<String, Double>> similarities = chooser.getAssignmentScorer().getSimilarityService()
+							.computeSortedSimilarities(ass.getAssignment(), targets,
+									Comparators.pairRightComparator.reversed());
+					System.out.println("Source:" + ass);
+					System.out.println(similarities.subList(0, Math.min(5, similarities.size())));
+				}
+			}
+		}
 	}
 
 	/**

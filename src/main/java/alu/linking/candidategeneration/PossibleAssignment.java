@@ -110,7 +110,7 @@ public class PossibleAssignment implements Scorable, Comparable<PossibleAssignme
 
 	@Override
 	public String toString() {
-		return getAssignment().toString();
+		return getAssignment();
 	}
 
 	public Number getScore() {

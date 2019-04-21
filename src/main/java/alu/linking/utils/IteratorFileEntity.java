@@ -33,7 +33,12 @@ public class IteratorFileEntity implements Iterator<String>, AutoCloseable {
 	@Override
 	public String next() {
 		// Takes the subject
-		String ret = parser.next()[0].toString();
+		String ret;
+		if (parser.hasNext()) {
+			ret = parser.next()[0].toString();
+		} else {
+			ret = null;
+		}
 		// Removes starting and ending "<" resp. ">"
 		if (ret.startsWith("<") && ret.endsWith(">")) {
 			ret = ret.substring(1, ret.length() - 1);

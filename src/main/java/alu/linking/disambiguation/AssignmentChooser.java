@@ -1,6 +1,5 @@
 package alu.linking.disambiguation;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -21,14 +20,13 @@ import alu.linking.mentiondetection.Mention;
  * 
  * @author Kwizzer
  *
- * @param 
+ * @param
  */
 public class AssignmentChooser {
 	private static Logger logger = Logger.getLogger(AssignmentChooser.class);
 	private AssignmentScorer scorer = null;
 
-	public AssignmentChooser(final EnumModelType KG)
-			throws ClassNotFoundException, IOException {
+	public AssignmentChooser(final EnumModelType KG) throws ClassNotFoundException, IOException {
 		this.scorer = new AssignmentScorer(KG);
 		// Graph.getInstance().readIn(FilePaths.FILE_HOPS_GRAPH_DUMP.getPath(KG),
 		// FilePaths.FILE_HOPS_GRAPH_DUMP_PATH_IDS.getPath(KG),
@@ -89,4 +87,7 @@ public class AssignmentChooser {
 		 */
 	}
 
+	public AssignmentScorer getAssignmentScorer() {
+		return this.scorer;
+	}
 }

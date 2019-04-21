@@ -42,11 +42,14 @@ public class ContinuousHillClimbingPicker extends HillClimbingPicker {
 		Collections.sort(copyContext, Comparators.mentionOffsetComparator);
 		// Computing clusters outside, so we don't have to redo it every time
 		final Map<String, List<String>> clusters = computeClusters(copyContext);
+		// Remove entities that do not have an associated embedding
+		// & cluster if they are left w/o entity as a result of it
+		removeInvalidEmbeddings(clusters);
 
 		final Map<String, List<MutablePair<String, Double>>> continuousChoices = new HashMap<>();
 		while (copyContext.size() > 4) {
 			// Do the picking logic
-			final Map<String, Pair<String, Double>> iterationChoices = super.pickItems(copyContext, clusters);
+			final Map<String, Pair<String, Double>> iterationChoices = super.pickItems(clusters);
 
 			for (Map.Entry<String, Pair<String, Double>> iterationChoice : iterationChoices.entrySet()) {
 				final String key = iterationChoice.getKey();
@@ -64,7 +67,7 @@ public class ContinuousHillClimbingPicker extends HillClimbingPicker {
 						found = true;
 						// It's the same pair, so let's combine them!
 						final Double currentValue = continuousPair.getValue();
-						final Double newValue = computeNewValue(this.context.size() - copyContext.size(), currentValue,
+						final Double newValue = computeNewValue(this.context.size() - clusters.size(), currentValue,
 								iterationChoicePair.getValue());
 						continuousPair.setValue(newValue);
 					}
@@ -134,9 +137,9 @@ public class ContinuousHillClimbingPicker extends HillClimbingPicker {
 	 * @return
 	 */
 	private Double computeNewValue(int iterationNumber, Double previousValue, Double currentValue) {
-		// return previousValue + iterationNumber * currentValue;
+		return previousValue + iterationNumber * currentValue;
 		// return previousValue + currentValue;
-		return previousValue + 1;
+		// return previousValue + 1;
 	}
 
 }

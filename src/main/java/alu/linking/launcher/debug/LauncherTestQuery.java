@@ -1,6 +1,8 @@
 package alu.linking.launcher.debug;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.QuerySolution;
@@ -22,9 +24,9 @@ public class LauncherTestQuery {
 	public static void main(String[] args) {
 		final EnumModelType KG = EnumModelType.
 		// MAG
-		//DBPEDIA_FULL
-				CRUNCHBASE2//
-				;
+				DBPEDIA_FULL
+		// CRUNCHBASE2//
+		;
 		System.out.println("Testing query for: " + KG.name());
 		Stopwatch.start(LauncherTestQuery.class.getName());
 		final Dataset dataset = TDBFactory.createDataset(FilePaths.DATASET.getPath(KG));
@@ -40,21 +42,185 @@ public class LauncherTestQuery {
 		// getABC(model);
 		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
 		// getObjectsFor(model, "http://dbpedia.org/resource/Smartphone");
-		// getObjectsForSubjectOfSFQuery(model, "http://dbpedia.org/resource/Smartphone");
+		// getObjectsForSubjectOfSFQuery(model,
+		// "http://dbpedia.org/resource/Smartphone");
 //		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
-		getPredicates(model);
-		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
-		getTypes(model);
-		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
-		getPredicatesGroupCounts(model);
-		Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
+		// getPredicates(model);
+		// Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
+		// getTypes(model);
+		// Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
+		// getPredicatesGroupCounts(model);
+		// Stopwatch.endOutputStart(LauncherTestQuery.class.getName());
 		// getRandom(model);
 		// testVirtuoso();
 		// getDBLPAuthors(model);
 
+		getSteveJobsConnections(model);
+
 		// getPredicatesAndTypes(model);
 		System.out.println("Finished!");
 		// "SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 100"
+	}
+
+	private static Map<String, String> mapEntityToName = new HashMap<>();
+
+	private static void getSteveJobsConnections(Model model) {
+		Map<String, Integer> mapEntityNeighbours = new HashMap<>();
+		System.out.println("################################################");
+		System.out.println("# Steve Jobs - Grabbing 2nd degree connections #");
+		System.out.println("################################################");
+		String queryStr = "select distinct ?s ?p1 ?o1 ?p2 ?o2 where { \n" //
+				+ " ?s  ?p1 ?o1 . \n" //
+				+ " ?o1 ?p2 ?o2 . \n"//
+				+ " FILTER(?s = <http://dbpedia.org/resource/Steve_Jobs>)" + " }"//
+																					// + " LIMIT 100"
+		;
+		final String from = "steveJobs";
+
+		ResultSet results = RDFUtils.execQuery(model, queryStr);
+		while (results.hasNext()) {
+			final QuerySolution qs = results.next();
+			final String obj1 = qs.get("o1").toString();
+			mapEntityNeighbours.put(obj1, mapEntityNeighbours.getOrDefault(obj1, 0) + 1);
+		}
+
+		System.out.println("############################################");
+		System.out.println("# Steve Jobs #1                            #");
+		System.out.println("############################################");
+		queryStr = "select distinct ?s ?p1 ?o1 where { \n" //
+				+ " ?s ?p1 ?o1 . \n" //
+				+ " FILTER(?s = <http://dbpedia.org/resource/Steve_Jobs>)" + " }"//
+																					// + " LIMIT 100"
+		;
+		System.out.println("%Single step");
+		System.out.println();
+		int level = 1;
+		// Output Steve Jobs node
+		System.out.println("\\node[rblock](steveJobs){dbr:Steve\\_Jobs};");
+
+		results = RDFUtils.execQuery(model, queryStr);
+		boolean firstInLevel = true;
+		int nodeCounter = 0;
+		final int maxNodes = 20;
+		String prevNode = "";
+
+		while (results.hasNext()) {
+			final QuerySolution qs = results.next();
+			final String edge = "";//qs.get("p1").toString();
+			final String to = qs.get("o1").toString();
+			if (!mapEntityNeighbours.containsKey(to))
+			{
+				continue;
+			}
+			if (nodeCounter++ > maxNodes) {
+				// ignore
+				continue;
+			} else {
+
+				if (firstInLevel) {
+					printNode(from + ".east", to, edge, from, DIRECTION.RIGHT, 25, "",
+							mapEntityNeighbours.getOrDefault(to, 0));
+					firstInLevel = false;
+				} else {
+					final String dirFrom = mapEntityToName.get(prevNode);
+					if (dirFrom != null) {
+						printNode(from + ".east", to, edge, dirFrom, DIRECTION.DOWN, 5, "",
+								mapEntityNeighbours.getOrDefault(to, 0));
+					}
+				}
+				prevNode = to;
+			}
+		}
+		// Now print a node with the counter value
+		if (nodeCounter > maxNodes) {
+			printNode(from + ".east", "\\vdots (" + nodeCounter + ")", "\\ldots", mapEntityToName.get(prevNode),
+					DIRECTION.DOWN, 5, "", 0);// , "draw=none,");
+		}
+
+		System.out.println("---------------------------------------------");
+
+	}
+
+	public enum DIRECTION {
+		UP("above"), DOWN("below"), LEFT("left"), RIGHT("right"), //
+		UP_LEFT(UP.direction + " " + LEFT.direction), //
+		UP_RIGHT(UP.direction + " " + RIGHT.direction), //
+		DOWN_LEFT(DOWN.direction + " " + LEFT.direction), //
+		DOWN_RIGHT(DOWN.direction + " " + RIGHT.direction),//
+		//
+		;
+
+		public String direction;
+
+		DIRECTION(final String direction) {
+			this.direction = direction;
+		}
+	};
+
+	private static void printNode(String from, String to, String edge, String dirFrom, DIRECTION dir,
+			final int distance, final String additionalTikzArgument, final int connectTo) {
+		final String dirStr;
+
+		if (edge.contains("sameAs") || edge.contains("date")) {
+			// Ignore all sameAs links as they are relatively boring...
+			return;
+		}
+
+		final String edgeLabelPos = "auto";// "left";//"auto";
+		final String toName = createName(to);
+		final String positioning = dir.direction + "=" + distance + "pt of " + dirFrom;
+		System.out.println("\\node[rblock" //
+				+ "," + positioning //
+				+ additionalTikzArgument + "](" + toName + "){" //
+				+ shorten(to) + "};")//
+		;
+		System.out.println("\\draw[edge] (" + from //
+		// + ".east"//
+				+ ") to node [" + edgeLabelPos + "] {" + shorten(edge) + "} (" + toName //
+				+ ".west"//
+				+ ");");
+
+		if (connectTo > 0) {
+			printNode(toName, "(" + connectTo + ")", "\\ldots", toName, DIRECTION.RIGHT, 30, ", minimum width={width(\"(123456789)\")+2pt}", 0);
+		}
+	}
+
+	private static String shorten(String to) {
+		int maxLength = 15;
+		to = to.replace("http://dbpedia.org/resource/", "dbr:");
+		to = to.replace("http://dbpedia.org/property/", "dbp:");
+		to = to.replace("http://dbpedia.org/ontology/", "dbo:");
+		to = to.replace("http://en.wikipedia.org/wiki/", "wiki:");
+		to = to.replace("http://www.w3.org/2000/01/rdf-schema#", "rdfs:");
+		to = to.replace("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "rdf:");
+		to = to.replace("http://xmlns.com/foaf/0.1/", "foaf:");
+		to = to.replace("http://www.w3.org/2002/07/owl#", "owl:");
+		to = to.replace("http://www.w3.org/2001/XMLSchema#", "xsd:");
+		to = to.replace("http://www.w3.org/2004/02/skos/core#", "skos:");
+		to = to.replace("http://purl.org/linguistics/gold/", "gold:");
+		to = to.replace("http://purl.org/dc/terms/", "purl:");
+		to = to.replace("http://www.w3.org/ns/prov#", "prov:");
+
+		to = to.replace("_", "\\_");
+		// to = to.replace("^", "\\^");
+		to = to.replace("#", "\\#");
+		// to = to.replace("", "");
+
+		if (to.length() > maxLength) {
+			to = to.substring(0, maxLength) + "...";
+		}
+		return to;
+	}
+
+	private static int nameCounter = 0;
+
+	private static String createName(String to) {
+		String name;
+		if ((name = mapEntityToName.get(to)) == null) {
+			name = "" + nameCounter++;
+			mapEntityToName.put(to, name);
+		}
+		return name;
 	}
 
 	private static void testVirtuoso() {
