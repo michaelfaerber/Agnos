@@ -12,6 +12,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 
 import org.apache.log4j.Logger;
 
@@ -36,6 +37,20 @@ import alu.linking.structure.Loggable;
  *
  */
 public class AssignmentScorer<N> implements Loggable {
+	public enum CombineOperation {
+		OCCURRENCE(ClusterItemPicker::occurrenceOperation), //
+		MAX_SIM(ClusterItemPicker::maxedOperation), //
+		SIM_ADD(ClusterItemPicker::similarityOperation), //
+		SIM_SQUARE_ADD(ClusterItemPicker::similaritySquaredOperation),//
+
+		;
+		final BiFunction<Double, Double, Double> combineOperation;
+
+		CombineOperation(BiFunction<Double, Double, Double> combineOperation) {
+			this.combineOperation = combineOperation;
+		}
+	}
+
 	private static Logger logger = Logger.getLogger(AssignmentScorer.class);
 	private final HashSet<Mention> context = new HashSet<>();
 	private final EntitySimilarityService similarityService;
@@ -67,14 +82,17 @@ public class AssignmentScorer<N> implements Loggable {
 //				break;
 //			}
 //		}
+
+		final CombineOperation combineOperation = CombineOperation.OCCURRENCE;
+
+//		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new
+//		ContinuousHillClimbingPicker(
+//		combineOperation.combineOperation, similarityService, pagerankLoader)));
+		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(
+				new HillClimbingPicker(combineOperation.combineOperation, similarityService, pagerankLoader)));
 		// PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new
-		// ContinuousHillClimbingPicker(
-		// ClusterItemPicker::occurrenceOperation, similarityService, pagerankLoader)));
-		//PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new HillClimbingPicker(ClusterItemPicker::occurrenceOperation, similarityService, pagerankLoader)));
-		//PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new HillClimbingPicker(ClusterItemPicker::maxedOperation, similarityService, pagerankLoader)));
-		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new HillClimbingPicker(ClusterItemPicker::similaritySquaredOperation, similarityService, pagerankLoader)));
-		//PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new HillClimbingPicker(ClusterItemPicker::similarityOperation, similarityService, pagerankLoader)));
-		//PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new PairwisePicker(ClusterItemPicker::occurrenceOperation, similarityService, pagerankLoader)));
+		// PairwisePicker(combineOperation.combineOperation, similarityService,
+		// pagerankLoader)));
 
 		// PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new
 		// SubPageRankPicker(similarityService, 0.5d)));
