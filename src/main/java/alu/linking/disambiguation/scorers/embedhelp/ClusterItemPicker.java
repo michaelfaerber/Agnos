@@ -158,27 +158,6 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 		return copyClusters;
 	}
 
-	/**
-	 * Method executing the wanted operation for grouping of entities for the
-	 * specified surface forms<br>
-	 * Note: Pretty much fulfills the role of a reward function which in the end
-	 * determines which entity is disambiguated to
-	 * 
-	 * @param previousValue     previous value within map
-	 * @param pairSimilaritySum the cosine similarity that might want to be summed
-	 * @return value resulting of the operation
-	 */
-	public static Double applyOperation(Double previousValue, Double pairSimilaritySum) {
-		// Either sum them or just add +1
-		// occurrence
-		return previousValue + 1;
-		// summed similarity
-		// return previousValue + pairSimilaritySum;
-		// square it to make a bigger impact, the better it is
-		// return previousValue + Math.pow(pairSimilaritySum, 2f);
-		// Highest of both - Result: terrible
-		// return Math.max(previousValue, pairSimilaritySum);
-	}
 
 	public static Double occurrenceOperation(Double previousValue, Double pairSimilaritySum) {
 		return previousValue + 1;

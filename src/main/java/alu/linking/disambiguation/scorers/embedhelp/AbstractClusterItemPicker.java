@@ -9,6 +9,16 @@ public abstract class AbstractClusterItemPicker implements ClusterItemPicker {
 		this.combinationOperation = combinationOperation;
 	}
 
+	/**
+	 * Method executing the wanted operation for grouping of entities for the
+	 * specified surface forms<br>
+	 * Note: Pretty much fulfills the role of a reward function which in the end
+	 * determines which entity is disambiguated to
+	 * 
+	 * @param previousValue     previous value within map
+	 * @param pairSimilaritySum the cosine similarity that might want to be summed
+	 * @return value resulting of the operation
+	 */
 	protected Double applyOperation(Double existingPairValue, Double right) {
 		return getCombinationOperation().apply(existingPairValue, right);
 	}
