@@ -11,11 +11,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.apache.jena.ext.com.google.common.util.concurrent.AtomicDouble;
 
 import com.github.jsonldjava.shaded.com.google.common.collect.Lists;
 
@@ -32,7 +36,8 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 
 	private final Random r = new Random(System.currentTimeMillis());
 	private final boolean CREATE_TABLE = false;
-	private final boolean ENTITY_TABLE = true;
+	private final boolean ENTITY_TABLE = false;
+	private final int threadCount = 20;
 
 	public static final PICK_SELECTION DEFAULT_FIRST_CHOICE = PICK_SELECTION//
 			.TOP_PAGERANK
@@ -84,13 +89,9 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 	}
 
 	@Override
-	public void linkContext(Collection<Mention> context) {
-		this.context = context;
-	}
-
-	@Override
-	public void updateContext() {
+	public void updateContext(Collection<Mention> context) {
 		// None?
+		this.context = context;
 	}
 
 	@Override
@@ -407,51 +408,31 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 		// Randomized best-choice - START
 		// ##############################
 		// final int iterations = 20;
-		final int iterations = Math.min(20, (int) (Math.sqrt(clusterNames.size())));
+		final int iterations = Math.max(3, Math.min(20, (int) (Math.sqrt(clusterNames.size()))));
 		Set<String> previousChoices = null;
 		Set<String> currentChoices = null;
 		final int maxIterations = 200;
 		int iterCounter = 0;
 		println("%Started");
+		final long minDelay = 1_000l;
 		do {
 			previousChoices = currentChoices;
+			final String watchDisamb = "disamb";
+
 			for (int i = 0; i < iterations; ++i) {
+				Stopwatch.start(watchDisamb);
+				// getLogger().info("Iteration: " + i);
 				// Shuffle the cluster names randomly
 				Collections.shuffle(clusterNames);
+				startCreateTable(clusterNames, chosenClusterEntityMap);
 				// This is the hillclimbing part of it which takes the best local choice in
 				// order to maximize the reward of the overall similarity sum
-				if (CREATE_TABLE) {
-					println("%Shuffled clusters");
-					println("\\hline");
-					println("%Table header");
-					final String lastCluster = clusterNames.get(clusterNames.size() - 1);
-					// print("From/To");
-					for (String clustername : clusterNames) {
-						print(bolden(clustername));
-						print(" & ");
-					}
-//					print(" & ");
-					print(bolden("Similarity"));
-					print(" & ");
-					print(bolden("Sum Score"));
-
-					println(" \\\\ \\hline");
-					println("%Initialised entities");
-					for (String clustername : clusterNames) {
-						final String shortEntity = shortenDBpResource(
-								chosenClusterEntityMap.get(clustername).getLeft());
-						print(shortEntity);
-						print(" & ");
-					}
-					// print(" & ");
-					print("/");// N/A sim score
-					print(" & ");
-					print("/");// N/A overall score
-					println(" \\\\ \\hline");
-				}
 				iterativelyPickLocalBest(clusters, chosenClusterEntityMap, clusterNames);
+				Stopwatch.endOutput(watchDisamb, minDelay, "Iteration[" + i + "] through the cluster");
 			}
+			Stopwatch.start(watchDisamb);
 			currentChoices = mapToValueSet(chosenClusterEntityMap);
+			Stopwatch.endOutput(watchDisamb, minDelay, "Duration of mapToValueSet");
 			// getLogger().info("CHOICES AFTER ITERATIONS: " + currentChoices);
 			iterCounter += iterations;
 			if (iterCounter > maxIterations) {
@@ -486,6 +467,38 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 		return disambiguationResultsMap;
 	}
 
+	private void startCreateTable(final List<String> clusterNames,
+			Map<String, Pair<String, Double>> chosenClusterEntityMap) {
+		if (CREATE_TABLE) {
+			println("%Shuffled clusters");
+			println("\\hline");
+			println("%Table header");
+			final String lastCluster = clusterNames.get(clusterNames.size() - 1);
+			// print("From/To");
+			for (String clustername : clusterNames) {
+				print(bolden(clustername));
+				print(" & ");
+			}
+//			print(" & ");
+			print(bolden("Similarity"));
+			print(" & ");
+			print(bolden("Sum Score"));
+
+			println(" \\\\ \\hline");
+			println("%Initialised entities");
+			for (String clustername : clusterNames) {
+				final String shortEntity = shortenDBpResource(chosenClusterEntityMap.get(clustername).getLeft());
+				print(shortEntity);
+				print(" & ");
+			}
+			// print(" & ");
+			print("/");// N/A sim score
+			print(" & ");
+			print("/");// N/A overall score
+			println(" \\\\ \\hline");
+		}
+	}
+
 	private String bolden(String shortEntity) {
 		return "\\textbf{" + shortEntity + "}";
 	}
@@ -493,15 +506,17 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 	private String shortenDBpResource(String string) {
 		String ret = string;
 		ret = ret.replace("http://dbpedia.org/resource/", "dbr:");
-		ret = ret.replace("Thee_Silver_Mt._Zion_Memorial_Orchestra", "Mem_Orchestra");
+		ret = ret.replace("Thee_Silver_Mt._Zion_Memorial_Orchestra", "Mem_Orch");
 		ret = ret.replace("Battle_of_Britain_Memorial_Flight", "Mem_Battle");
 		ret = ret.replace("Ponce,_Puerto_Rico", "Ponce_Puerto");
 		ret = ret.replace("Late_of_the_Pier", "Late_Pier");
+		ret = ret.replace("Late_Antiquity", "Late_Antiq");
 		ret = ret.replace("Bill_Walsh_(American_football_coach)", "Bill_Walsh");
 		ret = ret.replace("Wood_Memorial_Stakes", "Mem_Wood");
 		ret = ret.replace("Lucas_Oil_Late_Model_Dirt_Series", "Lucas_Oil");
-		ret = ret.replace("Stanford_Graduate_School_of_Business", "Stanford_Business");
+		ret = ret.replace("Stanford_Graduate_School_of_Business", "Stanford_Bsns");
 		ret = ret.replace("Late_Night_with_Jimmy_Fallon", "Late_Night");
+		ret = ret.replace("Stanford_University", "Stanford_Uni");
 		ret = ret.replace("", "");
 		ret = ret.replace("_", "\\_");
 		return ret;
@@ -544,12 +559,12 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 	 */
 	private Set<String> mapToValueSet(Map<String, Pair<String, Double>> chosenClusterEntityMap) {
 		final Set<String> valueSet = new HashSet<String>();
-		// for (Map.Entry<String, Pair<String, Double>> e :
-		// chosenClusterEntityMap.entrySet()) {
-		// valueSet.add(e.getValue().getLeft());
-		// }
+		for (Map.Entry<String, Pair<String, Double>> e : chosenClusterEntityMap.entrySet()) {
+			valueSet.add(e.getValue().getLeft());
+		}
 
-		chosenClusterEntityMap.values().stream().forEach(pair -> valueSet.add(pair.getLeft()));
+		// chosenClusterEntityMap.values().stream().forEach(pair ->
+		// valueSet.add(pair.getLeft()));
 		return valueSet;
 	}
 
@@ -581,13 +596,16 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 	private void iterativelyPickLocalBest(Map<String, List<String>> clusters,
 			Map<String, Pair<String, Double>> chosenClusterEntityMap, List<String> clusterNames) {
 		// Now pick the best one between current and next
+		final long minDelay = 1_000;
+		final String watch = "iterativelyPickLocalBest";
 		for (int clusterNameIndex = 1; clusterNameIndex < clusterNames.size(); ++clusterNameIndex) {
+			Stopwatch.start(watch);
 			final String currClusterName = clusterNames.get(clusterNameIndex - 1);
 			final String nextClusterName = clusterNames.get(clusterNameIndex);
-
 			final Pair<String, Double> bestNext = this.similarityService.topSimilarity(
 					chosenClusterEntityMap.get(currClusterName).getLeft(), clusters.get(nextClusterName),
 					allowSelfConnection);
+			Stopwatch.endOutputStart(watch, minDelay, "ClusterNameIndex[" + clusterNameIndex + "]: TopSim");
 			if (bestNext == null) {
 				// If there is no connection other than possibly oneself (depending on
 				// allowSelfConnection), skip it
@@ -597,29 +615,33 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 			// Otherwise just go to the next one
 			final Pair<String, Double> previousChoice = chosenClusterEntityMap.remove(nextClusterName);
 			final Double newSimilaritySum = getSimilaritySumToEntity(chosenClusterEntityMap, bestNext.getLeft());
+			Stopwatch.endOutputStart(watch, minDelay,
+					"ClusterNameIndex[" + clusterNameIndex + "]: getSimilaritySumToEntity#1");
 			final Double oldSimilaritySum = getSimilaritySumToEntity(chosenClusterEntityMap, previousChoice.getLeft());
-//			log.info("NEW 'CANDIDATE' TOP - From[" + currClusterName + "]-To[" + nextClusterName + "]: BEST["
-//					+ bestNext.getLeft() + ", " + bestNext.getRight() + "] - NEW SIM: " + newSimilaritySum);
-//			log.info("'CURRENT' TOP: " + previousChoice.getLeft() + ", " + previousChoice.getRight()
-//					+ " - CURRENT SIM: " + oldSimilaritySum);
+			Stopwatch.endOutputStart(watch, minDelay,
+					"ClusterNameIndex[" + clusterNameIndex + "]: getSimilaritySumToEntity#2");
 			// Intuition: If I like my choice more than anyone dislikes it, it is worth it!
 			// So if the new similarity sum is higher, we'll take it
 			final Pair<String, Double> chosenEntity;
 			final Number chosenSimValue;
 
 			if (newSimilaritySum >= oldSimilaritySum) {
-//				log.info("CHOICE DONE: NEW SIMILARITY SUM");
 				chosenClusterEntityMap.put(nextClusterName, bestNext);
 				chosenEntity = bestNext;
 				chosenSimValue = newSimilaritySum;
+				Stopwatch.endOutputStart(watch, minDelay,
+						"ClusterNameIndex[" + clusterNameIndex + "]: NEW_SIM >= OLD_SIM");
 			} else {
-//				log.info("CHOICE DONE: CURRENT SIMILARITY SUM");
 				// Update the value if initialization didn't take care of it
+				Stopwatch.endOutputStart(watch, minDelay,
+						"ClusterNameIndex[" + clusterNameIndex + "]: NEW_SIM < OLD_SIM");
 				final Pair<String, Double> oldChoiceUpdatedSimilarity = new ImmutablePair<>(previousChoice.getLeft(),
 						this.similarityService.similarity(chosenClusterEntityMap.get(currClusterName).getLeft(), //
 								previousChoice.getKey()//
 						).doubleValue()//
 				);
+				Stopwatch.endOutputStart(watch, minDelay,
+						"ClusterNameIndex[" + clusterNameIndex + "]: Recompute sim for initialised...");
 				// Has to be added again for the likely-updated similarity (as other entities
 				// might have changed since this was last set)
 				// chosenClusterEntityMap.put(nextClusterName, previousChoice);
@@ -628,48 +650,57 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 				chosenSimValue = oldSimilaritySum;
 			}
 
-			if (!CREATE_TABLE) {
-				final boolean switched = (newSimilaritySum >= oldSimilaritySum);
-				final String fromEntity = chosenClusterEntityMap.get(currClusterName).getLeft();
-				println("------------------------------------------------------------");
-				println("FROM[" + currClusterName + "] -> TO[" + nextClusterName + "]");
-				println("From Entity: " + fromEntity);
-				println("[" + (switched ? "switchedFrom" : "keeping") + "] Score[" + oldSimilaritySum + "] "
-						+ (switched ? "Switched from:" : "Keeping old:") + previousChoice);
-				println("[" + (switched ? "switchedTo" : "ignored") + "] Score[" + newSimilaritySum + "] "
-						+ (switched ? "Switched   to:" : "'Ignoring' :") + bestNext);
-			} else if (CREATE_TABLE) {
-				if (ENTITY_TABLE) {
-					final DecimalFormat format = new DecimalFormat("##.000000");
-					// print(currClusterName + "\t->\t" + nextClusterName //
-//							+ " (Sum Old:" + format.format(oldSimilaritySum) //
-//							+ "; New:" + format.format(newSimilaritySum) //
-//							+ ", Sim Old:" + format.format(previousChoice.getValue()) //
-//							+ "; New:" + format.format(bestNext.getValue()) //
-//							+ ")" //
-//					);
-					for (int i = 0; i < clusterNameIndex; ++i) {
-						// Spacing for table
-						print(" & ");
-					}
+			// createTable(newSimilaritySum, oldSimilaritySum, chosenClusterEntityMap,
+			// clusterNames, currClusterName,
+			// nextClusterName, clusterNameIndex, previousChoice, bestNext, chosenEntity,
+			// chosenSimValue);
+		}
 
-					print(shortenDBpResource(chosenEntity.getKey()));
-					for (int i = clusterNameIndex; i < clusterNames.size() - 1; ++i) {
-						// Spacing for table
-						print(" & ");
-					}
-					print(" & ");
-					print(format.format(chosenEntity.getValue()));// similarity score of choice
-					// println("%" + chosenEntity.toString());
-					// println("%" + chosenClusterEntityMap.get(currClusterName) + "->"+
-					// chosenClusterEntityMap.get(nextClusterName));
-					print(" & ");
-					print(format.format(chosenSimValue));// entire path's score
-					print("\\\\ ");
-					println("\\hline");
-				}
+	}
+
+	private void createTable(final double newSimilaritySum, final double oldSimilaritySum,
+			Map<String, Pair<String, Double>> chosenClusterEntityMap, List<String> clusterNames,
+			final String currClusterName, final String nextClusterName, final int clusterNameIndex,
+			final Pair<String, Double> previousChoice, final Pair<String, Double> bestNext,
+			final Pair<String, Double> chosenEntity, final Number chosenSimValue) {
+		if (!CREATE_TABLE) {
+			final boolean switched = (newSimilaritySum >= oldSimilaritySum);
+			final String fromEntity = chosenClusterEntityMap.get(currClusterName).getLeft();
+			println("------------------------------------------------------------");
+			println("FROM[" + currClusterName + "] -> TO[" + nextClusterName + "]");
+			println("From Entity: " + fromEntity);
+			println("[" + (switched ? "switchedFrom" : "keeping") + "] Score[" + oldSimilaritySum + "] "
+					+ (switched ? "Switched from:" : "Keeping old:") + previousChoice);
+			println("[" + (switched ? "switchedTo" : "ignored") + "] Score[" + newSimilaritySum + "] "
+					+ (switched ? "Switched   to:" : "'Ignoring' :") + bestNext);
+		} else if (CREATE_TABLE && ENTITY_TABLE) {
+			final DecimalFormat format = new DecimalFormat("##.000000");
+			// print(currClusterName + "\t->\t" + nextClusterName //
+//						+ " (Sum Old:" + format.format(oldSimilaritySum) //
+//						+ "; New:" + format.format(newSimilaritySum) //
+//						+ ", Sim Old:" + format.format(previousChoice.getValue()) //
+//						+ "; New:" + format.format(bestNext.getValue()) //
+//						+ ")" //
+//				);
+			for (int i = 0; i < clusterNameIndex; ++i) {
+				// Spacing for table
+				print(" & ");
 			}
 
+			print(shortenDBpResource(chosenEntity.getKey()));
+			for (int i = clusterNameIndex; i < clusterNames.size() - 1; ++i) {
+				// Spacing for table
+				print(" & ");
+			}
+			print(" & ");
+			print(format.format(chosenEntity.getValue()));// similarity score of choice
+			// println("%" + chosenEntity.toString());
+			// println("%" + chosenClusterEntityMap.get(currClusterName) + "->"+
+			// chosenClusterEntityMap.get(nextClusterName));
+			print(" & ");
+			print(format.format(chosenSimValue));// entire path's score
+			print("\\\\ ");
+			println("\\hline");
 		}
 
 	}
@@ -679,7 +710,7 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 	}
 
 	private void print(String str) {
-		//System.out.print(str);
+		// System.out.print(str);
 	}
 
 	/**
@@ -791,15 +822,73 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 		return similaritySum;
 	}
 
+	/**
+	 * See the summed similarities from the source to the choices (without the
+	 * source entity itself)
+	 * 
+	 * @param chosenClusterEntityMap
+	 * @param sourceEntity
+	 * @return
+	 */
 	private Double getSimilaritySumToEntity(Map<String, Pair<String, Double>> chosenClusterEntityMap,
 			final String sourceEntity) {
-		Double sum = 0D;
-		for (Map.Entry<String, Pair<String, Double>> e : chosenClusterEntityMap.entrySet()) {
-			if (!sourceEntity.equals(e.getValue().getKey())) {
-				sum += this.similarityService.similarity(sourceEntity, e.getValue().getKey()).doubleValue();
-			}
+		final long minDelay = 500;
+		final String watch = "INSIDE - getSimilaritySumToEntity";
+		Stopwatch.start(watch);
+		final AtomicDouble sum = new AtomicDouble(0D);
+		Stopwatch.endOutputStart(watch, minDelay, "AtomicDouble Init");
+
+		AtomicInteger doneCounter = new AtomicInteger(0);
+		final int todoSimilarities = chosenClusterEntityMap.keySet().size();
+		Stopwatch.endOutputStart(watch, minDelay, "Choices Keyset.size");
+		final int threads = Math.min(this.threadCount, todoSimilarities);
+		final ThreadPoolExecutor pool = new ThreadPoolExecutor(threads, threads, 0, TimeUnit.SECONDS,
+				new java.util.concurrent.LinkedBlockingQueue<Runnable>());
+		Stopwatch.endOutputStart(watch, minDelay, "Threadpool init");
+		try {
+			final Iterator<Entry<String, Pair<String, Double>>> itChoices = chosenClusterEntityMap.entrySet()
+					.iterator();
+			Stopwatch.endOutputStart(watch, minDelay, "Map Iterator creation");
+			final long sleepStep = 10l;
+			do {
+				while (itChoices.hasNext() && pool.getActiveCount() < threads) {
+					final Entry<String, Pair<String, Double>> choiceEntry = itChoices.next();
+					Stopwatch.endOutputStart(watch, minDelay, "Taking next choice!");
+					// Multi thread here
+					pool.execute(new Runnable() {
+						@Override
+						public void run() {
+							if (!sourceEntity.equals(choiceEntry.getValue().getKey())) {
+								final Double similarity = similarityService
+										.similarity(sourceEntity, choiceEntry.getValue().getKey()).doubleValue();
+								sum.addAndGet(similarity);
+							}
+							doneCounter.incrementAndGet();
+						}
+					});
+				}
+				Stopwatch.endOutputStart(watch, minDelay,
+						"[Pool Actives: " + pool.getActiveCount() + "] Waiting for free threads");
+				Thread.sleep(sleepStep);
+			} while (itChoices.hasNext());
+			Stopwatch.endOutputStart(watch, minDelay, "Created tasks");
+
+			pool.shutdown();
+			long sleepCounter = 0l;
+			do {
+				// No need for await termination as this is pretty much it already...
+				Thread.sleep(sleepStep);
+				sleepCounter += sleepStep;
+				Stopwatch.endOutputRestart(watch, minDelay, " getSimSum - Completed: " + doneCounter.get() + "/"
+						+ todoSimilarities + " in " + sleepCounter + "ms.");
+			} while (!pool.isTerminated());
+			pool.awaitTermination(30L, TimeUnit.DAYS);
+			Stopwatch.endOutputStart(watch, minDelay, "getSimilaritySum - done...");
+		} catch (InterruptedException ie) {
+			getLogger().error("Exception during thread execution...", ie);
 		}
-		return sum;
+
+		return sum.doubleValue();
 	}
 
 	@Override

@@ -39,13 +39,9 @@ public class PairwisePicker extends AbstractClusterItemPicker {
 	}
 
 	@Override
-	public void linkContext(Collection<Mention> context) {
-		this.context = context;
-	}
-
-	@Override
-	public void updateContext() {
+	public void updateContext(Collection<Mention> context) {
 		// None?
+		this.context = context;
 	}
 
 	@Override

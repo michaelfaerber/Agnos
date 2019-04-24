@@ -4,29 +4,18 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiFunction;
 
 import org.apache.log4j.Logger;
 
 import alu.linking.candidategeneration.PossibleAssignment;
-import alu.linking.candidategeneration.Scorable;
-import alu.linking.config.constants.FilePaths;
 import alu.linking.config.constants.Numbers;
 import alu.linking.config.kg.EnumModelType;
-import alu.linking.disambiguation.pagerank.PageRankLoader;
-import alu.linking.disambiguation.scorers.GraphWalkEmbeddingScorer;
-import alu.linking.disambiguation.scorers.PageRankScorer;
-import alu.linking.disambiguation.scorers.embedhelp.ClusterItemPicker;
-import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
-import alu.linking.disambiguation.scorers.hillclimbing.HillClimbingPicker;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 
@@ -36,73 +25,22 @@ import alu.linking.structure.Loggable;
  * @author Kwizzer
  *
  */
-public class AssignmentScorer<N> implements Loggable {
-	public enum CombineOperation {
-		OCCURRENCE(ClusterItemPicker::occurrenceOperation), //
-		MAX_SIM(ClusterItemPicker::maxedOperation), //
-		SIM_ADD(ClusterItemPicker::similarityOperation), //
-		SIM_SQUARE_ADD(ClusterItemPicker::similaritySquaredOperation),//
-
-		;
-		final BiFunction<Double, Double, Double> combineOperation;
-
-		CombineOperation(BiFunction<Double, Double, Double> combineOperation) {
-			this.combineOperation = combineOperation;
-		}
-	}
+public class AssignmentScorer implements Loggable {
 
 	private static Logger logger = Logger.getLogger(AssignmentScorer.class);
 	private final HashSet<Mention> context = new HashSet<>();
-	private final EntitySimilarityService similarityService;
+	public final ScoreCombiner<PossibleAssignment> combiner;
+	public final Collection<Scorer<PossibleAssignment>> scorers;
+	public final Collection<PostScorer<PossibleAssignment, Mention>> postScorers;
 
-	public AssignmentScorer(final EnumModelType KG) throws FileNotFoundException, ClassNotFoundException, IOException {
-		// Determines how everything is scored!
-		PossibleAssignment.setScoreCombiner(new ScoreCombiner<PossibleAssignment>());
-
-		// How to load pagerank
-		final PageRankLoader pagerankLoader = new PageRankLoader(KG);
-		// Loads the pagerank from file
-		pagerankLoader.exec();
-
-		// Pre-scoring
-		PossibleAssignment.addScorer(new PageRankScorer(KG, pagerankLoader));
-
-		// Post-scoring
-		// PossibleAssignment.addPostScorer(new VicinityScorer());
-		final Map<String, List<Number>> entityEmbeddingsMap = GraphWalkEmbeddingScorer.humanload(
-				FilePaths.FILE_GRAPH_WALK_ID_MAPPING_ENTITY_HUMAN.getPath(KG),
-				FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG));
-		this.similarityService = new EntitySimilarityService(entityEmbeddingsMap);
-//		int displayCounter = 0;
-//		for (Entry<String, List<Number>> e : entityEmbeddingsMap.entrySet()) {
-//			System.out.println(e.getKey());
-//			displayCounter++;
-//			if (displayCounter > 50) {
-//				System.out.println("printed 50");
-//				break;
-//			}
-//		}
-
-		final CombineOperation combineOperation = CombineOperation.OCCURRENCE;
-
-//		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new
-//		ContinuousHillClimbingPicker(
-//		combineOperation.combineOperation, similarityService, pagerankLoader)));
-		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(
-				new HillClimbingPicker(combineOperation.combineOperation, similarityService, pagerankLoader)));
-		// PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new
-		// PairwisePicker(combineOperation.combineOperation, similarityService,
-		// pagerankLoader)));
-
-		// PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new
-		// SubPageRankPicker(similarityService, 0.5d)));
-		// PossibleAssignment.addPostScorer(new SSPEmbeddingScorer(KG));
-
-		for (PostScorer postScorer : PossibleAssignment.getPostScorers()) {
-			// Links a context object which will be updated when necessary through
-			// updateContext(Collection<Mention<N>>)
-			postScorer.linkContext(context);
-		}
+	public AssignmentScorer(final ScoreCombiner<PossibleAssignment> combiner,
+			Collection<Scorer<PossibleAssignment>> scorers,
+			Collection<PostScorer<PossibleAssignment, Mention>> postScorers)
+			throws FileNotFoundException, ClassNotFoundException, IOException {
+		this.combiner = combiner;
+		this.scorers = scorers;
+		this.postScorers = postScorers;
+		
 	}
 
 	/**
@@ -122,32 +60,57 @@ public class AssignmentScorer<N> implements Loggable {
 		final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors
 				.newFixedThreadPool(Numbers.SCORER_THREAD_AMT.val.intValue());
 		AtomicInteger doneCounter = new AtomicInteger(0);
-		for (Scorable assgnmt : possAssignments) {
+		for (PossibleAssignment assgnmt : possAssignments) {
 			// Multi thread here
 			final Future<Integer> future = executor.submit(new Callable<Integer>() {
 				@Override
 				public Integer call() throws Exception {
-					assgnmt.computeScore();
+					// assgnmt.computeScore();
+					computeScore(assgnmt);
 					return doneCounter.incrementAndGet();
 				}
 			});
 		}
 		executor.shutdown();
 		long sleepCounter = 0l;
+		final long sleepStep = 20l;
 		do {
 			// No need for await termination as this is pretty much it already...
-			Thread.sleep(100);
-			sleepCounter += 100l;
-			if ((sleepCounter > 5_000) && ((sleepCounter % 5000) <= 100)) {
+			Thread.sleep(sleepStep);
+			sleepCounter += sleepStep;
+			if ((sleepCounter > 5_000) && ((sleepCounter % 5000) <= sleepStep)) {
 				getLogger().debug(
 						"Score Computation - In progress [" + doneCounter.get() + " / " + assSize + "] documents.");
 			}
 		} while (!executor.isTerminated());
-		final boolean terminated = executor.awaitTermination(10L, TimeUnit.MINUTES);
+		final boolean terminated = executor.awaitTermination(10L, TimeUnit.DAYS);
 		if (!terminated) {
 			throw new RuntimeException("Could not compute score in time.");
 		}
 		return mention.getPossibleAssignments();
+	}
+
+	/**
+	 * Compute score for PossibleAssignment
+	 * 
+	 * @param assignment
+	 */
+	public void computeScore(PossibleAssignment assignment) {
+		Number currScore = null;
+		// Goes through all the scorers that have been defined and combines them in the
+		// wanted manner
+		// Pre-scoring step
+		for (@SuppressWarnings("rawtypes")
+		Scorer<PossibleAssignment> scorer : scorers) {
+			currScore = combiner.combine(currScore, scorer, assignment);
+		}
+		// Post-scoring step
+		for (@SuppressWarnings("rawtypes")
+		PostScorer<PossibleAssignment, Mention> scorer : postScorers) {
+			currScore = combiner.combine(currScore, scorer, assignment);
+		}
+		assignment.score(currScore);
+		// return currScore;
 	}
 
 	/**
@@ -158,12 +121,9 @@ public class AssignmentScorer<N> implements Loggable {
 	public void updatePostContext(Collection<Mention> mentions) {
 		this.context.clear();
 		this.context.addAll(mentions);
-		for (PostScorer postScorer : PossibleAssignment.getPostScorers()) {
-			postScorer.updateContext();
+		for (PostScorer postScorer : postScorers) {
+			postScorer.updateContext(this.context);
 		}
 	}
 
-	public EntitySimilarityService getSimilarityService() {
-		return this.similarityService;
-	}
 }

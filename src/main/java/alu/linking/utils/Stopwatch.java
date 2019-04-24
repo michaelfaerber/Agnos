@@ -175,6 +175,71 @@ public class Stopwatch {
 	}
 
 	/**
+	 * Outputs if the diff difference is greater or equal to minDelay
+	 * 
+	 * @author Kris Noullet (kn65)
+	 * @param watch
+	 * @param msg
+	 * @param minDelay
+	 * @return
+	 */
+	public static long endOutput(final String watch, final long minDelay, final String msg) {
+		return endOutput(watch, minDelay, msg, false);
+	}
+
+	/**
+	 * Outputs if the diff difference is greater or equal to minDelay and restarts
+	 * it once it has output if restart = TRUE
+	 * 
+	 * @author Kris Noullet (kn65)
+	 * @param watch
+	 * @param msg
+	 * @param minDelay
+	 * @param restart  starts the timer again if the delay is surpassed
+	 * @return
+	 */
+	public static long endOutput(final String watch, final long minDelay, final String msg, final boolean restart) {
+		end(watch);
+		long diff = diff(watch);
+		if (diff >= minDelay) {
+			getLogger().info("[" + watch + ", " + diff + " ms] " + msg);
+			if (restart) {
+				start(watch);
+			}
+		}
+		return diff;
+	}
+
+	/**
+	 * Outputs if the diff difference is greater or equal to minDelay
+	 * 
+	 * @author Kris Noullet (kn65)
+	 * @param watch
+	 * @param msg
+	 * @param minDelay
+	 * @return
+	 */
+	public static long endOutputRestart(final String watch, final long minDelay, final String msg) {
+		return endOutput(watch, minDelay, msg, true);
+	}
+
+	/**
+	 * Outputs if the diff difference is greater or equal to minDelay and starts the
+	 * timer again
+	 * 
+	 * @author Kris Noullet (kn65)
+	 * @param watch
+	 * @param msg
+	 * @param minDelay
+	 * @return
+	 */
+	public static long endOutputStart(final String watch, final long minDelay, final String msg) {
+		final long diff = endOutput(watch, minDelay, msg);
+		start(watch);
+		return diff;
+	}
+
+	/**
 	 * Ends watch timer, outputs the difference and starts it anew
 	 * 
 	 * @author Kris Noullet (kn65)
@@ -182,9 +247,7 @@ public class Stopwatch {
 	 * @return time difference
 	 */
 	public static long endOutputStart(final String watch) {
-		end(watch);
-		long diff = diff(watch);
-		getLogger().info("[" + watch + "] Executed in " + diff + " ms.");
+		final long diff = endOutput(watch);
 		start(watch);
 		return diff;
 	}

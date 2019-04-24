@@ -316,22 +316,22 @@ public class EmbeddingsUtils {
 			l2 = right;
 		}
 
-		Number num = 0d;
-		Number denLeft = 0d;
-		Number denRight = 0d;
+		Double num = 0d;
+		Double denLeft = 0d;
+		Double denRight = 0d;
 		for (int i = 0; i < l1.size(); ++i) {
-			num = num.doubleValue() + (l1.get(i).doubleValue() * l2.get(i).doubleValue());
-			denLeft = denLeft.doubleValue() + Math.pow(l1.get(i).doubleValue(), 2);
-			denRight = denRight.doubleValue() + Math.pow(l2.get(i).doubleValue(), 2);
+			num = num + (l1.get(i).doubleValue() * l2.get(i).doubleValue());
+			denLeft = denLeft + Math.pow(l1.get(i).doubleValue(), 2);
+			denRight = denRight + Math.pow(l2.get(i).doubleValue(), 2);
 		}
-		denLeft = Math.sqrt(denLeft.doubleValue());
-		denRight = Math.sqrt(denRight.doubleValue());
+		denLeft = Math.sqrt(denLeft);
+		denRight = Math.sqrt(denRight);
 
-		final Number den = (denLeft.doubleValue() * denRight.doubleValue());
+		final Double den = (denLeft * denRight);
 
-		final Number ret;
+		final Double ret;
 		// return ((num.doubleValue() / den.doubleValue()) + 1d) / 2d;
-		ret = Math.abs((num.doubleValue() / den.doubleValue()));
+		ret = Math.abs((num / den));
 		// return (num.doubleValue() / den.doubleValue());
 		return ret;
 	}

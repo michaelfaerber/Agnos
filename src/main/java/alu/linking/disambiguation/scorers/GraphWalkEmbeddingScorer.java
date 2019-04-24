@@ -104,7 +104,7 @@ public class GraphWalkEmbeddingScorer implements PostScorer<PossibleAssignment, 
 	/**
 	 * Recomputes the best combination of entities to minimize distance
 	 */
-	private synchronized void recomputeOptimum() {
+	private void recomputeOptimum() {
 		try {
 			bestCombination.clear();
 			bestCombination.addAll(clusterHelper.combine());
@@ -127,15 +127,10 @@ public class GraphWalkEmbeddingScorer implements PostScorer<PossibleAssignment, 
 	}
 
 	@Override
-	public void linkContext(Collection<Mention> context) {
-		clusterHelper.linkContext(context);
-	}
-
-	@Override
-	public void updateContext() {
+	public void updateContext(Collection<Mention> context) {
 		synchronized (changedLock) {
 			hasChanged = true;
-			clusterHelper.updateContext();
+			clusterHelper.updateContext(context);
 		}
 	}
 

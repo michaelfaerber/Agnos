@@ -1,17 +1,26 @@
 package alu.linking.disambiguation;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 import org.apache.log4j.Logger;
 
 import com.google.common.collect.Lists;
 
 import alu.linking.candidategeneration.PossibleAssignment;
+import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
+import alu.linking.disambiguation.pagerank.PageRankLoader;
+import alu.linking.disambiguation.scorers.GraphWalkEmbeddingScorer;
+import alu.linking.disambiguation.scorers.PageRankScorer;
+import alu.linking.disambiguation.scorers.embedhelp.ClusterItemPicker;
+import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
+import alu.linking.disambiguation.scorers.hillclimbing.HillClimbingPicker;
 import alu.linking.mentiondetection.Mention;
 
 /**
@@ -23,38 +32,94 @@ import alu.linking.mentiondetection.Mention;
  * @param
  */
 public class AssignmentChooser {
+	public enum CombineOperation {
+		OCCURRENCE(ClusterItemPicker::occurrenceOperation), //
+		MAX_SIM(ClusterItemPicker::maxedOperation), //
+		SIM_ADD(ClusterItemPicker::similarityOperation), //
+		SIM_SQUARE_ADD(ClusterItemPicker::similaritySquaredOperation),//
+
+		;
+		final BiFunction<Double, Double, Double> combineOperation;
+
+		CombineOperation(BiFunction<Double, Double, Double> combineOperation) {
+			this.combineOperation = combineOperation;
+		}
+	}
+
+	private final EntitySimilarityService similarityService;
+	private final EnumModelType KG;
+
 	private static Logger logger = Logger.getLogger(AssignmentChooser.class);
-	private AssignmentScorer scorer = null;
+	// How to load pagerank
+	final PageRankLoader pagerankLoader;
 
 	public AssignmentChooser(final EnumModelType KG) throws ClassNotFoundException, IOException {
-		this.scorer = new AssignmentScorer(KG);
+		this.KG = KG;
+		// Do all the heavy pre-loading
+		final Map<String, List<Number>> entityEmbeddingsMap = GraphWalkEmbeddingScorer.humanload(
+				FilePaths.FILE_GRAPH_WALK_ID_MAPPING_ENTITY_HUMAN.getPath(KG),
+				FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG));
+		this.similarityService = new EntitySimilarityService(entityEmbeddingsMap);
+
 		// Graph.getInstance().readIn(FilePaths.FILE_HOPS_GRAPH_DUMP.getPath(KG),
 		// FilePaths.FILE_HOPS_GRAPH_DUMP_PATH_IDS.getPath(KG),
 		// FilePaths.FILE_HOPS_GRAPH_DUMP_EDGE_IDS.getPath(KG));
+
+		// Load it once
+		pagerankLoader = new PageRankLoader(KG);
+		// Loads the pagerank from file
+		pagerankLoader.exec();
 	}
 
 	/**
-	 * Calls the scorer appropriately and returns a list of the assignments
-	 * 
-	 * @return
-	 * @throws InterruptedException
-	 */
-	private Collection<PossibleAssignment> score(final Mention mention) throws InterruptedException {
-		// logger.debug(mention.getMention() + " / " + mention.getSource());
-		return scorer.score(mention);
-	}
-
-	/**
-	 * Assigns the proper values to the mentions
+	 * Assigns the proper values to the mentions. Instantiates a new
+	 * AssignmentScorer for each time this method is called. As such, there should
+	 * be no overlapping of contexts due to repeated AssignmentChooser instance
+	 * reuse.
 	 * 
 	 * @param mentions
 	 * @throws InterruptedException
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 * @throws FileNotFoundException
 	 */
-	public void choose(final List<Mention> mentions) throws InterruptedException {
-		// Update context for post-scoring (does it for all linked post-scorers)
-		scorer.updatePostContext(mentions);
-		// Score the possible assignments for each detected mention
+	public void choose(final List<Mention> mentions)
+			throws InterruptedException, FileNotFoundException, ClassNotFoundException, IOException {
+		final ScoreCombiner<PossibleAssignment> combiner = new ScoreCombiner<PossibleAssignment>();
+		final Collection<Scorer<PossibleAssignment>> scorers = Lists.newArrayList();
+		final Collection<PostScorer<PossibleAssignment, Mention>> postScorers = Lists.newArrayList();
+		// #############
+		// Pre-scoring
+		scorers.add(new PageRankScorer(KG, pagerankLoader));
+		// #############
 
+		
+		// #############
+		// Post-scoring
+		// PossibleAssignment.addPostScorer(new VicinityScorer());
+		final CombineOperation combineOperation = CombineOperation.OCCURRENCE;
+
+		// postScorer.add(new GraphWalkEmbeddingScorer(new
+		// ContinuousHillClimbingPicker(combineOperation.combineOperation,
+		// similarityService, pagerankLoader)));
+		postScorers.add(new GraphWalkEmbeddingScorer(
+				new HillClimbingPicker(combineOperation.combineOperation, similarityService, pagerankLoader)));
+
+		// postScorer.add(new GraphWalkEmbeddingScorer(new
+		// PairwisePicker(combineOperation.combineOperation, similarityService,
+		// pagerankLoader)));
+
+		// postScorer.add(new GraphWalkEmbeddingScorer(new
+		// SubPageRankPicker(similarityService, 0.5d)));
+		// postScorer.add(new SSPEmbeddingScorer(KG));
+		// #############
+
+		final AssignmentScorer assignmentScorer = new AssignmentScorer(combiner, scorers, postScorers);
+
+		// Update context for post-scoring (does it for all linked post-scorers)
+		assignmentScorer.updatePostContext(mentions);
+
+		// Score the possible assignments for each detected mention
 		// In order to avoid disambiguating multiple times for the same mention word, we
 		// split our mentions up and then just copy results from the ones that were
 		// computed
@@ -72,7 +137,7 @@ public class AssignmentChooser {
 			// Just score the first one within the lists
 			final List<Mention> sameWordMentions = e.getValue();
 			final Mention mention = sameWordMentions.get(0);
-			score(mention);
+			assignmentScorer.score(mention);
 			// Assign the top-scored possible assignment to the mention
 			mention.assignBest();
 			// Copy into the other mentions
@@ -87,7 +152,8 @@ public class AssignmentChooser {
 		 */
 	}
 
-	public AssignmentScorer getAssignmentScorer() {
-		return this.scorer;
+	public EntitySimilarityService getSimilarityService() {
+		return this.similarityService;
 	}
+
 }

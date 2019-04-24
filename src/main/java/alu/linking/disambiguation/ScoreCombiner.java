@@ -8,9 +8,8 @@ import alu.linking.structure.Loggable;
 public class ScoreCombiner<T> implements Loggable {
 	public Number combine(final Number currScore, final Scorer<T> scorer, final T scorerParam) {
 		// Add all types of scorers here with the appropriate weights
-		final Number weight = scorer.getWeight();
-		final Number score = scorer.computeScore(scorerParam);
-		// Generally not needed, but keeping here for the sake of it~
+
+
 		if (scorer instanceof PageRankScorer) {
 			// Pretty much just sets the weight
 			final Double prScore = Numbers.PAGERANK_WEIGHT.val.doubleValue()
@@ -24,6 +23,9 @@ public class ScoreCombiner<T> implements Loggable {
 			return add(currScore, vicScore);
 
 		} else {
+			final Number weight = scorer.getWeight();
+			final Number score = scorer.computeScore(scorerParam);
+
 			return add(currScore, weight.doubleValue() * score.doubleValue());
 		}
 	}

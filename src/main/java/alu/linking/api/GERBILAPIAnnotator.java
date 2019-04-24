@@ -1,6 +1,7 @@
 package alu.linking.api;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -36,7 +37,6 @@ import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
 import alu.linking.mentiondetection.StopwordsLoader;
-import alu.linking.postprocessing.MentionPruner;
 import alu.linking.postprocessing.ThresholdPruner;
 import alu.linking.structure.Executable;
 import alu.linking.utils.DetectionUtils;
@@ -63,7 +63,7 @@ public class GERBILAPIAnnotator implements Executable {
 	private MentionDetector md = null;
 	private CandidateGenerator<String> candidateGenerator = null;
 	private AssignmentChooser chooser = null;
-	private MentionPruner pruner = null;
+	private ThresholdPruner pruner = null;
 
 	public GERBILAPIAnnotator(final EnumModelType KG) {
 		this.KG = KG;
@@ -96,9 +96,9 @@ public class GERBILAPIAnnotator implements Executable {
 			this.candidateGenerator = new CandidateGeneratorMap(map);
 			Stopwatch.endOutputStart(getClass().getName());
 			// Initialise AssignmentChooser
-			Stopwatch.start(chooserWatch);
-			this.chooser = new AssignmentChooser(this.KG);
 			Stopwatch.endOutput(chooserWatch);
+			this.chooser = new AssignmentChooser(this.KG);
+			Stopwatch.start(chooserWatch);
 			this.pruner = new ThresholdPruner(1.0d);
 			init = true;
 		} catch (Exception exc) {
@@ -178,7 +178,7 @@ public class GERBILAPIAnnotator implements Executable {
 			// nifDocument.setText(text);
 			// nifDocument.setDocumentURI("http://informatik.uni-freiburg.de/document#" +
 			// docCounter++);
-		} catch (InterruptedException ie) {
+		} catch (Exception ie) {
 			getLogger().error("Exception while annotating.", ie);
 			return "";
 		}
@@ -215,9 +215,12 @@ public class GERBILAPIAnnotator implements Executable {
 	 * @param markings  markings that are wanted
 	 * @return annotations
 	 * @throws InterruptedException
+	 * @throws IOException 
+	 * @throws ClassNotFoundException 
+	 * @throws FileNotFoundException 
 	 */
 	private Collection<? extends Marking> annotatePlainText(final String inputText, final List<Marking> markings)
-			throws InterruptedException {
+			throws InterruptedException, FileNotFoundException, ClassNotFoundException, IOException {
 		final List<Marking> retList = Lists.newArrayList();
 		// new ScoredNamedEntity(startPosition, length, uris, confidence);
 		// new Mention()... transform mention into a scored named entity
@@ -322,7 +325,7 @@ public class GERBILAPIAnnotator implements Executable {
 		}
 	}
 
-	private List<Mention> linking(String text, List<Marking> markings) throws InterruptedException {
+	private List<Mention> linking(String text, List<Marking> markings) throws InterruptedException, FileNotFoundException, ClassNotFoundException, IOException {
 		List<Mention> mentions = null;
 
 		Stopwatch.start(linking);
@@ -433,7 +436,7 @@ public class GERBILAPIAnnotator implements Executable {
 				System.out.println("Mention:" + mentions.get(i) + "->" + mentions.get(j));
 				for (PossibleAssignment ass : mentions.get(i).getPossibleAssignments()) {
 					// Sorted similarities
-					final List<Pair<String, Double>> similarities = chooser.getAssignmentScorer().getSimilarityService()
+					final List<Pair<String, Double>> similarities = chooser.getSimilarityService()
 							.computeSortedSimilarities(ass.getAssignment(), targets,
 									Comparators.pairRightComparator.reversed());
 					System.out.println("Source:" + ass);

@@ -105,12 +105,8 @@ public class SSPEmbeddingScorer implements PostScorer<PossibleAssignment, Mentio
 	}
 
 	@Override
-	public void linkContext(Collection<Mention> context) {
+	public void updateContext(Collection<Mention> context) {
 		this.context = context;
-	}
-
-	@Override
-	public void updateContext() {
 		hasChanged = true;
 	}
 

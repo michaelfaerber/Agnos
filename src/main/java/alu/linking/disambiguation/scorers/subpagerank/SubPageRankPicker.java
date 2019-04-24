@@ -58,13 +58,8 @@ public class SubPageRankPicker extends AbstractClusterItemPicker implements Logg
 	}
 
 	@Override
-	public void linkContext(Collection<Mention> context) {
+	public void updateContext(Collection<Mention> context) {
 		this.context = context;
-	}
-
-	@Override
-	public void updateContext() {
-		// Nothing?
 	}
 
 	@Override

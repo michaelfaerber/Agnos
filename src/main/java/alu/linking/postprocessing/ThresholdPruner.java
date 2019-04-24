@@ -11,6 +11,7 @@ import alu.linking.mentiondetection.Mention;
 
 public class ThresholdPruner implements MentionPruner {
 	private final double threshold;
+	private double summedWeight = 0d;
 
 	public ThresholdPruner(final double threshold) {
 		// Do a pruner that works
@@ -29,10 +30,6 @@ public class ThresholdPruner implements MentionPruner {
 	@Override
 	public List<Mention> prune(Collection<Mention> mentions) {
 		final List<Mention> retMentions = Lists.newArrayList();
-		double summedWeight = 0d;
-		for (Scorer<PossibleAssignment> scorer : PossibleAssignment.getScorers()) {
-			summedWeight += scorer.getWeight().doubleValue();
-		}
 
 		final double minThreshold = threshold * summedWeight;
 		for (Mention mention : mentions) {
@@ -41,5 +38,14 @@ public class ThresholdPruner implements MentionPruner {
 			}
 		}
 		return retMentions;
+	}
+
+	public double computeWeights(Collection<Scorer<PossibleAssignment>> scorers) {
+		double summedWeight = 0d;
+		for (Scorer<PossibleAssignment> scorer : scorers) {
+			summedWeight += scorer.getWeight().doubleValue();
+		}
+		this.summedWeight = summedWeight;
+		return summedWeight;
 	}
 }

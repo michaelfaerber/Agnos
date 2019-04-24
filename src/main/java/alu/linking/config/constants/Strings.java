@@ -5,9 +5,9 @@ public enum Strings {
 	// From most-common to most-specific
 	// ROOTPATH("/vol1/tomcat/webapps/AgnosNIFAPI/project_files/"), //
 	SHETLAND_DIR("/home/noulletk/prog/bmw/"), //
-	SEELAND_DIR(
-			// "/vol1/data_faerberm/kris/prog/"
-			"/vol2/kris/"), //
+	SEELAND_DIR("/vol1/data_faerberm/kris/prog/"
+	// "/vol2/kris/"//
+	), //
 	LOCAL_DIR("./"), //
 	ROOTPATH(SHETLAND_DIR.val), //
 	NEWLINE(System.getProperty("line.separator")), //

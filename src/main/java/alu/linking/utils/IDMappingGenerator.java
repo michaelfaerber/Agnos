@@ -62,9 +62,11 @@ public class IDMappingGenerator<V> implements AutoCloseable {
 	 * @return Counter value corresponding to the value passed
 	 * @throws IOException
 	 */
-	public synchronized String generateMapping(final V val) throws IOException {
+	public String generateMapping(final V val) throws IOException {
+		String key;
 		synchronized (mapping) {
-			String key = mapping.getKey(val);
+			key = mapping.getKey(val);
+		}
 			if (key == null) {
 				// Doesn't exist yet -> create + output + return
 				key = prefix + counter.getAndIncrement();
@@ -72,7 +74,6 @@ public class IDMappingGenerator<V> implements AutoCloseable {
 			}
 			// Else: simply return it
 			return key;
-		}
 	}
 
 	public synchronized boolean exists(final V val) {
@@ -87,15 +88,16 @@ public class IDMappingGenerator<V> implements AutoCloseable {
 	 * @param i counter value mapped to wanted V-type object
 	 * @return object that i is mapped to
 	 */
-	public synchronized V getMappedValue(final String i) {
+	public V getMappedValue(final String i) {
+		final V val;
 		synchronized (mapping) {
-			final V val = mapping.get(i);
-			if (val == null) {
-				throw new RuntimeException("Requested value(" + i + ") without valid mapping. Current counter is @ "
-						+ counter.get() + " and prefix(" + this.prefix + ")");
-			}
-			return val;
+			val = mapping.get(i);
 		}
+		if (val == null) {
+			throw new RuntimeException("Requested value(" + i + ") without valid mapping. Current counter is @ "
+					+ counter.get() + " and prefix(" + this.prefix + ")");
+		}
+		return val;
 	}
 
 	/**

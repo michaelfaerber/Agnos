@@ -70,13 +70,9 @@ public class GreedyOptimalPicker extends AbstractClusterItemPicker implements Lo
 	}
 
 	@Override
-	public void linkContext(Collection<Mention> context) {
-		this.context = context;
-	}
-
-	@Override
-	public void updateContext() {
+	public void updateContext(Collection<Mention> context) {
 		// In case something else has to be updated
+		this.context = context;
 	}
 
 	@Override

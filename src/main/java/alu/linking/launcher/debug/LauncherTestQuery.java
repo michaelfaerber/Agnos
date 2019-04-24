@@ -1,8 +1,10 @@
 package alu.linking.launcher.debug;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.QuerySolution;
@@ -54,92 +56,110 @@ public class LauncherTestQuery {
 		// getRandom(model);
 		// testVirtuoso();
 		// getDBLPAuthors(model);
-
-		getSteveJobsConnections(model);
+		findConnections(model);
+		// getSteveJobsConnections(model);
 
 		// getPredicatesAndTypes(model);
 		System.out.println("Finished!");
 		// "SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 100"
 	}
 
-	private static Map<String, String> mapEntityToName = new HashMap<>();
+	private static void findConnections(Model model) {
+		final String from = "<http://dbpedia.org/resource/" + //
+				"Late_of_the_Pier" +
+				// "Late_Night" + //
+				// "Thee_Silver_Mt._Zion_Memorial_Orchestra" + //
+				">";
+		final String to = "<http://dbpedia.org/resource/" + //
+		// "Steve_Jobs" + //
+				"Joan_Baez" + //
+				">";
 
-	private static void getSteveJobsConnections(Model model) {
-		Map<String, Integer> mapEntityNeighbours = new HashMap<>();
-		System.out.println("################################################");
-		System.out.println("# Steve Jobs - Grabbing 2nd degree connections #");
-		System.out.println("################################################");
-		String queryStr = "select distinct ?s ?p1 ?o1 ?p2 ?o2 where { \n" //
-				+ " ?s  ?p1 ?o1 . \n" //
-				+ " ?o1 ?p2 ?o2 . \n"//
-				+ " FILTER(?s = <http://dbpedia.org/resource/Steve_Jobs>)" + " }"//
-																					// + " LIMIT 100"
-		;
-		final String from = "steveJobs";
-
-		ResultSet results = RDFUtils.execQuery(model, queryStr);
-		while (results.hasNext()) {
-			final QuerySolution qs = results.next();
-			final String obj1 = qs.get("o1").toString();
-			mapEntityNeighbours.put(obj1, mapEntityNeighbours.getOrDefault(obj1, 0) + 1);
-		}
-
-		System.out.println("############################################");
-		System.out.println("# Steve Jobs #1                            #");
-		System.out.println("############################################");
-		queryStr = "select distinct ?s ?p1 ?o1 where { \n" //
-				+ " ?s ?p1 ?o1 . \n" //
-				+ " FILTER(?s = <http://dbpedia.org/resource/Steve_Jobs>)" + " }"//
-																					// + " LIMIT 100"
-		;
-		System.out.println("%Single step");
-		System.out.println();
-		int level = 1;
-		// Output Steve Jobs node
-		System.out.println("\\node[rblock](steveJobs){dbr:Steve\\_Jobs};");
-
-		results = RDFUtils.execQuery(model, queryStr);
-		boolean firstInLevel = true;
-		int nodeCounter = 0;
-		final int maxNodes = 20;
-		String prevNode = "";
-
-		while (results.hasNext()) {
-			final QuerySolution qs = results.next();
-			final String edge = "";//qs.get("p1").toString();
-			final String to = qs.get("o1").toString();
-			if (!mapEntityNeighbours.containsKey(to))
-			{
-				continue;
-			}
-			if (nodeCounter++ > maxNodes) {
-				// ignore
-				continue;
+		Set<String> fromSet = new HashSet<>();
+		Set<String> toSet = new HashSet<>();
+		Set<String> fromHops = new HashSet<>(), toHops = new HashSet<>();
+		final int maxDist = 10;
+		for (int i = 1; i < maxDist; ++i) {
+			System.out.println("Distance = " + i);
+			if (fromSet.size() == 0 || fromHops.size() > 0) {
+				fromHops = hops(model, from, i);
+				System.out.println("[FROM] Had(" + fromSet.size() + ") Found: " + fromHops.size() + " entities!");
+				fromSet.addAll(fromHops);
 			} else {
-
-				if (firstInLevel) {
-					printNode(from + ".east", to, edge, from, DIRECTION.RIGHT, 25, "",
-							mapEntityNeighbours.getOrDefault(to, 0));
-					firstInLevel = false;
-				} else {
-					final String dirFrom = mapEntityToName.get(prevNode);
-					if (dirFrom != null) {
-						printNode(from + ".east", to, edge, dirFrom, DIRECTION.DOWN, 5, "",
-								mapEntityNeighbours.getOrDefault(to, 0));
+				System.out.println("Ignoring FROM");
+			}
+			if (toSet.size() == 0 || toHops.size() > 0) {
+				toHops = hops(model, to, i);
+				System.out.println("[TO] Had(" + toSet.size() + ") Found: " + toHops.size() + " entities!");
+				toSet.addAll(toHops);
+			} else {
+				System.out.println("Ignoring TO");
+			}
+			Set<String> copySetFrom = new HashSet<>(fromSet);
+			Set<String> copySetTo = new HashSet<>(toSet);
+			copySetFrom.retainAll(copySetTo);
+			if (copySetFrom.size() > 0) {
+				final Set<String> displaySet = show(copySetFrom, 500);
+				for (String s : displaySet) {
+					if (!s.contains("int") && !s.contains("^^")) {
+						System.out.println("\\item \\texttt{" + shorten(s) + "}");
 					}
 				}
-				prevNode = to;
+				System.out.println("Common items:" + displaySet);
+				System.out.println("Found common items -> " + copySetFrom.size());
+				System.out.println("Distance (common distance):" + i);
+				// break;
 			}
 		}
-		// Now print a node with the counter value
-		if (nodeCounter > maxNodes) {
-			printNode(from + ".east", "\\vdots (" + nodeCounter + ")", "\\ldots", mapEntityToName.get(prevNode),
-					DIRECTION.DOWN, 5, "", 0);// , "draw=none,");
-		}
-
+		//
 		System.out.println("---------------------------------------------");
-
 	}
+
+	private static Set<String> show(Set<String> copySetFrom, int i) {
+		Set<String> retSet = new HashSet<>();
+		int counter = 0;
+		for (String s : copySetFrom) {
+			retSet.add(s);
+			counter++;
+			if (counter > i) {
+				break;
+			}
+		}
+		return retSet;
+	}
+
+	private static Set<String> hops(Model model, String from, final int distance) {
+		final Set<String> foundResources = new HashSet<>();
+		StringBuilder sb = new StringBuilder();
+		sb.append("select * where { \n"); //
+		;
+		int i = 0;
+		String prevObject = from, currObject = "";
+		for (i = 0; i < distance - 1; ++i) {
+			currObject = " ?o" + i;
+			sb.append(prevObject + " ?p" + i + " " + currObject + " .");
+			prevObject = currObject;
+			// sb.append( ". ?o"+i+" ?p"+(i+1)+" ?o"+(i+1)+" ");
+		}
+		sb.append(prevObject + " ?p" + (i + 1) + " ?o" + (i + 1));
+		sb.append("}");
+		final ResultSet results = RDFUtils.execQuery(model, sb.toString());
+		while (results.hasNext()) {
+			final QuerySolution qs = results.next();
+			Iterator<String> it = new de.dwslab.petar.walks.QuerySolutionIterator(qs);
+			while (it.hasNext()) {
+				final String varName = it.next();
+				if (varName.startsWith("o")) {
+					// System.out.print(varName + ":" + qs.get(varName) + " ");
+					foundResources.add(qs.get(varName).toString());
+				}
+			}
+			// System.out.println();
+		}
+		return foundResources;
+	}
+
+	private static Map<String, String> mapEntityToName = new HashMap<>();
 
 	public enum DIRECTION {
 		UP("above"), DOWN("below"), LEFT("left"), RIGHT("right"), //
@@ -181,12 +201,13 @@ public class LauncherTestQuery {
 				+ ");");
 
 		if (connectTo > 0) {
-			printNode(toName, "(" + connectTo + ")", "\\ldots", toName, DIRECTION.RIGHT, 30, ", minimum width={width(\"(123456789)\")+2pt}", 0);
+			printNode(toName, "(" + connectTo + ")", "\\ldots", toName, DIRECTION.RIGHT, 30,
+					", minimum width={width(\"(123456789)\")+2pt}", 0);
 		}
 	}
 
 	private static String shorten(String to) {
-		int maxLength = 15;
+		int maxLength = 30;
 		to = to.replace("http://dbpedia.org/resource/", "dbr:");
 		to = to.replace("http://dbpedia.org/property/", "dbp:");
 		to = to.replace("http://dbpedia.org/ontology/", "dbo:");
@@ -425,4 +446,81 @@ public class LauncherTestQuery {
 			System.out.println();
 		}
 	}
+
+	private static void getSteveJobsConnections(Model model) {
+		Map<String, Integer> mapEntityNeighbours = new HashMap<>();
+		System.out.println("################################################");
+		System.out.println("# Steve Jobs - Grabbing 2nd degree connections #");
+		System.out.println("################################################");
+		String queryStr = "select distinct ?s ?p1 ?o1 ?p2 ?o2 where { \n" //
+				+ " ?s  ?p1 ?o1 . \n" //
+				+ " ?o1 ?p2 ?o2 . \n"//
+				+ " FILTER(?s = <http://dbpedia.org/resource/Steve_Jobs>)" + " }"//
+																					// + " LIMIT 100"
+		;
+		final String from = "steveJobs";
+
+		ResultSet results = RDFUtils.execQuery(model, queryStr);
+		while (results.hasNext()) {
+			final QuerySolution qs = results.next();
+			final String obj1 = qs.get("o1").toString();
+			mapEntityNeighbours.put(obj1, mapEntityNeighbours.getOrDefault(obj1, 0) + 1);
+		}
+
+		System.out.println("############################################");
+		System.out.println("# Steve Jobs #1                            #");
+		System.out.println("############################################");
+		queryStr = "select distinct ?s ?p1 ?o1 where { \n" //
+				+ " ?s ?p1 ?o1 . \n" //
+				+ " FILTER(?s = <http://dbpedia.org/resource/Steve_Jobs>)" + " }"//
+																					// + " LIMIT 100"
+		;
+		System.out.println("%Single step");
+		System.out.println();
+		int level = 1;
+		// Output Steve Jobs node
+		System.out.println("\\node[rblock](steveJobs){dbr:Steve\\_Jobs};");
+
+		results = RDFUtils.execQuery(model, queryStr);
+		boolean firstInLevel = true;
+		int nodeCounter = 0;
+		final int maxNodes = 20;
+		String prevNode = "";
+
+		while (results.hasNext()) {
+			final QuerySolution qs = results.next();
+			final String edge = "";// qs.get("p1").toString();
+			final String to = qs.get("o1").toString();
+			if (!mapEntityNeighbours.containsKey(to)) {
+				continue;
+			}
+			if (nodeCounter++ > maxNodes) {
+				// ignore
+				continue;
+			} else {
+
+				if (firstInLevel) {
+					printNode(from + ".east", to, edge, from, DIRECTION.RIGHT, 25, "",
+							mapEntityNeighbours.getOrDefault(to, 0));
+					firstInLevel = false;
+				} else {
+					final String dirFrom = mapEntityToName.get(prevNode);
+					if (dirFrom != null) {
+						printNode(from + ".east", to, edge, dirFrom, DIRECTION.DOWN, 5, "",
+								mapEntityNeighbours.getOrDefault(to, 0));
+					}
+				}
+				prevNode = to;
+			}
+		}
+		// Now print a node with the counter value
+		if (nodeCounter > maxNodes) {
+			printNode(from + ".east", "\\vdots (" + nodeCounter + ")", "\\ldots", mapEntityToName.get(prevNode),
+					DIRECTION.DOWN, 5, "", 0);// , "draw=none,");
+		}
+
+		System.out.println("---------------------------------------------");
+
+	}
+
 }

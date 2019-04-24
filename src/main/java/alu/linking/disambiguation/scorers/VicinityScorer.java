@@ -22,7 +22,7 @@ import alu.linking.mentiondetection.Mention;
 public class VicinityScorer implements PostScorer<PossibleAssignment, Mention> {
 	private Logger logger = Logger.getLogger(getClass());
 	private double sigma_ratio = Numbers.VICINITY_SCORING_WEIGHT_SIGMA.val.doubleValue();
-	private Collection<Mention> context;
+
 	private final Graph<Integer> graph;
 	private final Set<Integer> goalNodesSet = new HashSet<>();
 
@@ -104,7 +104,7 @@ public class VicinityScorer implements PostScorer<PossibleAssignment, Mention> {
 	 * Updates context based on linked context
 	 */
 	@Override
-	public void updateContext() {
+	public void updateContext(Collection<Mention> context) {
 		goalNodesSet.clear();
 		// Update what nodes can be used as goal nodes
 		for (Mention contextMention : context) {
@@ -116,11 +116,6 @@ public class VicinityScorer implements PostScorer<PossibleAssignment, Mention> {
 				}
 			}
 		}
-	}
-
-	@Override
-	public void linkContext(Collection<Mention> context) {
-		this.context = context;
 	}
 
 	@Override
