@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -22,7 +23,7 @@ import alu.linking.utils.EmbeddingsUtils;
 
 public class EntitySimilarityService {
 	private final Map<String, List<Number>> embeddings;
-	private final Map<String, Number> distCache = new HashMap<>();
+	private final LRUMap<String, Number> distCache = new LRUMap<>(1_024 * 1_024);
 	public final Set<String> notFoundIRIs = new HashSet<>();
 	public final AtomicInteger recovered = new AtomicInteger();
 
