@@ -27,6 +27,34 @@ public class LauncherGERBILTableToLatex {
 
 	public static void main(String[] args) {
 		final ADD_MODE add_mode = ADD_MODE.BEST;
+		final boolean agnostic = true;
+		final boolean microOrMacro = false;
+		final int f1ColumnIndex, precisionColumnIndex, recallColumnIndex;
+		final List<String> systemWhitelist = Lists.newArrayList();
+		if (agnostic) {
+			systemWhitelist.addAll(Arrays.asList(new String[] { "Agnos", "mag"// , "fox"
+			}));
+		} else {
+			systemWhitelist.addAll(Arrays.asList(new String[] { "Agnos", "mag", "spotlight", "babelfy"// , "fox"
+			}));
+		}
+		final List<String> datasetWhitelist = Lists.newArrayList();
+		datasetWhitelist.addAll(Arrays.asList(new String[] { // "ace2004",
+				"dbpedia", "kore50", // "microposts2014",
+				"microposts2015-test", "microposts2015-train", "microposts2016-dev", "microposts2016-train", "n3-r",
+				"oke" }));
+		if (microOrMacro) {
+			// Micro column indices
+			f1ColumnIndex = 2;
+			precisionColumnIndex = 3;
+			recallColumnIndex = 4;
+
+		} else {
+			// Macro column indices
+			f1ColumnIndex = 5;
+			precisionColumnIndex = 6;
+			recallColumnIndex = 7;
+		}
 		final File inFile = new File(
 				// "C:\\Users\\Kris\\Desktop\\jar_out\\evaluation\\evaluation_everything_in_progress.txt")//
 				"C:\\Users\\Kris\\Desktop\\jar_out\\evaluation\\merged_evaluations.txt")//
@@ -51,8 +79,6 @@ public class LauncherGERBILTableToLatex {
 		final String[] stillRunning = "Agnos (NIF WS) 	Microposts2016-Test 	The experiment is still running. 	2019-04-23 20:13:26 	1.2.7"
 				.split(separator);
 		final int stateMessageIndex = 2;
-		final List<String> whitelist = Lists.newArrayList();
-		whitelist.addAll(Arrays.asList(new String[] { "Agnos", "mag" }));
 		final boolean DEBUG = false;
 		final List<String> runningLists = Lists.newArrayList();
 		final List<String> errorsLists = Lists.newArrayList();
@@ -81,9 +107,15 @@ public class LauncherGERBILTableToLatex {
 				final String datasetName = tokens[1];
 				final String key = makeKey(datasetName, systemName);
 				final Triple<String, String, String> f1PrecisionRecall = new ImmutableTriple(
-						df.format(Double.valueOf(tokens[2])), df.format(Double.valueOf(tokens[3])),
-						df.format(Double.valueOf(tokens[4])));
-				if (whitelist == null || whitelist.size() == 0 || isIn(key, whitelist)) {
+						df.format(Double.valueOf(tokens[f1ColumnIndex])),
+						df.format(Double.valueOf(tokens[precisionColumnIndex])),
+						df.format(Double.valueOf(tokens[recallColumnIndex])));
+				final boolean systemOK = (systemWhitelist == null || systemWhitelist.size() == 0
+						|| isIn(systemName, systemWhitelist));
+				final boolean datasetOK = (datasetWhitelist == null || datasetWhitelist.size() == 0
+						|| isIn(datasetName, datasetWhitelist));
+
+				if (systemOK && datasetOK) {
 					if (mapDatasetSystemTOMetrics.get(key) == null) {
 						mapDatasetSystemTOMetrics.put(key, f1PrecisionRecall);
 					} else if (add_mode != ADD_MODE.ONLY_FIRST) {
@@ -123,7 +155,14 @@ public class LauncherGERBILTableToLatex {
 
 			// sb.append(" \\begin{tabular}{| *{" + (systemNames.size() * 3 + 1) + "}{c|}
 			// }");
-			sb.append("	    \\begin{longtable}{| *{" + (systemNames.size() * 3 + 1) + "}{c|} }");
+			sb.append("	    \\begin{longtable}{|r|| *{" + (systemNames.size()) + "}{c|c|c||} }");
+			sb.append(Strings.NEWLINE.val);
+			sb.append(" \\caption{GERBIL " + (microOrMacro ? "Micro" : "Macro") + (agnostic ? " Agnostic" : "")
+					+ " Evaluation (F1, Precision, Recall)}\r\n");
+			sb.append(" \\label{tab:evaluation" + (microOrMacro ? "Micro" : "Macro") + (agnostic ? "Agnostic" : "")
+					+ "}");
+			sb.append(Strings.NEWLINE.val);
+			sb.append("	    \\\\");
 			sb.append(Strings.NEWLINE.val);
 			sb.append("	    \\hline");
 			sb.append(Strings.NEWLINE.val);
@@ -136,7 +175,7 @@ public class LauncherGERBILTableToLatex {
 					first = false;
 				}
 
-				sb.append("& \\multicolumn{3}{c|}{" + system.trim() + "}");
+				sb.append("& \\multicolumn{3}{c||}{" + system.trim() + "}");
 			}
 			sb.append("\\\\ \\hline");
 			sb.append(Strings.NEWLINE.val);
@@ -195,17 +234,19 @@ public class LauncherGERBILTableToLatex {
 			sb.append(Strings.NEWLINE.val);
 
 			// sb.append(" \\end{tabular}\r\n");
-			sb.append(" \\caption{GERBIL Evaluation}\r\n");
-			sb.append(" \\label{tab:evaluation}\r\n");
-			sb.append("    \\end{longtable}\r\n");
+//			sb.append(" \\caption{GERBIL " + (microOrMacro ? "Micro" : "Macro") + (agnostic ? " Agnostic" : "")
+//					+ " Evaluation (F1, Precision, Recall)}\r\n");
+//			sb.append(" \\label{tab:evaluation" + (microOrMacro ? "Micro" : "Macro") + (agnostic ? "Agnostic" : "")
+//					+ "}\r\n");
+			sb.append("\\end{longtable}\r\n");
 			// sb.append("\\end{table}\r\n");
 
-			System.out.println("%No idea(" + missingStatesList.size() + ")");
-			System.out.println("%ERRORS(" + errorsLists.size() + ")");
-			System.out.println("%IN PROGRESS(" + runningLists.size() + ")");
+			System.out.println("% No idea(" + missingStatesList.size() + ")");
+			System.out.println("% ERRORS(" + errorsLists.size() + ")");
+			System.out.println("% IN PROGRESS(" + runningLists.size() + ")");
 			System.out.println(
-					"%Entries(" + mapDatasetSystemTOMetrics.size() + "): " + mapDatasetSystemTOMetrics.keySet());
-			System.out.println(sb.toString());
+					"% Entries(" + mapDatasetSystemTOMetrics.size() + "): " + mapDatasetSystemTOMetrics.keySet());
+			System.out.println(boldenBest(sb.toString()));
 
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -214,6 +255,67 @@ public class LauncherGERBILTableToLatex {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	private static String boldenBest(String input) {
+		final String newline = Strings.NEWLINE.val;
+		final String[] lines = input.split(newline);
+		final StringBuilder retSB = new StringBuilder();
+		for (String line : lines) {
+			final StringBuilder sbLine = new StringBuilder();
+			final String columnSplit = "&";
+			String[] lineTokens = line.split(columnSplit);
+			final int jump = 3;
+			final int startF1 = 1;
+			final int startPrecision = 2;
+			final int startRecall = 3;
+			final int bestIndexF1 = findBestIndex(startF1, jump, lineTokens);
+			final int bestIndexPrecision = findBestIndex(startPrecision, jump, lineTokens);
+			final int bestIndexRecall = findBestIndex(startRecall, jump, lineTokens);
+			for (int i = 0; i < lineTokens.length; ++i) {
+				String token = lineTokens[i];
+				if ((i >= startF1 && i == bestIndexF1) || (i >= startPrecision && i == bestIndexPrecision)
+						|| (i >= startRecall && i == bestIndexRecall)) {
+					// Bolden it
+					token = bolden(token);
+				}
+				if (i != 0) {
+					sbLine.append(columnSplit);
+				}
+				sbLine.append(token);
+			}
+			retSB.append(sbLine.toString());
+			retSB.append(newline);
+		}
+		return retSB.toString();
+	}
+
+	private static String bolden(String token) {
+		final String toReplace = "\\\\ \\hline";
+		final String tokenHelper = token.replace(toReplace, "");
+		if (!token.equals(tokenHelper)) {
+			return "\\textbf{" + tokenHelper + "}" + toReplace;
+		}
+		return "\\textbf{" + token + "}";
+	}
+
+	private static int findBestIndex(int start, int jump, String[] lineTokens) {
+		int bestIndex = 0;
+		double maxVal = 0.0;
+		// Skip index=0 since that is just datasets...
+		for (int i = start; i < lineTokens.length; i += jump) {
+			final String token = lineTokens[i].trim().replace("\\\\ \\hline", "");
+			try {
+				final double value = Double.valueOf(token);
+				if (value > maxVal) {
+					bestIndex = i;
+					maxVal = value;
+				}
+			} catch (NumberFormatException nfe) {
+				// Ignore
+			}
+		}
+		return bestIndex;
 	}
 
 	private static boolean isIn(String key, List<String> whitelist) {

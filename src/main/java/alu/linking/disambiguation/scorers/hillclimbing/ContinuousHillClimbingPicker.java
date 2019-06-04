@@ -33,6 +33,10 @@ public class ContinuousHillClimbingPicker extends HillClimbingPicker {
 		super(operation, similarityService, pagerankLoader);
 	}
 
+	public ContinuousHillClimbingPicker(EntitySimilarityService similarityService, PageRankLoader pagerankLoader) {
+		super(similarityService, pagerankLoader);
+	}
+
 	@Override
 	public List<String> combine() {
 		super.prune = false;
@@ -47,7 +51,7 @@ public class ContinuousHillClimbingPicker extends HillClimbingPicker {
 		removeInvalidEmbeddings(clusters);
 
 		final Map<String, List<MutablePair<String, Double>>> continuousChoices = new HashMap<>();
-		while (copyContext.size() > 4) {
+		while (copyContext.size() > 1) {
 			// Do the picking logic
 			final Map<String, Pair<String, Double>> iterationChoices = super.pickItems(clusters);
 

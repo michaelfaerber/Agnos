@@ -11,9 +11,11 @@ import java.util.function.BiFunction;
 import com.beust.jcommander.internal.Lists;
 
 import alu.linking.candidategeneration.PossibleAssignment;
+import alu.linking.disambiguation.CombineOperation;
 import alu.linking.disambiguation.ContextBase;
 import alu.linking.disambiguation.pagerank.AssignmentScore;
 import alu.linking.disambiguation.pagerank.PageRankLoader;
+import alu.linking.disambiguation.scorers.embedhelp.ClusterItemPicker.PICK_SELECTION;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 
@@ -24,7 +26,7 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 
 	public static final int DEFAULT_PR_TOP_K = 30;// 50;// 30;// 0;// 100;
 	public static final double DEFAULT_PR_MIN_THRESHOLD = 1d;// 0.16d;// 0.16d;// 1d;// 0.1d;
-	public static final int DEFAULT_REPEAT = 2_000;// was 200 before, but due to long texts...
+	public static final int DEFAULT_REPEAT = 100;// was 200 before, but due to long texts...
 	public static final double DEFAULT_PRUNE_MIN_SCORE_RATIO = 0.40;
 	public static final boolean allowSelfConnection = false;
 	// Whether to remove assignments when there is only one possibility (due to high
@@ -33,6 +35,14 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 	// 0.16d due to MANY rarely-referenced 0.15d endpoints existing
 	public static final int MIN_REPEAT = 1;
 
+	public static final PICK_SELECTION DEFAULT_FIRST_CHOICE = PICK_SELECTION//
+			// .TOP_PAGERANK
+			.RANDOM//
+	;
+	public final static BiFunction<Double, Double, Double> DEFAULT_OPERATION = 
+			CombineOperation.OCCURRENCE.combineOperation;
+
+	
 	public List<String> combine();
 
 	public double getPickerWeight();

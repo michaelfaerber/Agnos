@@ -34,12 +34,6 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 	private final boolean CREATE_TABLE = false;
 	private final boolean ENTITY_TABLE = true;
 
-	public static final PICK_SELECTION DEFAULT_FIRST_CHOICE = PICK_SELECTION//
-			.TOP_PAGERANK
-	// .RANDOM
-	//
-	;
-	public final static BiFunction<Double, Double, Double> DEFAULT_OPERATION = ClusterItemPicker::occurrenceOperation;
 
 	protected boolean prune = false;
 
@@ -679,7 +673,7 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 	}
 
 	private void print(String str) {
-		//System.out.print(str);
+		// System.out.print(str);
 	}
 
 	/**
