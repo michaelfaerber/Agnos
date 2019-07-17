@@ -18,6 +18,11 @@ import alu.linking.disambiguation.hops.graph.Graph;
 import alu.linking.disambiguation.hops.graph.GraphNode;
 import alu.linking.structure.FineLoggable;
 
+/**
+ * Abstract wrapper class for concurrent path building for hop-computation
+ * @author Kristian Noullet
+ *
+ */
 public abstract class ConcurrentPathBuilderWrapper implements FineLoggable {
 	public List<String> fromFile(final EnumModelType KG, final BufferedReader readerInAllTraversalNodes,
 			final BufferedWriter wrtNotFoundTraversalNodes, final boolean outputPaths, final boolean outputEdges,

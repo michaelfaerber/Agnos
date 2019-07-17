@@ -26,7 +26,7 @@ import alu.linking.config.kg.EnumModelType;
 
 /**
  * Graph implementation. Used to generate graph from Triple data
- * 
+ *
  * @author Kris Noullet (kn65)
  *
  */
@@ -46,6 +46,13 @@ public class Graph<T> {
 	private static Set<String> objectBlacklist = new HashSet<String>();
 	private EnumModelType KG = null;
 
+	/**
+	 * Private wrapper instance used to ensure singleton creation (ensured by Java's
+	 * class loader)
+	 * 
+	 * @author Kristian Noullet
+	 *
+	 */
 	private static class GraphWrapper {
 		static Graph<Integer> INSTANCE = new Graph<Integer>(EnumModelType.DEFAULT, new IntegerIncrementable(0l),
 				new IntegerIncrementable(0l), new IntegerIncrementable(0l));

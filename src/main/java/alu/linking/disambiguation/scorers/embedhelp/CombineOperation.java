@@ -1,9 +1,14 @@
-package alu.linking.disambiguation;
+package alu.linking.disambiguation.scorers.embedhelp;
 
 import java.util.function.BiFunction;
 
-import alu.linking.disambiguation.scorers.embedhelp.ClusterItemPicker;
-
+/**
+ * Enumeration handling different types of combination procedures of scores (for
+ * embedding similarities) through use of static BiFunctions
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public enum CombineOperation {
 	OCCURRENCE(ClusterItemPicker::occurrenceOperation), //
 	MAX_SIM(ClusterItemPicker::maxedOperation), //

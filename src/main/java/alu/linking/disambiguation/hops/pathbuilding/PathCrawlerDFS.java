@@ -14,6 +14,12 @@ import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.hops.graph.Graph;
 import alu.linking.disambiguation.hops.graph.GraphNode;
 
+/**
+ * Naive DFS implementation for path crawling
+ * @author Kristian Noullet
+ *
+ * @param <T> node type
+ */
 public class PathCrawlerDFS<T> extends PathCrawlerBasic<T> {
 
 	final boolean useFile;

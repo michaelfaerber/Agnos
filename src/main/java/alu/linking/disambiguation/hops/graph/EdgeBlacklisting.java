@@ -7,6 +7,14 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+/**
+ * Class handling blacklisting of specific edges within our in-memory graph
+ * <br>
+ * See {@link NodeBlacklisting} for the node equivalent.
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class EdgeBlacklisting {
 	private Graph<Integer> graph = null;
 	private Logger logger = Logger.getLogger(getClass());
@@ -63,7 +71,6 @@ public class EdgeBlacklisting {
 		return ret;
 	}
 
-
 	/**
 	 * Alternative to enforcing blacklisting on a graph while assuming that it works
 	 * properly.
@@ -86,8 +93,7 @@ public class EdgeBlacklisting {
 		int counter = 0;
 		int idProgressCounter = 0;
 		double allNodesSize = (double) nodes.size();
-		for (Map.Entry<Integer, GraphNode<Integer>> e : nodes.entrySet())
-		{
+		for (Map.Entry<Integer, GraphNode<Integer>> e : nodes.entrySet()) {
 			counter += e.getValue().removeEdges(IDs);
 			if (idProgressCounter % Math.ceil(allNodesSize / 10.0) == 0) {// Updates for every 0.1%
 				double perc_progress = ((double) ((int) ((((float) idProgressCounter) / allNodesSize) * 1000.0))
@@ -201,8 +207,7 @@ public class EdgeBlacklisting {
 	/**
 	 * Checks whether passed ID is blacklisted
 	 * 
-	 * @param ID
-	 *            Integer to be checked for blacklisting
+	 * @param ID Integer to be checked for blacklisting
 	 * @return True if yes, false otherwise
 	 */
 	public boolean isBlacklisted(final Integer ID) {
@@ -221,8 +226,7 @@ public class EdgeBlacklisting {
 	/**
 	 * Used to find out whether a String is blacklisted
 	 * 
-	 * @param URL
-	 *            String of a URL that might have been added to a black list
+	 * @param URL String of a URL that might have been added to a black list
 	 * @return Whether a given URL (or String-typed ID) is contained in one of the
 	 *         black lists
 	 */

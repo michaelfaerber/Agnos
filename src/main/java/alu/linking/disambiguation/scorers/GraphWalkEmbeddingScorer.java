@@ -22,6 +22,13 @@ import alu.linking.utils.EmbeddingsUtils;
 import alu.linking.utils.IDMappingLoader;
 import alu.linking.utils.Stopwatch;
 
+/**
+ * A wrapper class for embeddings-based scorers by instantiating it with a
+ * cluster item picker which does most of the heavy lifting
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class GraphWalkEmbeddingScorer implements PostScorer<PossibleAssignment, Mention>, Loggable {
 	private boolean hasChanged = true;
 	private final Set<String> bestCombination = new HashSet<>();

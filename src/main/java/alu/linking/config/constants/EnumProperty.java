@@ -6,6 +6,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+/**
+ * Enumeration for loading properties from predefined constant files
+ * @author Kristian Noullet
+ *
+ */
 public enum EnumProperty {
 
 	// ##################################

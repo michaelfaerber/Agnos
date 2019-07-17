@@ -24,8 +24,8 @@ public class LauncherTestQuery {
 	public static void main(String[] args) {
 		final EnumModelType KG = EnumModelType.
 		// MAG
-				DBPEDIA_FULL
-		// CRUNCHBASE2//
+		// DBPEDIA_FULL
+				CRUNCHBASE2//
 		;
 		System.out.println("Testing query for: " + KG.name());
 		Stopwatch.start(LauncherTestQuery.class.getName());
@@ -55,8 +55,8 @@ public class LauncherTestQuery {
 		// testVirtuoso();
 		// getDBLPAuthors(model);
 
-		getSteveJobsConnections(model);
-
+		// getSteveJobsConnections(model);
+		getCrunchbaseNews(model);
 		// getPredicatesAndTypes(model);
 		System.out.println("Finished!");
 		// "SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 100"
@@ -106,10 +106,9 @@ public class LauncherTestQuery {
 
 		while (results.hasNext()) {
 			final QuerySolution qs = results.next();
-			final String edge = "";//qs.get("p1").toString();
+			final String edge = "";// qs.get("p1").toString();
 			final String to = qs.get("o1").toString();
-			if (!mapEntityNeighbours.containsKey(to))
-			{
+			if (!mapEntityNeighbours.containsKey(to)) {
 				continue;
 			}
 			if (nodeCounter++ > maxNodes) {
@@ -181,7 +180,8 @@ public class LauncherTestQuery {
 				+ ");");
 
 		if (connectTo > 0) {
-			printNode(toName, "(" + connectTo + ")", "\\ldots", toName, DIRECTION.RIGHT, 30, ", minimum width={width(\"(123456789)\")+2pt}", 0);
+			printNode(toName, "(" + connectTo + ")", "\\ldots", toName, DIRECTION.RIGHT, 30,
+					", minimum width={width(\"(123456789)\")+2pt}", 0);
 		}
 	}
 
@@ -303,6 +303,18 @@ public class LauncherTestQuery {
 				+ "?author <http://xmlns.com/foaf/0.1/name> ?b . \n"
 
 				+ "}" + " LIMIT 100";
+		execQuery(model, queryStr);
+		System.out.println("---------------------------------------------");
+	}
+
+	private static void getCrunchbaseNews(Model model) {
+		System.out.println("############################################");
+		System.out.println("# News                                  #");
+		System.out.println("############################################");
+		final String queryStr = "SELECT ?s ?url WHERE {\n"
+				+ "?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://ontologycentral.com/2010/05/cb/vocab#News> .\n"
+				+ "?s <http://ontologycentral.com/2010/05/cb/vocab#url> ?url ."
+				+ "}\n" + " LIMIT 100";
 		execQuery(model, queryStr);
 		System.out.println("---------------------------------------------");
 	}

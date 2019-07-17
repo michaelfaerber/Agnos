@@ -8,7 +8,7 @@ import org.apache.log4j.Logger;
 
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
-import alu.linking.config.kg.KGManager;
+import alu.linking.config.kg.deprecated.KGManager;
 import alu.linking.executable.Pipeline;
 import alu.linking.executable.debug.Tester;
 import alu.linking.executable.preprocessing.deprecated.ComputeHops;

@@ -1,7 +1,10 @@
 package alu.linking.config.constants;
 
-import virtuoso.jena.driver.VirtGraph;
-
+/**
+ * Enumeration handling connections to different servers
+ * @author Kristian Noullet
+ *
+ */
 public enum EnumConnection {
 	// Connecting for downloading / uploading annotation files
 	//TAGTOG(EnumUserAccounts.TAGTOG_CONNECTION, "https", "www.tagtog.net", "/-api/documents/v1"), //

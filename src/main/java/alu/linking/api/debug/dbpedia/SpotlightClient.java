@@ -1,4 +1,4 @@
-package alu.linking.api;
+package alu.linking.api.debug.dbpedia;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,6 +30,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * Client for sending annotation requests to DBpedia
+ * @author Kristian Noullet
+ *
+ */
 public class SpotlightClient {
 
 	private static final Logger LOGGER = Logger.getLogger(SpotlightClient.class);

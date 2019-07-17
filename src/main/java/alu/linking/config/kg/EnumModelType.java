@@ -3,6 +3,11 @@ package alu.linking.config.kg;
 import alu.linking.config.constants.EnumConnection;
 import alu.linking.config.constants.Strings;
 
+/**
+ * Supported Knowledge Graphs for our framework
+ * @author Kristian Noullet
+ *
+ */
 public enum EnumModelType {
 	NONE("", null), //
 	DBPEDIA(Strings.ROOTPATH.val + "dbpedia/", EntityQuery.DEFAULT), //

@@ -19,7 +19,7 @@ import org.apache.jena.ext.com.google.common.collect.Lists;
 
 import alu.linking.api.GERBILAPIAnnotator;
 import alu.linking.config.kg.EnumModelType;
-import alu.linking.disambiguation.pagerank.PageRankLoader;
+import alu.linking.executable.preprocessing.loader.PageRankLoader;
 import alu.linking.structure.Loggable;
 
 public class LauncherEvaluateKORE implements Loggable {

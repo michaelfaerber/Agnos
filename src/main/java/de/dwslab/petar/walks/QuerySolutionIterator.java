@@ -14,9 +14,13 @@ public class QuerySolutionIterator implements Iterator<String> {
 	private final int varNamesSize;
 
 	public QuerySolutionIterator(QuerySolution result) {
-		result.varNames().forEachRemaining(s -> varNames.add(s));
+		final Iterator<String> it = result.varNames();
+		while (it.hasNext())
+		{
+			varNames.add(it.next());
+		}
+		//result.varNames().forEachRemaining(s -> varNames.add(s));
 		Collections.sort(varNames, new Comparator<String>() {
-
 			@Override
 			public int compare(String o1, String o2) {
 				// Idea: sX -> pX -> oX
@@ -25,12 +29,14 @@ public class QuerySolutionIterator implements Iterator<String> {
 				// Putting non-predicate/-object variables first
 				if (!o1.startsWith("s") && !o1.startsWith("p") && !o1.startsWith("o")) {
 					// it's not a predicate nor an object, so it's likely the entity
-					return 1;
+					//return 1;
+					return o1.compareTo(o2);
 				}
 
 				if (!o2.startsWith("s") && !o2.startsWith("p") && !o2.startsWith("o")) {
 					// it's not a predicate nor an object, so it's likely the entity
-					return -1;
+					//return -1;
+					return o1.compareTo(o2);
 				}
 
 				// both of them are either s, p or o

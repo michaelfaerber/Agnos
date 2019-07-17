@@ -11,14 +11,19 @@ import java.util.function.BiFunction;
 import com.beust.jcommander.internal.Lists;
 
 import alu.linking.candidategeneration.PossibleAssignment;
-import alu.linking.disambiguation.CombineOperation;
 import alu.linking.disambiguation.ContextBase;
 import alu.linking.disambiguation.pagerank.AssignmentScore;
-import alu.linking.disambiguation.pagerank.PageRankLoader;
-import alu.linking.disambiguation.scorers.embedhelp.ClusterItemPicker.PICK_SELECTION;
+import alu.linking.executable.preprocessing.loader.PageRankLoader;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 
+/**
+ * Class handling the selection (=picking) of items (or entities) from within
+ * defined clusters (=entities grouped by surface forms)
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 	public enum PICK_SELECTION {
 		TOP_PAGERANK, RANDOM, OPTIMAL_CALC
@@ -26,7 +31,7 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 
 	public static final int DEFAULT_PR_TOP_K = 30;// 50;// 30;// 0;// 100;
 	public static final double DEFAULT_PR_MIN_THRESHOLD = 1d;// 0.16d;// 0.16d;// 1d;// 0.1d;
-	public static final int DEFAULT_REPEAT = 100;// was 200 before, but due to long texts...
+	public static final int DEFAULT_REPEAT = 50;// was 200 before, but due to long texts...
 	public static final double DEFAULT_PRUNE_MIN_SCORE_RATIO = 0.40;
 	public static final boolean allowSelfConnection = false;
 	// Whether to remove assignments when there is only one possibility (due to high
@@ -36,19 +41,24 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 	public static final int MIN_REPEAT = 1;
 
 	public static final PICK_SELECTION DEFAULT_FIRST_CHOICE = PICK_SELECTION//
-			// .TOP_PAGERANK
-			.RANDOM//
+			.TOP_PAGERANK
+	// .RANDOM//
 	;
-	public final static BiFunction<Double, Double, Double> DEFAULT_OPERATION = 
-			CombineOperation.OCCURRENCE.combineOperation;
+	public final static BiFunction<Double, Double, Double> DEFAULT_OPERATION = CombineOperation.OCCURRENCE.combineOperation;
 
-	
 	public List<String> combine();
 
 	public double getPickerWeight();
 
+	/**
+	 * Prints the experiment setup
+	 */
 	public void printExperimentSetup();
 
+	/**
+	 * 
+	 * @return which combination operation is used for this picker instance
+	 */
 	public BiFunction<Double, Double, Double> getCombinationOperation();
 
 	default Map<String, Map<String, Number>> computeInitScoreMap(final Collection<Mention> context,
@@ -72,6 +82,13 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 		return retMap;
 	}
 
+	/**
+	 * Computes a map of clusters (key = surface form; value = list of entities for
+	 * the surface form)
+	 * 
+	 * @param context
+	 * @return
+	 */
 	default Map<String, List<String>> computeClusters(final Collection<Mention> context) {
 		final Map<String, List<String>> clusterMap = new HashMap<>();
 
@@ -103,6 +120,20 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 		return clusterMap;
 	}
 
+	/**
+	 * Limit the number of items within each cluster to a specified amount
+	 * (PR_TOP_K) along with a hard minimum threshold<br>
+	 * Note that both are hard limits for exclusion from cluster and do not show a
+	 * preference in relation to each other
+	 * 
+	 * @param prLoader         PageRankLoader instance to load the pagerank values -
+	 *                         if not yet loaded within the wrapper
+	 * @param clusters         clusters as computed in
+	 *                         {@link #computeClusters(Collection)}
+	 * @param PR_TOP_K         how many items there are at most
+	 * @param PR_MIN_THRESHOLD what the minimum PR value for something should be
+	 * @return the filtered clusters based on the input parameters
+	 */
 	default Map<String, List<String>> computePRLimitedClusters(final PageRankLoader prLoader,
 			final Map<String, List<String>> clusters, final int PR_TOP_K, final double PR_MIN_THRESHOLD) {
 		final Map<String, List<String>> copyClusters = new HashMap<>();
@@ -168,19 +199,49 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 		return copyClusters;
 	}
 
-
+	/**
+	 * An occurrence-based combination operation incrementing the value (by 1)
+	 * 
+	 * @param previousValue     old value
+	 * @param pairSimilaritySum how similar the considered entities are
+	 * @return new value
+	 */
 	public static Double occurrenceOperation(Double previousValue, Double pairSimilaritySum) {
 		return previousValue + 1;
 	}
 
+	/**
+	 * A similarity-based combination operation increasing the value by the
+	 * similarity
+	 * 
+	 * @param previousValue     old value
+	 * @param pairSimilaritySum how similar the considered entities are
+	 * @return new value
+	 */
 	public static Double similarityOperation(Double previousValue, Double pairSimilaritySum) {
 		return previousValue + pairSimilaritySum;
 	}
 
+	/**
+	 * A similarity-based combination operation increasing the value by the
+	 * <b>squared</b> similarity
+	 * 
+	 * @param previousValue     old value
+	 * @param pairSimilaritySum how similar the considered entities are
+	 * @return new value
+	 */
 	public static Double similaritySquaredOperation(Double previousValue, Double pairSimilaritySum) {
 		return previousValue + Math.pow(pairSimilaritySum, 2f);
 	}
 
+	/**
+	 * A maximum similarity-based combination operation simply taking the highest of
+	 * the two values (meaning the highest similarity value should win out)
+	 * 
+	 * @param previousValue     old value
+	 * @param pairSimilaritySum how similar the considered entities are
+	 * @return new value
+	 */
 	public static Double maxedOperation(Double previousValue, Double pairSimilaritySum) {
 		return Math.max(previousValue, pairSimilaritySum);
 	}

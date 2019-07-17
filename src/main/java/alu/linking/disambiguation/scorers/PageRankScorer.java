@@ -10,9 +10,16 @@ import alu.linking.config.constants.FilePaths;
 import alu.linking.config.constants.Numbers;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.Scorer;
-import alu.linking.disambiguation.pagerank.PageRankLoader;
+import alu.linking.executable.preprocessing.loader.PageRankLoader;
 import alu.linking.utils.Stopwatch;
 
+/**
+ * Class handling apriori PageRank scores by simply loading the appropriate one
+ * for a wanted PossibleAssignment instance
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class PageRankScorer implements Scorer<PossibleAssignment> {
 	private static final Logger logger = Logger.getLogger(PageRankScorer.class);
 	private final EnumModelType KG;
@@ -42,9 +49,8 @@ public class PageRankScorer implements Scorer<PossibleAssignment> {
 		loadPageRank();
 		Stopwatch.endOutput("pagerankloading");
 	}
-	
-	public PageRankScorer(final EnumModelType KG, final PageRankLoader pagerankLoader)
-	{
+
+	public PageRankScorer(final EnumModelType KG, final PageRankLoader pagerankLoader) {
 		this.KG = KG;
 		this.pagerankLoader = pagerankLoader;
 	}

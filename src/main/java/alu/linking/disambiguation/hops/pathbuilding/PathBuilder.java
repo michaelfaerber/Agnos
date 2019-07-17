@@ -13,6 +13,12 @@ import alu.linking.disambiguation.hops.graph.Graph;
 import alu.linking.disambiguation.hops.graph.GraphNode;
 import alu.linking.structure.FineLoggable;
 
+/**
+ * A callable class for building paths
+ * @author Kristian Noullet
+ *
+ * @param <T>
+ */
 public class PathBuilder<T> implements Callable<List<String>>, FineLoggable {
 	private Logger logger = Logger.getLogger(getClass());
 

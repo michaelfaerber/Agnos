@@ -1,4 +1,4 @@
-package alu.linking.disambiguation.pagerank;
+package alu.linking.executable.preprocessing.loader;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -23,10 +23,17 @@ import com.github.jsonldjava.shaded.com.google.common.collect.Lists;
 
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
+import alu.linking.disambiguation.pagerank.AssignmentScore;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Executable;
 import alu.linking.utils.DecoderUtils;
 
+/**
+ * Class handling loading of PageRank scores for specific KGs
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class PageRankLoader implements Executable {
 	private final EnumModelType KG;
 	public Map<String, Number> pagerankScores = null;
@@ -46,6 +53,10 @@ public class PageRankLoader implements Executable {
 		return exec(null);
 	}
 
+	/**
+	 * Ignores input arguments and just loads values from the file specified in
+	 * FilePaths.FILE_PAGERANK in the tree for the specific KG
+	 */
 	@Override
 	public Map<String, Number> exec(Object... o) throws IOException {
 		// Load PR from file
@@ -172,7 +183,7 @@ public class PageRankLoader implements Executable {
 			} else {
 				Number foundScore = getScore(possAss.toString());
 				if (foundScore == null) {
-					//getLogger().error("[" + possAss.toString() + "] No PR score.");
+					// getLogger().error("[" + possAss.toString() + "] No PR score.");
 					setPRNotFound.add(possAss.toString());
 					foundScore = 0d;
 				}
@@ -204,7 +215,8 @@ public class PageRankLoader implements Executable {
 					if ((val = map.get(key)) == null) {
 						val = 0f;
 					}
-					//Sums up PR values if there's multiple variations of the same entity, e.g. uppercase and lowercase
+					// Sums up PR values if there's multiple variations of the same entity, e.g.
+					// uppercase and lowercase
 					map.put(key, val.floatValue() + Float.valueOf(nodes[2].toString()));
 				} catch (ArrayIndexOutOfBoundsException aiooe) {
 					getLog().error("Error appeared with: " + Arrays.toString(nodes));

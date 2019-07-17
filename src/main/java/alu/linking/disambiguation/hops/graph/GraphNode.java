@@ -7,10 +7,13 @@ import java.util.Set;
 
 import com.beust.jcommander.internal.Lists;
 
+/**
+ * A Node within the in-memory graph, see {@link Graph}
+ * @author Kristian Noullet
+ *
+ * @param <T>
+ */
 public class GraphNode<T> implements Serializable {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -7011294609068585108L;
 
 	private List<T> next = null;

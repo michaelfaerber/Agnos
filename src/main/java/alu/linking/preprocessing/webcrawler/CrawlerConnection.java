@@ -114,6 +114,13 @@ public class CrawlerConnection implements TextProcessor {
 		return links;
 	}
 
+	public List<String> getLinks() throws IOException {
+		if (!callFinish) {
+			call();
+		}
+		return this.foundLinks;
+	}
+
 	@Override
 	public String getText() throws IOException {
 		if (!callFinish) {

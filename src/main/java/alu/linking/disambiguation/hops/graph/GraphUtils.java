@@ -9,6 +9,11 @@ import java.util.Set;
 
 import org.apache.jena.ext.com.google.common.collect.Lists;
 
+/**
+ * Utility class for the in-memory graph implementation and its related classes
+ * @author Kristian Noullet
+ *
+ */
 public class GraphUtils {
 	public static List<Set<Integer>> detectSubgraphs(Graph g) {
 		/*

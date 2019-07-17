@@ -8,7 +8,15 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import alu.linking.mentiondetection.Mention;
 
+/**
+ * Class containing static comparator instances for various types
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class Comparators {
+	// Mentions comparator based on their offsets, with additional logic on the
+	// start offset
 	public static final Comparator<Mention> mentionOffsetComp = new Comparator<Mention>() {
 		@Override
 		public int compare(Mention o1, Mention o2) {
@@ -17,7 +25,8 @@ public class Comparators {
 			return (o1.getOffset() == o2.getOffset()) ? diffLength : ((o1.getOffset() > o2.getOffset()) ? 1 : -1);
 		}
 	};
-	
+
+	// Markings comparators based on their offsets
 	public static final Comparator<Marking> markingsOffsetComp = new Comparator<Marking>() {
 
 		@Override
@@ -38,7 +47,8 @@ public class Comparators {
 			return spanLeft.getStartPosition() - spanRight.getStartPosition();
 		}
 	};
-	
+
+	// Pair comparator based on the right element
 	public static final Comparator<Pair<? extends Comparable, ? extends Comparable>> pairRightComparator = new Comparator<Pair<? extends Comparable, ? extends Comparable>>() {
 
 		@Override
@@ -48,6 +58,8 @@ public class Comparators {
 		}
 
 	};
+
+	// Pair comparator based on the left element
 	public static final Comparator<Pair<? extends Comparable, ? extends Comparable>> pairLeftComparator = new Comparator<Pair<? extends Comparable, ? extends Comparable>>() {
 
 		@Override
@@ -57,13 +69,13 @@ public class Comparators {
 		}
 
 	};
-	
+
+	// Simple offset-based comparator for mentions
 	public static final Comparator<Mention> mentionOffsetComparator = new Comparator<Mention>() {
 		@Override
 		public int compare(Mention o1, Mention o2) {
 			return o1.getOffset() - o2.getOffset();
 		}
 	};
-
 
 }

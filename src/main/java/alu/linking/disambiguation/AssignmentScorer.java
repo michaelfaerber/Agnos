@@ -20,11 +20,12 @@ import alu.linking.candidategeneration.Scorable;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.constants.Numbers;
 import alu.linking.config.kg.EnumModelType;
-import alu.linking.disambiguation.pagerank.PageRankLoader;
 import alu.linking.disambiguation.scorers.GraphWalkEmbeddingScorer;
 import alu.linking.disambiguation.scorers.PageRankScorer;
+import alu.linking.disambiguation.scorers.embedhelp.CombineOperation;
 import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
 import alu.linking.disambiguation.scorers.hillclimbing.ContinuousHillClimbingPicker;
+import alu.linking.executable.preprocessing.loader.PageRankLoader;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 
@@ -40,6 +41,13 @@ public class AssignmentScorer<N> implements Loggable {
 	private final HashSet<Mention> context = new HashSet<>();
 	private final EntitySimilarityService similarityService;
 
+	/**
+	 * Constructor sets up scoring behaviour, including which scorers are utilised
+	 * @param KG which KG we are doing it for
+	 * @throws FileNotFoundException if file not found
+	 * @throws ClassNotFoundException if class not found
+	 * @throws IOException if 
+	 */
 	public AssignmentScorer(final EnumModelType KG) throws FileNotFoundException, ClassNotFoundException, IOException {
 		// Determines how everything is scored!
 		PossibleAssignment.setScoreCombiner(new ScoreCombiner<PossibleAssignment>());
@@ -68,13 +76,14 @@ public class AssignmentScorer<N> implements Loggable {
 //			}
 //		}
 
-		//final CombineOperation combineOperation = CombineOperation.MAX_SIM;
+		final CombineOperation combineOperation = CombineOperation.MAX_SIM;
 
-		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new
-		ContinuousHillClimbingPicker(
-		//combineOperation.combineOperation, 
-		similarityService, pagerankLoader)));
-		//PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new HillClimbingPicker(//combineOperation.combineOperation, similarityService, pagerankLoader)));
+		PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new ContinuousHillClimbingPicker(
+				//// combineOperation.combineOperation,
+				similarityService, pagerankLoader)));
+		// PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new
+		// HillClimbingPicker(
+		// combineOperation.combineOperation, similarityService, pagerankLoader)));
 		// PossibleAssignment.addPostScorer(new GraphWalkEmbeddingScorer(new
 		// PairwisePicker(combineOperation.combineOperation, similarityService,
 		// pagerankLoader)));

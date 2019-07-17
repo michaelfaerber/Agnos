@@ -12,6 +12,12 @@ import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 import alu.linking.utils.EmbeddingsUtils;
 
+/**
+ * A cluster item picker instance greedily picking items.
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class GreedyOptimalPicker extends AbstractClusterItemPicker implements Loggable {
 
 	private Map<String, List<Number>> entityEmbeddingsMap;

@@ -7,6 +7,11 @@ import org.apache.jena.ext.com.google.common.collect.Lists;
 
 import alu.linking.structure.BufferedSeparableWriter;
 
+/**
+ * A write instance to keep lists of strings
+ * @author Kristian Noullet
+ *
+ */
 public class StringListWriter extends BufferedSeparableWriter {
 	private final StringBuilder entry = new StringBuilder();
 	private final List<String> entries = Lists.newArrayList();

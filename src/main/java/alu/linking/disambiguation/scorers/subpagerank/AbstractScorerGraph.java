@@ -2,6 +2,11 @@ package alu.linking.disambiguation.scorers.subpagerank;
 
 import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
 
+/**
+ * Abstract graph mostly utilised for sub-pagerank scoring algorithm( alternative)s
+ * @author Kristian Noullet
+ *
+ */
 public abstract class AbstractScorerGraph {
 	// How many iterations
 	protected int iter = 5;

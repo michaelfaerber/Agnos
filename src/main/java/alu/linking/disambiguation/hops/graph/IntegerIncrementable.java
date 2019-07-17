@@ -2,6 +2,11 @@ package alu.linking.disambiguation.hops.graph;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * An integer-based (atomic long, actually) incrementable object
+ * @author Kristian Noullet
+ *
+ */
 public class IntegerIncrementable implements Incrementable<Integer> {
 	public AtomicLong val;
 

@@ -16,6 +16,11 @@ import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
 import alu.linking.preprocessing.fileparser.input.FileInParser;
 import alu.linking.preprocessing.fileparser.input.NxParserGenericWrapper;
 
+/**
+ * Class building an in-memory Graph object based on an input file (of N-triples)
+ * @author Kristian Noullet
+ *
+ */
 public class GraphBuilder {
 	private String inputFilepathN3 = null;
 	private final EnumModelType KG;

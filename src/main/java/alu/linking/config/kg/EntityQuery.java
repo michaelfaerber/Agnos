@@ -1,5 +1,12 @@
 package alu.linking.config.kg;
 
+/**
+ * Constant (SPARQL-based) query definitions used by the EnumModelType
+ * enumeration for specific knowledge graphs to retrieve entities
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public enum EntityQuery {
 //	DBPEDIA(""), //
 //	FREEBASE(""), //

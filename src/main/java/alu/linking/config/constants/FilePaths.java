@@ -8,6 +8,15 @@ import java.io.IOException;
 
 import alu.linking.config.kg.EnumModelType;
 
+/**
+ * Enumeration containing all (constant) file locations the framework utilises
+ * (with the exception of properties files due to dependency cycles), handling
+ * folder structure generation (if not yet existant) based on defined knowledge
+ * graphs (see {@link EnumModelType} for KG locations)
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public enum FilePaths {
 	// Contains all constant paths
 	// Attempting to keep a specific order
@@ -22,6 +31,13 @@ public enum FilePaths {
 	DIR_DATA(DIR_RESOURCE.path + "data/"), //
 	DIR_DATASETS(DIR_DATA.path + "datasets/"), //
 	DIR_MENTIONS(DIR_DATA.path + "mentions/"), //
+	DIR_NEWS(DIR_DATA.path + "news/"), //
+	DIR_NEWS_BODY(DIR_NEWS.path + "body/"), //
+	DIR_NEWS_LINKS(DIR_NEWS.path + "links/"), //
+	DIR_NEWS_FILTERED(DIR_NEWS.path + "filtered/"), //
+	DIR_NEWS_FILTERED_BODY(DIR_NEWS_FILTERED.path + "body/"), //
+	DIR_NEWS_FILTERED_LINKS(DIR_NEWS_FILTERED.path + "links/"), //
+
 	DIR_LOGS(DIR_DATA.path + "logs/"), //
 	DIR_TAGTOG_OUTPUT(DIR_DATA.path + "tagtog/"), //
 	DIR_TAGTOG_ANALYSIS(DIR_DATA.path + "tagtog_analysis/"), //
@@ -79,6 +95,8 @@ public enum FilePaths {
 	FILE_NEWS_URLS_CONTENT_SORTED(DIR_DATA.path + "news_urls_content_sorted.nt"), //
 	FILE_TAGTOG_SAMPLE_OUTPUT(DIR_DATA.path + "tagtog_sample.json"), //
 	FILE_DUMP_CRUNCHBASE(DIR_DATA.path + "crunchbase-dump-201510.nt"), //
+	FILE_CB_NEWS_URL(DIR_DATA.path + "cb_news.txt"), //
+
 	// NPComplete's required tagger file
 	FILE_NPCOMPLETE_ENGLISH_TAGGER("./lib/english-left3words-distsim.tagger"), //
 	FILE_MENTIONS_BLACKLIST(DIR_MENTIONS.path + "blacklist.txt"), //
@@ -179,6 +197,10 @@ public enum FilePaths {
 	LOG_FILE_ERROR_WEB_CRAWLING(DIR_LOGS.path + "webcrawler_error.txt"), //
 	LOG_FILE_HOPS_FILES_CREATED(DIR_LOGS_HOPS.path + "created_pathfiles.txt"), //
 	LOG_FILE_TAGTOG_ANALYSIS(DIR_TAGTOG_OUTPUT.path + "tagtog_analysis.txt"), //
+	LOG_FILE_CRAWL_CB_ERROR((DIR_LOGS.path + "cb_news_error.txt")), //
+	LOG_FILE_CRAWL_CB_PROGRESS((DIR_LOGS.path + "cb_news_progress.txt")), //
+	LOG_FILE_CRAWL_CB_IGNORE((DIR_LOGS.path + "cb_news_ignore.txt")), //
+
 	// ##################################
 	// DATASETS
 	// ##################################

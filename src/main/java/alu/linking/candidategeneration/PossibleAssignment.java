@@ -11,6 +11,14 @@ import alu.linking.disambiguation.Scorer;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 
+/**
+ * A possible output candidate for entity linking - it can be scored, based on
+ * the score it can be compared to another possible assignment with (assumingly)
+ * the same mention
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class PossibleAssignment implements Scorable, Comparable<PossibleAssignment>, Loggable {
 	private static Logger logger = Logger.getLogger(PossibleAssignment.class);
 	private Number score = Float.valueOf(0f);
@@ -73,6 +81,9 @@ public class PossibleAssignment implements Scorable, Comparable<PossibleAssignme
 		return assignment;
 	}
 
+	/**
+	 * Computes the score for this possible assignment
+	 */
 	@Override
 	public Number computeScore() {
 		Number currScore = null;

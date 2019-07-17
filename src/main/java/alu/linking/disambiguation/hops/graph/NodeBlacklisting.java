@@ -7,6 +7,13 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+/**
+ * Class handling blacklisting of specific node within our in-memory graph
+ * <br>
+ * See {@link EdgeBlacklisting} for the edge equivalent.
+ * @author Kristian Noullet
+ *
+ */
 public class NodeBlacklisting {
 	private Graph<Integer> graph = null;
 	private Logger logger = Logger.getLogger(getClass());

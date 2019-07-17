@@ -1,4 +1,4 @@
-package alu.linking.config.kg;
+package alu.linking.config.kg.deprecated;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,8 +25,17 @@ import org.apache.jena.tdb.TDBFactory;
 import org.apache.jena.util.FileManager;
 
 import alu.linking.config.constants.Strings;
+import alu.linking.config.kg.EnumModelType;
 import alu.linking.utils.Stopwatch;
 
+/**
+ * Class managing KG instances along with their entities, initially designed
+ * around CrummyMatch, currently in a deprecated state
+ * 
+ * @author Kristian Noullet
+ *
+ */
+@Deprecated
 public abstract class KGManager {
 	final static Map<String, Dataset> dsMap = new HashMap<String, Dataset>();
 	protected final String default_set_dsPath;
@@ -78,14 +87,10 @@ public abstract class KGManager {
 	 * <b>Note</b>: Replaces any old models with the given modelTypeMerged-named
 	 * model
 	 * 
-	 * @param dsPath
-	 *            Path of dataset for all 3 considered models
-	 * @param modelTypeLeft
-	 *            Model to execute action on
-	 * @param modelTypeRight
-	 *            Model to execute action on
-	 * @param modelTypeMerged
-	 *            Resulting merged model
+	 * @param dsPath          Path of dataset for all 3 considered models
+	 * @param modelTypeLeft   Model to execute action on
+	 * @param modelTypeRight  Model to execute action on
+	 * @param modelTypeMerged Resulting merged model
 	 */
 	public static void mergeSurfaceForms(String dsPath, EnumModelType modelTypeLeft, EnumModelType modelTypeRight,
 			EnumModelType modelTypeMerged) {
@@ -210,10 +215,8 @@ public abstract class KGManager {
 	/**
 	 * Query the given model within specified dataset for any statements
 	 * 
-	 * @param dsPath
-	 *            Dataset path
-	 * @param modelType
-	 *            Which model to query
+	 * @param dsPath    Dataset path
+	 * @param modelType Which model to query
 	 * @return all statements for the given model within the specified dataset
 	 */
 	public static List<Statement> getAllStatements(String dsPath, EnumModelType modelType) {
@@ -229,16 +232,11 @@ public abstract class KGManager {
 	 * with optional subject/predicate/object selection criteria.
 	 * 
 	 * 
-	 * @param dsPath
-	 *            Which dataset to query the data from
-	 * @param modelType
-	 *            Which model within the dataset should be queried
-	 * @param subject
-	 *            if null -> can be any
-	 * @param property
-	 *            if null -> can be any
-	 * @param object
-	 *            if null -> can be any
+	 * @param dsPath    Which dataset to query the data from
+	 * @param modelType Which model within the dataset should be queried
+	 * @param subject   if null -> can be any
+	 * @param property  if null -> can be any
+	 * @param object    if null -> can be any
 	 * @return all statements fitting the input criteria
 	 */
 	public static List<Statement> getStatements(final String dsPath, final EnumModelType modelType,

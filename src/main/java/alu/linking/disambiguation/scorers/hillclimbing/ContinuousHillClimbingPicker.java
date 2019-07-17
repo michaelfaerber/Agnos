@@ -13,8 +13,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.github.jsonldjava.shaded.com.google.common.collect.Lists;
 
 import alu.linking.config.constants.Comparators;
-import alu.linking.disambiguation.pagerank.PageRankLoader;
 import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
+import alu.linking.executable.preprocessing.loader.PageRankLoader;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.utils.MentionUtils;
 

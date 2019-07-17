@@ -1,13 +1,18 @@
 package alu.linking.config.constants;
 
+/**
+ * String constants 
+ * @author Kristian Noullet
+ *
+ */
 public enum Strings {
 	// Attempting to keep a specific order
 	// From most-common to most-specific
 	// ROOTPATH("/vol1/tomcat/webapps/AgnosNIFAPI/project_files/"), //
 	SHETLAND_DIR("/home/noulletk/prog/bmw/"), //
 	SEELAND_DIR(
-			"/vol1/data_faerberm/kris/prog/"
-			//"/vol2/kris/"//
+			//"/vol1/data_faerberm/kris/prog/"
+			"/vol2/kris/"//
 			), //
 	LOCAL_DIR("./"), //
 	ROOTPATH(SEELAND_DIR.val), //
@@ -53,6 +58,9 @@ public enum Strings {
 	EMBEDDINGS_RDF2VEC_SPLIT_DELIM("(\\t)|(->)"), //
 	// ID Mapping separator (for human readable output)
 	ID_MAPPING_SEPARATOR("\t"),//
+	
+	// Crunchbase-specific Parameters
+	NEWS_URL_SEP("\t;\t"),//
 	;
 	public final String val;
 	public final String desc;

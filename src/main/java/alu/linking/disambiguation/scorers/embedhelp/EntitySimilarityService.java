@@ -3,7 +3,6 @@ package alu.linking.disambiguation.scorers.embedhelp;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -18,12 +17,21 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.github.jsonldjava.shaded.com.google.common.collect.Lists;
 
 import alu.linking.config.constants.Comparators;
+import alu.linking.config.constants.Numbers;
 import alu.linking.utils.DecoderUtils;
 import alu.linking.utils.EmbeddingsUtils;
 
+/**
+ * An LRU-based caching service for entity similarity with a size of
+ * {@link Numbers}.SIMILARITY_CACHE_SIZE.<br>
+ * Pretty much just a convenience class for speed-up.
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class EntitySimilarityService {
 	private final Map<String, List<Number>> embeddings;
-	private final LRUMap<String, Number> distCache = new LRUMap<>(1_024 * 1_024);
+	private final LRUMap<String, Number> distCache = new LRUMap<>(Numbers.SIMILARITY_CACHE_SIZE.val.intValue());
 	public final Set<String> notFoundIRIs = new HashSet<>();
 	public final AtomicInteger recovered = new AtomicInteger();
 
@@ -31,6 +39,16 @@ public class EntitySimilarityService {
 		this.embeddings = embeddings;
 	}
 
+	/**
+	 * Computes similarity between two passed entities - repeated calls to the same
+	 * (or switched around) pair will grab the value directly from an in-memory
+	 * lookup table <br>
+	 * <b>Note</b>: Thread-safety ensured
+	 * 
+	 * @param entity1 first entity
+	 * @param entity2 second entity
+	 * @return similarity between the two
+	 */
 	public Number similarity(final String entity1, final String entity2) {
 		final String keyStr = key(entity1, entity2);
 		Number retVal;
@@ -81,6 +99,13 @@ public class EntitySimilarityService {
 		return retVal;
 	}
 
+	/**
+	 * Create an internal key for storing/retrieving similarity values from a map
+	 * 
+	 * @param entity1 first entity
+	 * @param entity2 second entity
+	 * @return
+	 */
 	private String key(String entity1, String entity2) {
 		final StringBuilder sbDistKey;
 		final int compareRes = entity1.compareTo(entity2);
@@ -128,6 +153,15 @@ public class EntitySimilarityService {
 		}
 	}
 
+	/**
+	 * Computes similarities between a given source and targets, sorting it
+	 * afterwards with the passed comparator
+	 * 
+	 * @param source     source entity
+	 * @param targets    target entities
+	 * @param comparator to sort results
+	 * @return sorted list of pairs
+	 */
 	public List<Pair<String, Double>> computeSortedSimilarities(final String source, final Collection<String> targets,
 			final Comparator<Pair<? extends Comparable, ? extends Comparable>> comparator) {
 		final List<Pair<String, Double>> retList = computeSimilarities(source, targets);

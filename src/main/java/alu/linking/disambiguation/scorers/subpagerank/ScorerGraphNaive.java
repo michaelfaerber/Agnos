@@ -13,6 +13,11 @@ import org.apache.jena.ext.com.google.common.collect.Lists;
 
 import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
 
+/**
+ * Naively computes pagerank
+ * @author Kristian Noullet
+ *
+ */
 public class ScorerGraphNaive extends AbstractScorerGraph {
 	private final Map<String, ScorerGraphNode> nodes = new HashMap<String, ScorerGraphNode>();
 	// Whether neighbours should be unique, aka. node A and B are just connected to

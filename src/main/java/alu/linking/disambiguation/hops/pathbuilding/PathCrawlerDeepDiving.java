@@ -19,6 +19,14 @@ import alu.linking.config.constants.Numbers;
 import alu.linking.disambiguation.hops.graph.Graph;
 import alu.linking.disambiguation.hops.graph.GraphNode;
 
+/**
+ * Class for crawling paths in a DFS fashion while explicitly making use of more
+ * memory-friendly crawling ways
+ * 
+ * @author Kristian Noullet
+ *
+ * @param <T> Node type
+ */
 public class PathCrawlerDeepDiving<T> extends PathCrawlerBasic<T> {
 	private Logger logger = Logger.getLogger(getClass());
 
@@ -32,17 +40,12 @@ public class PathCrawlerDeepDiving<T> extends PathCrawlerBasic<T> {
 
 	/**
 	 * 
-	 * @param OUT_PATHS
-	 *            Where to output paths (aka. bunch of nodes)
-	 * @param OUT_EDGES
-	 *            Where to output edges
-	 * @param OUT_DIRS
-	 *            Where to output directions of edges
-	 * @param goalNodes
-	 *            possible ending nodes (for full-on path computation, i.e. without
-	 *            concatenation)
-	 * @throws IOException
-	 *             When problems with writers appear
+	 * @param OUT_PATHS Where to output paths (aka. bunch of nodes)
+	 * @param OUT_EDGES Where to output edges
+	 * @param OUT_DIRS  Where to output directions of edges
+	 * @param goalNodes possible ending nodes (for full-on path computation, i.e.
+	 *                  without concatenation)
+	 * @throws IOException When problems with writers appear
 	 */
 	public PathCrawlerDeepDiving(final Map<T, GraphNode<T>> allNodes, final String OUT_PATHS, final String OUT_EDGES,
 			final String OUT_DIRS, final Set<T> goalNodes) throws IOException {
@@ -119,10 +122,8 @@ public class PathCrawlerDeepDiving<T> extends PathCrawlerBasic<T> {
 	/**
 	 * O(|alrExpSet|)
 	 * 
-	 * @param next
-	 *            List of all possible expansions for a given node
-	 * @param alrExpSet
-	 *            Set of elements already expanded
+	 * @param next      List of all possible expansions for a given node
+	 * @param alrExpSet Set of elements already expanded
 	 * @return
 	 */
 	@Override

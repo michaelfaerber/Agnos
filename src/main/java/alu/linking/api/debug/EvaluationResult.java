@@ -2,6 +2,13 @@ package alu.linking.api.debug;
 
 import java.util.Set;
 
+/**
+ * Container object for annotation tasks, used for the appropriate evaluation of
+ * the framework
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class EvaluationResult {
 	public String inputText;
 	public double precision, recall, f1;

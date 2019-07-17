@@ -1,4 +1,4 @@
-package alu.linking.api;
+package alu.linking.api.debug.dbpedia;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,15 +10,11 @@ import java.util.List;
 
 import org.aksw.gerbil.transfer.nif.Document;
 import org.aksw.gerbil.transfer.nif.Marking;
-import org.aksw.gerbil.transfer.nif.Meaning;
 import org.aksw.gerbil.transfer.nif.MeaningSpan;
 import org.aksw.gerbil.transfer.nif.NIFDocumentCreator;
 import org.aksw.gerbil.transfer.nif.NIFDocumentParser;
-import org.aksw.gerbil.transfer.nif.Span;
 import org.aksw.gerbil.transfer.nif.TurtleNIFDocumentCreator;
 import org.aksw.gerbil.transfer.nif.TurtleNIFDocumentParser;
-import org.aksw.gerbil.transfer.nif.TypedSpan;
-import org.aksw.gerbil.transfer.nif.data.TypedNamedEntity;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -35,6 +31,11 @@ import org.apache.http.impl.execchain.RequestAbortedException;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 
+/**
+ * Class for testing out DBpedia's annotation mechanism through its NIF endpoint
+ * 
+ * @author Kristian Noullet
+ */
 public class DBpediaNIFWebAnnotator {
 	public static void main(final String[] args) {
 		final String inputPath = "C:\\Users\\Kris\\Desktop\\jar_out\\evaluation\\kore50-nif_angelina.ttl";
@@ -45,7 +46,8 @@ public class DBpediaNIFWebAnnotator {
 		try {
 			final InputStream inputStream = new FileInputStream(inputFile);
 			document = parser.getDocumentFromNIFStream(inputStream);
-			final List<MeaningSpan> markings = new DBpediaNIFWebAnnotator(dbpediaURL).performD2KBTask(document);
+			final List<MeaningSpan> markings = new DBpediaNIFWebAnnotator(dbpediaURL).performAnnotation(document,
+					MeaningSpan.class);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -189,43 +191,8 @@ public class DBpediaNIFWebAnnotator {
 		return response;
 	}
 
-	/**
-	 * @return the additionalHeader
-	 */
 	public List<Header> getAdditionalHeader() {
 		return additionalHeader;
-	}
-
-	public List<Meaning> performC2KB(Document document) throws RuntimeException {
-		return performAnnotation(document, Meaning.class);
-	}
-
-	public List<MeaningSpan> performD2KBTask(Document document) throws RuntimeException {
-		return performAnnotation(document, MeaningSpan.class);
-	}
-
-	public List<Span> performRecognition(Document document) throws RuntimeException {
-		return performAnnotation(document, Span.class);
-	}
-
-	public List<MeaningSpan> performA2KBTask(Document document) throws RuntimeException {
-		return performAnnotation(document, MeaningSpan.class);
-	}
-
-	public List<TypedSpan> performTyping(Document document) throws RuntimeException {
-		return performAnnotation(document, TypedSpan.class);
-	}
-
-	public List<TypedNamedEntity> performTask1(Document document) throws RuntimeException {
-		return performAnnotation(document, TypedNamedEntity.class);
-	}
-
-	public List<TypedNamedEntity> performTask2(Document document) throws RuntimeException {
-		return performAnnotation(document, TypedNamedEntity.class);
-	}
-
-	public List<TypedSpan> performRT2KBTask(Document document) throws RuntimeException {
-		return performAnnotation(document, TypedSpan.class);
 	}
 
 	public CloseableHttpClient getClient() {

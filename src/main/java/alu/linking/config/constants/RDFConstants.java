@@ -1,5 +1,10 @@
 package alu.linking.config.constants;
 
+/**
+ * Constants used for RDF-related tasks
+ * @author Kristian Noullet
+ *
+ */
 public enum RDFConstants {
 	RDF_BMW("http://bmw-kg.de/"),
 	RDF_CLASS(RDF_BMW.val + "class/"),

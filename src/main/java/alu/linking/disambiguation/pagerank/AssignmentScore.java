@@ -1,5 +1,16 @@
 package alu.linking.disambiguation.pagerank;
 
+import alu.linking.executable.preprocessing.loader.PageRankLoader;
+
+/**
+ * A score assignment - used majorly by {@link PageRankLoader}. Each
+ * AssignmentScore has a score and an assignment it is related to and can be
+ * compared with a precision of 10^-4.<br>
+ * Mainly used for comparing PR scores in order to apply Top K type logic on it
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class AssignmentScore implements Comparable<AssignmentScore> {
 	public Number score;
 	public String assignment;

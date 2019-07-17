@@ -21,6 +21,12 @@ import alu.linking.disambiguation.PostScorer;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.utils.EmbeddingsUtils;
 
+/**
+ * SSP-based embedding scorer 
+ * @deprecated
+ * @author Kristian Noullet
+ *
+ */
 public class SSPEmbeddingScorer implements PostScorer<PossibleAssignment, Mention> {
 	private final EnumModelType KG;
 	private final Map<String, List<Number>> entityEmbeddingsMap;

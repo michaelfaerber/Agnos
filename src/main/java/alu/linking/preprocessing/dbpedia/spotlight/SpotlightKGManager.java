@@ -6,7 +6,7 @@ import java.util.Map;
 import org.apache.jena.rdf.model.Statement;
 
 import alu.linking.config.kg.EnumModelType;
-import alu.linking.config.kg.KGManager;
+import alu.linking.config.kg.deprecated.KGManager;
 
 public class SpotlightKGManager extends KGManager {
 	public SpotlightKGManager(final String dsPath) {

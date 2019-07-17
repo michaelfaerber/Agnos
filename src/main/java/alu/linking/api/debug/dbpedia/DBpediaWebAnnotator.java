@@ -1,4 +1,4 @@
-package alu.linking.api;
+package alu.linking.api.debug.dbpedia;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,6 +35,11 @@ import org.apache.http.impl.execchain.RequestAbortedException;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 
+/**
+ * Testing class for DBpedia's annotation endpoint
+ * @author Kristian Noullet
+ *
+ */
 public class DBpediaWebAnnotator {
 	public static void main(final String[] args) {
 		final String inputPath = "C:\\Users\\Kris\\Desktop\\jar_out\\evaluation\\"

@@ -26,9 +26,9 @@ public class SFQuery extends LiteralEntityQuery {
 	private static final String delimLinking = Strings.ENTITY_SURFACE_FORM_LINKING_DELIM.val;
 	private static final String delimQueryResults = Strings.QUERY_RESULT_DELIMITER.val;
 	private static final List<String> entityVarNames = Arrays
-			.asList(new String[] { "entity", "s", "subject", "a", "asubject", "asubj", "a_subject" });
+			.asList(new String[] { "entity", "s", "subject", "a", "asubject", "asubj", "a_subject", "sub", "subj" });
 	private static final List<String> surfaceFormVarNames = Arrays
-			.asList(new String[] { "lit", "o", "object", "b", "bobject", "bobj", "b_object" });
+			.asList(new String[] { "lit", "o", "object", "b", "bobject", "bobj", "b_object", "ob", "obj" });
 
 	public SFQuery(EnumModelType KG) {
 		super(KG);

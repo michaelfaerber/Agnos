@@ -9,7 +9,13 @@ import com.beust.jcommander.internal.Lists;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 
-public class CandidateGeneratorMap implements CandidateGenerator<String>, Loggable {
+/**
+ * A simple dictionary/lookup-table-like implementation of candidate generation
+ * 
+ * @author Kristian Noullet
+ *
+ */
+public class CandidateGeneratorMap implements CandidateGenerator, Loggable {
 	private final Map<String, Collection<String>> linking;
 	private final boolean throwException = true;
 
@@ -20,7 +26,7 @@ public class CandidateGeneratorMap implements CandidateGenerator<String>, Loggab
 	/**
 	 * Generates all possible assignments for given mention
 	 * 
-	 * @param mention
+	 * @param mention Mention for which to generate candidates!
 	 * @return set of possible assignments
 	 */
 	@Override

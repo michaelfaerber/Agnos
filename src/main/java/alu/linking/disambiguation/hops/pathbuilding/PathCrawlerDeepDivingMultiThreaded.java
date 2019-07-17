@@ -16,6 +16,14 @@ import org.apache.jena.ext.com.google.common.collect.Lists;
 import alu.linking.disambiguation.hops.graph.GraphNode;
 import alu.linking.structure.Loggable;
 
+/**
+ * Class for crawling paths in a multi-threaded DFS fashion while explicitly
+ * making use of more memory-friendly crawling ways
+ * 
+ * @author Kristian Noullet
+ *
+ * @param <T> Node type
+ */
 public class PathCrawlerDeepDivingMultiThreaded<T> implements PathCrawler<T>, Loggable {
 	private final int MAX_LENGTH = alu.linking.config.constants.Numbers.HOPS_PATH_LENGTH.val.intValue();
 	private final HashMap<T, Set<T>> alreadyExpanded = new HashMap<T, Set<T>>();
@@ -67,10 +75,8 @@ public class PathCrawlerDeepDivingMultiThreaded<T> implements PathCrawler<T>, Lo
 	/**
 	 * O(|alrExpSet|)
 	 * 
-	 * @param next
-	 *            List of all possible expansions for a given node
-	 * @param alrExpSet
-	 *            Set of elements already expanded
+	 * @param next      List of all possible expansions for a given node
+	 * @param alrExpSet Set of elements already expanded
 	 * @return
 	 */
 	@Override

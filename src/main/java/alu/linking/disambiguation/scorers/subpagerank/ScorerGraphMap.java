@@ -14,6 +14,11 @@ import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
 import alu.linking.structure.Loggable;
 import alu.linking.utils.Stopwatch;
 
+/**
+ * Utilises map logic for pagerank computation
+ * @author Kristian Noullet
+ *
+ */
 public class ScorerGraphMap extends AbstractScorerGraph implements Loggable {
 	private Map<String, Double> prScores = new HashMap<>();
 

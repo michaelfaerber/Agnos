@@ -42,6 +42,11 @@ import alu.linking.structure.Executable;
 import alu.linking.utils.DetectionUtils;
 import alu.linking.utils.Stopwatch;
 
+/**
+ * Class handling annotation tasks for GERBIL
+ * @author Kristian Noullet
+ *
+ */
 public class GERBILAPIAnnotator implements Executable {
 
 	private final EnumModelType KG;
@@ -61,7 +66,7 @@ public class GERBILAPIAnnotator implements Executable {
 
 	private Set<String> stopwords = null;
 	private MentionDetector md = null;
-	private CandidateGenerator<String> candidateGenerator = null;
+	private CandidateGenerator candidateGenerator = null;
 	private AssignmentChooser chooser = null;
 	private MentionPruner pruner = null;
 

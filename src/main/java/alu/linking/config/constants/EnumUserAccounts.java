@@ -5,6 +5,15 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
+/**
+ * Enumeration handling credentials from files on a lazy-loading basis <br>
+ * Note: Security has been taken into account (not storing credentials in String
+ * objects due to dumping dangers, ...), but we do not claim perfect handling of
+ * said credentials
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public enum EnumUserAccounts {
 	// TAGTOG_CONNECTION_TEST(EnumProperty.AUTHENTICATE_TAGTOG_TESTING), //
 	// TAGTOG_CONNECTION(EnumProperty.AUTHENTICATE_TAGTOG), //

@@ -15,25 +15,27 @@ import java.util.function.BiFunction;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 
 import com.github.jsonldjava.shaded.com.google.common.collect.Lists;
 
 import alu.linking.config.constants.Comparators;
-import alu.linking.disambiguation.pagerank.AssignmentScore;
-import alu.linking.disambiguation.pagerank.PageRankLoader;
 import alu.linking.disambiguation.scorers.embedhelp.AbstractClusterItemPicker;
-import alu.linking.disambiguation.scorers.embedhelp.ClusterItemPicker;
 import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
+import alu.linking.executable.preprocessing.loader.PageRankLoader;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.utils.Stopwatch;
 
+/**
+ * A cluster item picker instance, picking items based on a hill-climbing scheme
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class HillClimbingPicker extends AbstractClusterItemPicker {
 
 	private final Random r = new Random(System.currentTimeMillis());
 	private final boolean CREATE_TABLE = false;
 	private final boolean ENTITY_TABLE = true;
-
 
 	protected boolean prune = false;
 
@@ -160,7 +162,6 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 		// Collections.shuffle(clusterNames);
 
 		// Pagerank stuff - limits the items to the top PR_TOP_K and PR_MIN_THRESHOLD
-		final Map<String, Triple<AssignmentScore, AssignmentScore, Integer>> mapClusterPageRankItems = new HashMap<>();
 		final Map<String, String> topPRChoices = new HashMap<>();
 		// Computes PageRank scores and filters out the ones that are too low either in
 		// rank or score (based on parameters passed)

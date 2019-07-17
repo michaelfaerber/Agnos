@@ -19,6 +19,12 @@ import alu.linking.disambiguation.hops.pathbuilding.ConcurrentPathBuilderBatch;
 import alu.linking.disambiguation.hops.pathbuilding.ConcurrentPathBuilderSingle;
 import alu.linking.mentiondetection.Mention;
 
+/**
+ * Context-based scorer making use of an in-memory graph and node connectivities
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class VicinityScorer implements PostScorer<PossibleAssignment, Mention> {
 	private Logger logger = Logger.getLogger(getClass());
 	private double sigma_ratio = Numbers.VICINITY_SCORING_WEIGHT_SIGMA.val.doubleValue();
@@ -48,8 +54,7 @@ public class VicinityScorer implements PostScorer<PossibleAssignment, Mention> {
 		final Integer startNodeID = graph.getIDMapping().getKey(nodeURL);
 		if (startNodeID == null) {
 			logger.error("No node found for " + nodeURL);
-			logger.debug(
-					"\t->Skipping path building for: Assignment(" + assignment + ") - " + nodeURL);
+			logger.debug("\t->Skipping path building for: Assignment(" + assignment + ") - " + nodeURL);
 			return 0;
 		}
 		// Add mention's source as a 'starting'/'from' node

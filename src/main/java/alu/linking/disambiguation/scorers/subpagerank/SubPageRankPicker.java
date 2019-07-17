@@ -18,6 +18,12 @@ import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 import alu.linking.utils.Stopwatch;
 
+/**
+ * Computes sub-pagerank on an in-memory graph for entity disambiguation
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class SubPageRankPicker extends AbstractClusterItemPicker implements Loggable {
 
 	enum PageRankAlgorithm {

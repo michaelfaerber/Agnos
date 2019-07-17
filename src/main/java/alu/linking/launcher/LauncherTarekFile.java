@@ -13,6 +13,7 @@ import org.semanticweb.yars.nx.Node;
 import com.beust.jcommander.internal.Lists;
 import com.google.common.io.Files;
 
+import alu.linking.config.kg.EnumModelType;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.utils.MentionUtils;
 
@@ -37,7 +38,7 @@ public class LauncherTarekFile {
 			}
 
 			File outputFile = null;
-			final LauncherInputLinking linking = new LauncherInputLinking();
+			final LauncherInputLinking linking = new LauncherInputLinking(EnumModelType.DEFAULT);
 			if (args.length > 0) {
 				final File inputFile = new File(args[0]);
 				if (args.length > 1) {

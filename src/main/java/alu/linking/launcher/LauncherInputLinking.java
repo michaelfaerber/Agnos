@@ -30,16 +30,22 @@ import alu.linking.utils.Stopwatch;
 public class LauncherInputLinking {
 	private static boolean init = false;
 
-	private static MentionDetector md;
-	private static AssignmentChooser chooser;
-	private static CandidateGenerator candidateGenerator;
-	private static Map<String, Collection<String>> map;
-	private static EnumModelType KG;
-	private static Long timeCounter = 0l;
-	private static Long mentionCounter = 0l;
+	private MentionDetector md;
+	private AssignmentChooser chooser;
+	private CandidateGenerator candidateGenerator;
+	private Map<String, Collection<String>> map;
+	private final EnumModelType KG;
+	private Long timeCounter = 0l;
+	private Long mentionCounter = 0l;
+	private final boolean USE_MEMORY_GRAPH;
+	
+	public LauncherInputLinking(final EnumModelType KG) {
+		this.KG = KG;
+		this.USE_MEMORY_GRAPH = false;
+	}
 
-	private static void init() throws Exception {
-		KG = EnumModelType.DEFAULT;
+	private void init() throws Exception {
+		// KG = EnumModelType.DEFAULT;
 		if (init)
 			return;
 
@@ -52,9 +58,9 @@ public class LauncherInputLinking {
 		for (Map.Entry<String, Collection<String>> e : tmpMap.entrySet()) {
 			map.put(e.getKey(), e.getValue());
 		}
-		
+
 		final InputProcessor inputProcessor = new InputProcessor(null);
-		LauncherInputLinking.md = new MentionDetectorMap(map, inputProcessor);
+		this.md = new MentionDetectorMap(map, inputProcessor);
 		// LauncherInputLinking.md = new MentionDetectorLSH(map, 0.8);
 		candidateGenerator = new CandidateGeneratorMap(map);
 
@@ -63,23 +69,25 @@ public class LauncherInputLinking {
 		// ########################################################
 		chooser = new AssignmentChooser(KG);
 		// Blacklisting stuff from graph
-		Stopwatch.start("Blacklist");
-		NodeBlacklisting nBlacklisting = new NodeBlacklisting(Graph.getInstance());
-		EdgeBlacklisting eBlacklisting = new EdgeBlacklisting(Graph.getInstance());
-		for (Map.Entry<String, String> e : blacklistMap().entrySet()) {
-			nBlacklisting.blacklist(e.getKey());
-		}
-		for (String key : blacklistMapEdges()) {
-			eBlacklisting.blacklist(key);
-		}
+		if (USE_MEMORY_GRAPH) {
+			Stopwatch.start("Blacklist");
+			NodeBlacklisting nBlacklisting = new NodeBlacklisting(Graph.getInstance());
+			EdgeBlacklisting eBlacklisting = new EdgeBlacklisting(Graph.getInstance());
+			for (Map.Entry<String, String> e : blacklistMap().entrySet()) {
+				nBlacklisting.blacklist(e.getKey());
+			}
+			for (String key : blacklistMapEdges()) {
+				eBlacklisting.blacklist(key);
+			}
 
-		nBlacklisting.blacklistConnectionsOver(0.05);
-		nBlacklisting.enforce();
-		Stopwatch.endOutput("Blacklist");
+			nBlacklisting.blacklistConnectionsOver(0.05);
+			nBlacklisting.enforce();
+			Stopwatch.endOutput("Blacklist");
+		}
 		init = true;
 	}
 
-	public static List<Mention> run(final String inputLine) {
+	public List<Mention> run(final String inputLine) {
 		try {
 			init();
 			long startTime = System.currentTimeMillis();

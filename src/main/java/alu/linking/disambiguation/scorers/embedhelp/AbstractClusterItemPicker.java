@@ -2,6 +2,13 @@ package alu.linking.disambiguation.scorers.embedhelp;
 
 import java.util.function.BiFunction;
 
+/**
+ * Abstract class for picking items from specific clusters (disambiguation step
+ * utilised with the embeddings)
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public abstract class AbstractClusterItemPicker implements ClusterItemPicker {
 	public final BiFunction<Double, Double, Double> combinationOperation;
 

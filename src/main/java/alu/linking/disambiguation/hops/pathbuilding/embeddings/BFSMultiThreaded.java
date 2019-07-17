@@ -16,6 +16,13 @@ import org.apache.jena.ext.com.google.common.collect.Lists;
 import alu.linking.disambiguation.hops.graph.GraphNode;
 import alu.linking.structure.Loggable;
 
+/**
+ * Recursive multi-threaded BFS implementation
+ * 
+ * @author Kristian Noullet
+ * @deprecated due to use of RDF store-based crawling
+ * @param <T>
+ */
 public class BFSMultiThreaded<T> implements Loggable {
 	private final int MAX_LENGTH = alu.linking.config.constants.Numbers.HOPS_PATH_LENGTH.val.intValue();
 	private final HashMap<T, Set<T>> alreadyExpanded = new HashMap<T, Set<T>>();
@@ -32,7 +39,7 @@ public class BFSMultiThreaded<T> implements Loggable {
 		this.sourceNodes = sourceNodes;
 		this.allNodes = possible_nodes_map;
 		this.foundNodes = foundNodes;
-		//One per level
+		// One per level
 		for (int i = 0; i < MAX_LENGTH; ++i) {
 			foundNodes.add(new ConcurrentSkipListSet<T>());
 		}
@@ -69,10 +76,8 @@ public class BFSMultiThreaded<T> implements Loggable {
 	/**
 	 * O(|alrExpSet|)
 	 * 
-	 * @param next
-	 *            List of all possible expansions for a given node
-	 * @param alrExpSet
-	 *            Set of elements already expanded
+	 * @param next      List of all possible expansions for a given node
+	 * @param alrExpSet Set of elements already expanded
 	 * @return
 	 */
 	public List<T> filter(final List<T> next, final Collection<T> path) {
@@ -120,8 +125,8 @@ public class BFSMultiThreaded<T> implements Loggable {
 					public void run() {
 						final LinkedList<T> newPath = new LinkedList<T>(path);
 						newPath.add(succ);
-						storePath(newPath, depth+1);
-						recursiveCrawlPaths(newPath, depth+1);
+						storePath(newPath, depth + 1);
+						recursiveCrawlPaths(newPath, depth + 1);
 					}
 				});
 			}

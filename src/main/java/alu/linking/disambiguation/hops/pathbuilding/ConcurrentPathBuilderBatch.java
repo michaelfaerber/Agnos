@@ -26,6 +26,9 @@ import alu.linking.utils.Stopwatch;
  */
 public class ConcurrentPathBuilderBatch extends ConcurrentPathBuilderWrapper {
 
+	/**
+	 * Concurrently builds paths between nodes based on the Graph singleton instance
+	 */
 	@Override
 	public List<String> concurrentBuild(final Map<Integer, GraphNode<Integer>> possible_nodes_map,
 			final Map<Integer, GraphNode<Integer>> all_source_nodes_map, final Set<Integer> goalNodes,

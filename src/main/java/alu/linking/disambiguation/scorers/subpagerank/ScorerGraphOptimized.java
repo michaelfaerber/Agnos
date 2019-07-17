@@ -9,6 +9,13 @@ import java.util.Set;
 
 import alu.linking.disambiguation.scorers.embedhelp.EntitySimilarityService;
 
+/**
+ * PageRank computation for sub-pagerank, taking into account certain aspects of
+ * our task in an attempt to reduce computational complexity
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class ScorerGraphOptimized extends AbstractScorerGraph {
 	private Map<String, List<String>> clusters = null;
 	private double amtEntities = -1d;
