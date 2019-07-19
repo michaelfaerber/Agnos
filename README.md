@@ -31,83 +31,84 @@
   
 </table> 
 
-*.debug</br>
+<h2>Package information</h2>:
+*.debug</b></br>
 	Classes used for debugging / analysis</br>
 *.deprecated</br>
 	Classes that are deprecated for the current version, but might make a comeback depending on direction and progress of research.</br>
 </br>
-alu.linking</br>
+<b>alu.linking</b></br>
 	Main Project Folder</br>
-alu.linking.api</br>
+<b>alu.linking.api</b></br>
 	Classes related to API calls (currently only NIF API for GERBIL)</br>
-alu.linking.candidategeneration</br>
+<b>alu.linking.candidategeneration</b></br>
 	Classes related to candidate generation</br>
-alu.linking.config</br>
+<b>alu.linking.config</b></br>
 	Configuration-related classes and packages</br>
-alu.linking.config.constants</br>
+<b>alu.linking.config.constants</b></br>
 	Configuration-related runtime constants (e.g. file locations, knowledge graphs, server connections, ...)</br>
-alu.linking.config.kg</br>
+<b>alu.linking.config.kg</b></br>
 	Knowledge graph-related constants (e.g. supported KGs and related entity queries)</br>
-alu.linking.disambiguation</br>
+<b>alu.linking.disambiguation</b></br>
 	Disambiguation-related classes and packages</br>
-alu.linking.disambiguation.hops</br>
+<b>alu.linking.disambiguation.hops</b></br>
 	Classes related to graph-hopping through KGs</br>
-alu.linking.disambiguation.hops.graph</br>
+<b>alu.linking.disambiguation.hops.graph</b></br>
 	In-memory graph related classes</br>
-alu.linking.disambiguation.hops.pathbuilding</br>
+<b>alu.linking.disambiguation.hops.pathbuilding</b></br>
 	Classes used for crawling paths within KGs (for 'hopping')</br>
-alu.linking.disambiguation.pagerank	</br>
+<b>alu.linking.disambiguation.pagerank	</b></br>
 	PageRank-related classes (Note: apriori PageRank computation can be found in eu.wdaqua.pagerank; contextual disambiguation 'Sub-PageRank' can be found in alu.linking.disambiguation.scorers.subpagerank)</br>
-alu.linking.disambiguation.scorers</br>
+<b>alu.linking.disambiguation.scorers</b></br>
 	Scorers and scorer-related classes used for disambiguation</br>
-alu.linking.disambiguation.scorers.embedhelp</br>
+<b>alu.linking.disambiguation.scorers.embedhelp</b></br>
 	Helper Classes used by various embeddings-related scorers</br>
-alu.linking.disambiguation.scorers.hillclimbing</br>
+<b>alu.linking.disambiguation.scorers.hillclimbing</b></br>
 	Choosing / 'Picking' Schemes related to Hill-Climbing</br>
-alu.linking.disambiguation.scorers.pairwise</br>
+<b>alu.linking.disambiguation.scorers.pairwise</b></br>
 	Choosing / 'Picking' Schemes related to pairwise strategies</br>
-alu.linking.disambiguation.scorers.subpagerank</br>
+<b>alu.linking.disambiguation.scorers.subpagerank</b></br>
 	Choosing / 'Picking' Schemes related to contextual (aka. not apriori) versions of PageRank</br>
-alu.linking.executable</br>
+<b>alu.linking.executable</b></br>
 	All kinds of classes that can be executed through our Pipeline instance</br>
-alu.linking.executable.preprocessing</br>
+<b>alu.linking.executable.preprocessing</b></br>
 	Preprocessing-related executable classes</br>
-alu.linking.executable.preprocessing.loader</br>
+<b>alu.linking.executable.preprocessing.loader</b></br>
 	Executable classes related to loading (precomputed) data (e.g. PageRank, Mention possibilities, ...)</br>
-alu.linking.executable.preprocessing.nounphrases</br>
+<b>alu.linking.executable.preprocessing.nounphrases</b></br>
 	Exeutable classes related to nounphrases and their extraction</br>
-alu.linking.executable.preprocessing.setup</br>
+<b>alu.linking.executable.preprocessing.setup</b></br>
 	Executable preprocessing classes related to project setup (prior to proper linking pipeline execution)</br>
-alu.linking.executable.preprocessing.setup.surfaceform</br>
+<b>alu.linking.executable.preprocessing.setup.surfaceform</b></br>
 	Executable preprocessing classes related to surface form</br>
-alu.linking.executable.preprocessing.setup.surfaceform.processing</br>
+<b>alu.linking.executable.preprocessing.setup.surfaceform.processing</b></br>
 	Executable classes related to surface forms' processing for proper use</br>
-alu.linking.executable.preprocessing.setup.surfaceform.processing.url</br>
+<b>alu.linking.executable.preprocessing.setup.surfaceform.processing.url</b></br>
 	Executable classes related to URL-based surface forms' processing</br>
-alu.linking.executable.preprocessing.setup.surfaceform.query</br>
+<b>alu.linking.executable.preprocessing.setup.surfaceform.query</b></br>
 	Executable classes related to surface forms' acquisition through query executions (e.g. to a Jena or Virtuoso-loaded KG)</br>
-alu.linking.executable.preprocessing.util</br>
+<b>alu.linking.executable.preprocessing.util</b></br>
 	Executable classes mostly boiling down to utility classes for other executables or their related classes</br>
-alu.linking.launcher</br>
+<b>alu.linking.launcher</b></br>
 	Various entry points to the code - either for some preprocessing steps, different kinds of disambiguation alternatives (e.g. via API, stdin, etc.)</br>
-alu.linking.mentiondetection</br>
+<b>alu.linking.mentiondetection</b></br>
 	Mention detection related classes (aka. detecting mentions from plaintext)</br>
-alu.linking.mentiondetection.exact</br>
+<b>alu.linking.mentiondetection.exact</b></br>
 	Classes related to exact mention detection</br>
-alu.linking.mentiondetection.fuzzy</br>
+<b>alu.linking.mentiondetection.fuzzy</b></br>
 	Classes related to fuzzy mention detection</br>
-alu.linking.postprocessing</br>
+<b>alu.linking.postprocessing</b></br>
 	Classes related to post processing of files</br>
-alu.linking.preprocessing</br>
+<b>alu.linking.preprocessing</b></br>
 	Classes related to preprocessing (non-executables, but potential dependendencies for executable classes)</br>
-alu.linking.structure</br>
+<b>alu.linking.structure</b></br>
 	Mostly global interfaces or bean-type classes relating to code as well as execution structure</br>
-alu.linking.utils</br>
+<b>alu.linking.utils</b></br>
 	Contains largely singleton or static utility classes potentially used by a multitude of classes</br>
-de.dwslab.petar</br>
+<b>de.dwslab.petar</b></br>
 	RDF2Vec-related classes (including modifications)</br>
-eu.wdaqua</br>
+<b>eu.wdaqua</b></br>
 	PageRank implementation-related classes</br>
-org.aksw.gerbil</br>
+<b>org.aksw.gerbil</b></br>
 	GERBIL evaluation framework-related classes (mostly used by alu.linking.api)</br>
 </body>
