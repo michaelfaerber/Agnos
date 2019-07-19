@@ -1,5 +1,5 @@
 # kg-agnostic-entity-linking
-<body>
+<body style="padding-left:5em">
 <br>
 <h2> Licenses </h2>
  <table style="width:100%">
