@@ -1,4 +1,4 @@
-package alu.linking.candidategeneration.lsh;
+package alu.linking.mentiondetection.fuzzy.lsh;
 
 import java.util.HashSet;
 import java.util.Set;

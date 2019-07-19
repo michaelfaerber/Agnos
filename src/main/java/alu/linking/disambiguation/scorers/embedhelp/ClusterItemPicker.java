@@ -10,12 +10,12 @@ import java.util.function.BiFunction;
 
 import com.beust.jcommander.internal.Lists;
 
-import alu.linking.candidategeneration.PossibleAssignment;
 import alu.linking.disambiguation.ContextBase;
 import alu.linking.disambiguation.pagerank.AssignmentScore;
 import alu.linking.executable.preprocessing.loader.PageRankLoader;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
+import alu.linking.structure.PossibleAssignment;
 
 /**
  * Class handling the selection (=picking) of items (or entities) from within

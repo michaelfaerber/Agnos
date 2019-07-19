@@ -8,6 +8,7 @@ import com.beust.jcommander.internal.Lists;
 
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
+import alu.linking.structure.PossibleAssignment;
 
 /**
  * A simple dictionary/lookup-table-like implementation of candidate generation

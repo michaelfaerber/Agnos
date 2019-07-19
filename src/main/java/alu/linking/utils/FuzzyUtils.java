@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.apache.jena.ext.com.google.common.collect.Lists;
 
-import alu.linking.candidategeneration.lsh.LSHSparseVector;
+import alu.linking.mentiondetection.fuzzy.lsh.LSHSparseVector;
 
 public class FuzzyUtils {
 	private static final char padding = '$';

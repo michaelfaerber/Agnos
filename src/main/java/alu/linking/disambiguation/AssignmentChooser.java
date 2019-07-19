@@ -10,9 +10,9 @@ import org.apache.log4j.Logger;
 
 import com.google.common.collect.Lists;
 
-import alu.linking.candidategeneration.PossibleAssignment;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.mentiondetection.Mention;
+import alu.linking.structure.PossibleAssignment;
 
 /**
  * Handles different scorers for pre- and post-scoring. <br>

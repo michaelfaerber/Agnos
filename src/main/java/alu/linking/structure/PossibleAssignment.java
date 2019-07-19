@@ -1,4 +1,4 @@
-package alu.linking.candidategeneration;
+package alu.linking.structure;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -9,7 +9,6 @@ import alu.linking.disambiguation.PostScorer;
 import alu.linking.disambiguation.ScoreCombiner;
 import alu.linking.disambiguation.Scorer;
 import alu.linking.mentiondetection.Mention;
-import alu.linking.structure.Loggable;
 
 /**
  * A possible output candidate for entity linking - it can be scored, based on

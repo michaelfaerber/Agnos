@@ -14,11 +14,11 @@ import java.util.Set;
 
 import com.beust.jcommander.internal.Lists;
 
-import alu.linking.candidategeneration.PossibleAssignment;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.PostScorer;
 import alu.linking.mentiondetection.Mention;
+import alu.linking.structure.PossibleAssignment;
 import alu.linking.utils.EmbeddingsUtils;
 
 /**

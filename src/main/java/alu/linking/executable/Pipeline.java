@@ -7,6 +7,15 @@ import org.apache.jena.ext.com.google.common.collect.Lists;
 import alu.linking.structure.Executable;
 import alu.linking.utils.Stopwatch;
 
+/**
+ * Overall execution pipeline, executing Executable instances through the passed
+ * arguments <br>
+ * <b>Note</b>: Pipeline itself is also an executable, meaning that one Pipeline
+ * may execute another sub-pipeline
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class Pipeline implements Executable {
 	private final LinkedList<Executable> subprograms = Lists.newLinkedList();
 	private final LinkedList<Object[]> params = Lists.newLinkedList();
@@ -66,7 +75,7 @@ public class Pipeline implements Executable {
 
 	@Override
 	public String getExecMethod() {
-		//Shouldn't have anything else as it's the working pipeline
+		// Shouldn't have anything else as it's the working pipeline
 		return null;
 	}
 

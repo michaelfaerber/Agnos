@@ -13,11 +13,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import alu.linking.candidategeneration.PossibleAssignment;
 import alu.linking.disambiguation.PostScorer;
 import alu.linking.disambiguation.scorers.embedhelp.ClusterItemPicker;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
+import alu.linking.structure.PossibleAssignment;
 import alu.linking.utils.EmbeddingsUtils;
 import alu.linking.utils.IDMappingLoader;
 import alu.linking.utils.Stopwatch;

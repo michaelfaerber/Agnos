@@ -5,12 +5,12 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 
-import alu.linking.candidategeneration.PossibleAssignment;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.constants.Numbers;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.Scorer;
 import alu.linking.executable.preprocessing.loader.PageRankLoader;
+import alu.linking.structure.PossibleAssignment;
 import alu.linking.utils.Stopwatch;
 
 /**

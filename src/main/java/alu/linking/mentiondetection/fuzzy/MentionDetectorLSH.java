@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.Lists;
 
-import alu.linking.candidategeneration.lsh.LSHSparseVector;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.constants.Numbers;
 import alu.linking.config.kg.EnumModelType;
@@ -33,6 +32,7 @@ import alu.linking.mentiondetection.EnumDetectionType;
 import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
+import alu.linking.mentiondetection.fuzzy.lsh.LSHSparseVector;
 import alu.linking.structure.Loggable;
 import alu.linking.utils.FuzzyUtils;
 import alu.linking.utils.Stopwatch;

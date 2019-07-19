@@ -6,8 +6,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import alu.linking.candidategeneration.PossibleAssignment;
 import alu.linking.structure.Loggable;
+import alu.linking.structure.PossibleAssignment;
 
 public class Mention implements Loggable {
 	private String mention = null;

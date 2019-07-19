@@ -5,9 +5,9 @@ import java.util.List;
 
 import com.beust.jcommander.internal.Lists;
 
-import alu.linking.candidategeneration.PossibleAssignment;
 import alu.linking.disambiguation.Scorer;
 import alu.linking.mentiondetection.Mention;
+import alu.linking.structure.PossibleAssignment;
 
 public class ThresholdPruner implements MentionPruner {
 	private final double threshold;

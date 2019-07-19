@@ -28,7 +28,6 @@ import com.beust.jcommander.internal.Lists;
 
 import alu.linking.candidategeneration.CandidateGenerator;
 import alu.linking.candidategeneration.CandidateGeneratorMap;
-import alu.linking.candidategeneration.PossibleAssignment;
 import alu.linking.config.constants.Comparators;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.AssignmentChooser;
@@ -39,6 +38,7 @@ import alu.linking.mentiondetection.StopwordsLoader;
 import alu.linking.postprocessing.MentionPruner;
 import alu.linking.postprocessing.ThresholdPruner;
 import alu.linking.structure.Executable;
+import alu.linking.structure.PossibleAssignment;
 import alu.linking.utils.DetectionUtils;
 import alu.linking.utils.Stopwatch;
 

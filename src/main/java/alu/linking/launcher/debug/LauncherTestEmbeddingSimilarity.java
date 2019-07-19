@@ -11,7 +11,6 @@ import org.apache.log4j.Logger;
 
 import alu.linking.candidategeneration.CandidateGenerator;
 import alu.linking.candidategeneration.CandidateGeneratorMap;
-import alu.linking.candidategeneration.PossibleAssignment;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.launcher.LauncherContinuousMentionDetector;
@@ -19,6 +18,7 @@ import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
 import alu.linking.mentiondetection.StopwordsLoader;
+import alu.linking.structure.PossibleAssignment;
 import alu.linking.utils.DetectionUtils;
 import alu.linking.utils.EmbeddingsUtils;
 import alu.linking.utils.IDMappingLoader;

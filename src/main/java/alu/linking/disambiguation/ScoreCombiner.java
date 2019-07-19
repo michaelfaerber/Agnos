@@ -5,12 +5,22 @@ import alu.linking.disambiguation.scorers.PageRankScorer;
 import alu.linking.disambiguation.scorers.VicinityScorer;
 import alu.linking.structure.Loggable;
 
+/**
+ * Class determining how scores stemming from various scorer instances are
+ * combined into a single disambiguated score
+ * 
+ * @author Kristian Noullet
+ *
+ * @param <T> what type the scorers are working with
+ */
 public class ScoreCombiner<T> implements Loggable {
 	public Number combine(final Number currScore, final Scorer<T> scorer, final T scorerParam) {
 		// Add all types of scorers here with the appropriate weights
 		final Number weight = scorer.getWeight();
 		final Number score = scorer.computeScore(scorerParam);
-		// Generally not needed, but keeping here for the sake of it~
+		// Generally not needed, but PR unfortunately can have some extremely high
+		// values by comparison and as such requires some smoothing (e.g. through
+		// sqrt())
 		if (scorer instanceof PageRankScorer) {
 			// Pretty much just sets the weight
 			final Double prScore = Numbers.PAGERANK_WEIGHT.val.doubleValue()

@@ -1,4 +1,4 @@
-package alu.linking.candidategeneration;
+package alu.linking.structure;
 
 /**
  * Interface allowing objects to be scored based on a computeScore() function

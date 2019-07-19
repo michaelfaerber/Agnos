@@ -28,12 +28,12 @@ import alu.linking.utils.MentionUtils;
  */
 public class ContinuousHillClimbingPicker extends HillClimbingPicker {
 
-	public ContinuousHillClimbingPicker(BiFunction<Double, Double, Double> operation,
-			EntitySimilarityService similarityService, PageRankLoader pagerankLoader) {
+	public ContinuousHillClimbingPicker(final BiFunction<Double, Double, Double> operation,
+			final EntitySimilarityService similarityService, final PageRankLoader pagerankLoader) {
 		super(operation, similarityService, pagerankLoader);
 	}
 
-	public ContinuousHillClimbingPicker(EntitySimilarityService similarityService, PageRankLoader pagerankLoader) {
+	public ContinuousHillClimbingPicker(final EntitySimilarityService similarityService, final PageRankLoader pagerankLoader) {
 		super(similarityService, pagerankLoader);
 	}
 

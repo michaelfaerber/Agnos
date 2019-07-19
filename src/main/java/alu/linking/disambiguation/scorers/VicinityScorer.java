@@ -10,7 +10,6 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import alu.linking.candidategeneration.PossibleAssignment;
 import alu.linking.config.constants.Numbers;
 import alu.linking.disambiguation.PostScorer;
 import alu.linking.disambiguation.hops.graph.Graph;
@@ -18,6 +17,7 @@ import alu.linking.disambiguation.hops.graph.GraphNode;
 import alu.linking.disambiguation.hops.pathbuilding.ConcurrentPathBuilderBatch;
 import alu.linking.disambiguation.hops.pathbuilding.ConcurrentPathBuilderSingle;
 import alu.linking.mentiondetection.Mention;
+import alu.linking.structure.PossibleAssignment;
 
 /**
  * Context-based scorer making use of an in-memory graph and node connectivities

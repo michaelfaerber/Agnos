@@ -3,6 +3,7 @@ package alu.linking.candidategeneration;
 import java.util.List;
 
 import alu.linking.mentiondetection.Mention;
+import alu.linking.structure.PossibleAssignment;
 
 /**
  * Simple interface for candidate generators with one method -
