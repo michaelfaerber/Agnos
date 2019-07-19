@@ -32,7 +32,7 @@
 </table> 
 
 
-<h2>Package information</h2>
+<h2>Package Details</h2>
 <dl>
 <dt>*.debug</dt>
 	<dd>Classes used for debugging / analysis</dd>

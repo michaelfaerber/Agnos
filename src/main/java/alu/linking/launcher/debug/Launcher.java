@@ -1,4 +1,4 @@
-package alu.linking.launcher;
+package alu.linking.launcher.debug;
 
 import java.io.File;
 import java.util.List;
@@ -23,6 +23,14 @@ import alu.linking.executable.preprocessing.util.VirtuosoCommunicator;
 import alu.linking.preprocessing.crunchbase.CrunchbaseKGManager;
 import alu.linking.preprocessing.fileparser.EnumFileType;
 
+/**
+ * Initially used for full-out system reproduction, but as needs vary based on
+ * KG and wanted case, it deprecated
+ * 
+ * @deprecated
+ * @author Kristian Noullet
+ *
+ */
 public class Launcher {
 	private static Logger logger = Logger.getLogger(Launcher.class);
 
@@ -68,19 +76,21 @@ public class Launcher {
 			// pipeline.queue(new SurfaceFormManager(), crunchbaseEntitiesFile,
 			// crunchbase_noun_phrases);
 
-			// pipeline.queue(new StringReplacer(), new File(FilePaths.FILE_PAGERANK.getPath(KG)),
+			// pipeline.queue(new StringReplacer(), new
+			// File(FilePaths.FILE_PAGERANK.getPath(KG)),
 			// new File(FilePaths.FILE_PAGERANK_ADAPTED.getPath(KG)), "\t", "");
 
 			if (UPDATE_QUERY_OUTPUT_SF) {
 				// Execute all queries from the surface form directory
-				final File[] surfaceFormQueryFiles = new File(FilePaths.DIR_QUERY_IN_SURFACEFORM.getPath(KG)).listFiles();
+				final File[] surfaceFormQueryFiles = new File(FilePaths.DIR_QUERY_IN_SURFACEFORM.getPath(KG))
+						.listFiles();
 				queueUpdateQueryOutput(pipeline, surfaceFormQueryFiles);
 			}
 
 			if (UPDATE_QUERY_OUTPUT_HSF) {
 				// Execute all queries from the helping surface form directory
-				final File[] helpingSurfaceFormQueryFiles = new File(FilePaths.DIR_QUERY_IN_HELPING_SURFACEFORM.getPath(KG))
-						.listFiles();
+				final File[] helpingSurfaceFormQueryFiles = new File(
+						FilePaths.DIR_QUERY_IN_HELPING_SURFACEFORM.getPath(KG)).listFiles();
 				// Execute queries and get the data for (helping) surface forms
 				// Note: HSF = Helping Surface Form
 				// b) Updates query output for the directly to-attach helping surface form (HSF)
@@ -107,7 +117,8 @@ public class Launcher {
 				// Execute the hopping queries and update the output from them
 				logger.debug("[Hops Querying] Added to queue");
 				// Execute all queries from the helping surface form NP URL directory
-				final File[] hopsQueryFiles = new File(FilePaths.DIR_QUERY_IN_EXTENDED_GRAPH_HOPS.getPath(KG)).listFiles();
+				final File[] hopsQueryFiles = new File(FilePaths.DIR_QUERY_IN_EXTENDED_GRAPH_HOPS.getPath(KG))
+						.listFiles();
 				queueUpdateQueryOutput(pipeline, hopsQueryFiles);
 			}
 
@@ -159,7 +170,8 @@ public class Launcher {
 				// For Part c): Noun-phrase detection/extraction on longish text
 				// Take all files in designated folder as input (aka. all files with the output
 				// from the executed queries) and process them to get their noun-phrases
-				final File[] hSF_NPFiles = new File(FilePaths.DIR_QUERY_OUT_NP_HELPING_SURFACEFORM.getPath(KG)).listFiles();
+				final File[] hSF_NPFiles = new File(FilePaths.DIR_QUERY_OUT_NP_HELPING_SURFACEFORM.getPath(KG))
+						.listFiles();
 				logger.debug("Part c) Added to queue");
 				for (File hSFNPIn : hSF_NPFiles) {
 					if (hSFNPIn.isFile()) {
@@ -167,8 +179,8 @@ public class Launcher {
 						final String hSFNPOut = FilePaths.DIR_EXTENDED_GRAPH.getPath(KG) + hSFNPIn.getName();
 						// Grabs the URLs from input file of type CSV, grabs the content from the web
 						// and finally outputs it in N3 format to the specified output file
-						pipeline.queue(new NP_HSFManager(), hSFNPIn, new File(hSFNPOut), EnumFileType.CSV, EnumFileType.N3,
-								false, true, true);
+						pipeline.queue(new NP_HSFManager(), hSFNPIn, new File(hSFNPOut), EnumFileType.CSV,
+								EnumFileType.N3, false, true, true);
 					}
 				}
 				alu.linking.utils.Stopwatch.endOutput("PART_C");
@@ -245,8 +257,8 @@ public class Launcher {
 			}
 			if (DISPLAY_STATEMENTS) {
 				// Query contents of extended graph just for the fun of it / debugging
-				List<Statement> stmts = new CrunchbaseKGManager(FilePaths.DATASET_CRUNCHBASE.getPath(KG)).getStatements(null,
-						"http://own.org/helpingSurfaceFormExtractedNP", null);
+				List<Statement> stmts = new CrunchbaseKGManager(FilePaths.DATASET_CRUNCHBASE.getPath(KG))
+						.getStatements(null, "http://own.org/helpingSurfaceFormExtractedNP", null);
 				logger.debug("Number of statements: " + stmts.size());
 				final int nbShown = 10;
 				for (int i = 0; i < Math.min(nbShown, stmts.size()); ++i) {
@@ -275,10 +287,9 @@ public class Launcher {
 	 * of VirtuosoCommunicator() to the pipeline as <br>
 	 * pipeline.queue(new VirtuosoCommunicator(), File[:].getPath(), TRUE)
 	 * 
-	 * @param pipeline
-	 *            pipeline that will take care of executing its parts
-	 * @param queryInputFiles
-	 *            files containing queries to be executed on the SPARQL endpoint
+	 * @param pipeline        pipeline that will take care of executing its parts
+	 * @param queryInputFiles files containing queries to be executed on the SPARQL
+	 *                        endpoint
 	 * 
 	 */
 	private static void queueUpdateQueryOutput(Pipeline pipeline, File[] queryInputFiles) {

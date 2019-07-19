@@ -12,28 +12,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.jena.ext.com.google.common.collect.Lists;
 import org.apache.log4j.Logger;
-import org.semanticweb.yars.nx.Node;
 
-import alu.linking.api.GERBILAPIAnnotator;
 import alu.linking.candidategeneration.CandidateGenerator;
 import alu.linking.candidategeneration.CandidateGeneratorMap;
-import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.AssignmentChooser;
-import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
 import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.mentiondetection.MentionDetector;
 import alu.linking.mentiondetection.StopwordsLoader;
-import alu.linking.mentiondetection.fuzzy.MentionDetectorLSH;
 import alu.linking.utils.DetectionUtils;
 import alu.linking.utils.Stopwatch;
 
+/**
+ * Entrypoint for continuous entity linking once precomputation structures have
+ * been properly established
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class LauncherContinuousMentionDetector {
 	public static boolean openBrowser;
 	// Whether the output should be detailed
@@ -99,8 +100,8 @@ public class LauncherContinuousMentionDetector {
 					inputLine = sc.nextLine();
 					Stopwatch.start(iterationWatch);
 					Stopwatch.start(detectionWatch);
-					mentions = md
-							.detect(InputProcessor.combineProcessedInput(InputProcessor.processAndRemoveStopwords(inputLine, stopwords)));
+					mentions = md.detect(InputProcessor
+							.combineProcessedInput(InputProcessor.processAndRemoveStopwords(inputLine, stopwords)));
 					System.out.println("Detected [" + mentions.size() + "] mentions.");
 					System.out.println("Detection duration: " + Stopwatch.endDiffStart(detectionWatch) + " ms.");
 
@@ -183,7 +184,6 @@ public class LauncherContinuousMentionDetector {
 			Desktop.getDesktop().browse(resultsFile.toURI());
 		}
 	}
-
 
 	private static Logger getLogger() {
 		return Logger.getLogger(LauncherContinuousMentionDetector.class);
