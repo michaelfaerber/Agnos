@@ -36,7 +36,7 @@
 
 
 <h2>Guide(s)</h2>
-Please note that the execution of Agnos creates the appropriate file tree for each defined knowledge graph (as seen in EnumModelType).
+Please note that the execution of Agnos creates the appropriate file/folder tree structure for each expected knowledge graph (as defined in EnumModelType).
 
 <h3>(Maven) Setup of virt-jena/jdbc drivers (dependency required for Virtuoso execution) on a local repository (due to unavailability on public repositories)</h3>
 <dl>
