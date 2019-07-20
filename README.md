@@ -27,8 +27,11 @@
     <td><a href="https://github.com/tdebatty/java-LSH/blob/master/LICENSE.md">MIT License</a></td>
     <td>LSHMinhash</td>
   </tr>
-  
-  
+  <tr>
+  	<td><a href="http://data.dws.informatik.uni-mannheim.de/rdf2vec/">RDF2Vec</td>
+  	<td>/</td>
+  	<td>de.dwslab.petar</td>
+  </tr>
 </table> 
 
 
@@ -52,6 +55,27 @@ Introduce it as an additional enumeration within EnumModelType and define a SPAR
 	<dd>0. Execute LauncherMentionDetectionTuning, defining a sample input as well as potentially different bins and bands dimensions in order to tune LSH arguments for execution times (not inclusiveness/exclusiveness/quality of results). Then adapt the arguments LSH_BANDS and LSH_BUCKETS in Numbers.java appropriately.</dd>
 
 <dt>3) Done. Ready to apply entity linking!</dt>
+
+</dl>
+
+<h3>Setup of virt-jena drivers (dependency required for Virtuoso execution) on a local repository (due to unavailability on public repositories)</h3>
+<dl>
+
+<dt>Install Jena's Virtuoso Driver</dt>
+	<dd>https://stackoverflow.com/questions/41137342/is-there-any-usable-dependency-for-virtuoso-jena-driver</dd>
+<dt>Maven</dt>
+	<dd>https://maven.apache.org/download.cgi</dd>
+
+<dt>Maven instructions</dt>
+	<dd>https://www.mkyong.com/maven/how-to-install-maven-in-windows/</dd>
+
+<dt>For the Virtuoso maven jar generation</dt>
+	<dd>Do this (add quotes compared to the solution proposed, as it otherwise complains with some errors)</dd>
+	<dd>Explained why here: https://stackoverflow.com/questions/16348459/error-the-goal-you-specified-requires-a-project-to-execute-but-there-is-no-pom</dd>
+
+<dt>Commands</dt>
+	<dd>mvn install:install-file -q "-Dfile=./virt_jena3.jar" "-DgroupId=com.openlink.virtuoso" "-DartifactId=virt_jena3" "-Dversion=3.0" "-Dpackaging=jar" "-DgeneratePom=true"</dd>
+	<dd>mvn install:install-file -q "-Dfile=./virtjdbc4.jar" "-DgroupId=com.openlink.virtuoso" "-DartifactId=virtjdbc4" "-Dversion=4.0" "-Dpackaging=jar" "-DgeneratePom=true"</dd>
 
 </dl>
 
