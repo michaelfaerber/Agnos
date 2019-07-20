@@ -38,21 +38,22 @@ Introduce it as an additional enumeration within EnumModelType and define a SPAR
 </br>
 <h3>Set up precomputation structures</h3>
 <dl>
-<dt>1) Mention Detection Tuning (LSH)</dt> 
-	<dd>0. (Optional) Execute LauncherMentionDetectionTuning, defining a sample input as well as potentially different bins and bands dimensions in order to tune LSH arguments for execution times (not inclusiveness/exclusiveness/quality of results). Then adapt the arguments LSH_BANDS and LSH_BUCKETS in Numbers.java appropriately.</dd>
-<dt>2) Importing KG, setting up mention detection & pagerank, then computing embeddings</dt>
-	<dd>Import KG into Jena (local) or Virtuoso (possible remote connection through JDBC driver) by executing LauncherSetupTDB, specifying the wanted EnumModelType (aka. KG) and input location in order to set up the TDB for Jena usage. If the KG is accessed via the Virtuoso endpoint/JDBC driver (and is already loaded within it), this step is not necessary.</dd>
-	<dd>Execute LauncherExecuteQueries, specifying the wanted EnumModelType (aka. KG) in order to execute all wanted surface form, helping surface form etc. queries on the KG - required for mention detection and for deciding which embeddings are required.</dd>
-	<dd>Execute LauncherSetup, specifying the wanted EnumModelType (aka. KG) - this will execute the mention detection setup, as well as compute apriori PageRank values for the KG file located as defined in FilePaths.FILE_PAGERANK. <b>Note</b> that a local version of the KG needs to be present (even if using Virtuoso) in order to compute PageRank on it.</dd>
-	<dd>-Compute Graph Walks (Java) with wanted arguments in LauncherWalkGenerator and then executing it, outputting walks to ./[KG]/resources/data/walks.txt.</dd>
-	<dd>-Specify location of output graph walks in ./sentencesPaths.txt (can be split among multiple files)</dd>
-	<dd>Specify hyperparameters and compute Embeddings (Python) by executing ./scripts/trainModel.py</dd>
-	<dd>-Place/Move embeddings appropriately into the KG's file tree structure as defined in FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS (or change the value to match the embeddings output location).</dd>
+
+<dt>1) Importing KG, setting up mention detection & pagerank, then computing embeddings</dt>
+	<dd>1. Import KG into Jena (local) or Virtuoso (possible remote connection through JDBC driver) by executing LauncherSetupTDB, specifying the wanted EnumModelType (aka. KG) and input location in order to set up the TDB for Jena usage. If the KG is accessed via the Virtuoso endpoint/JDBC driver (and is already loaded within it), this step is not necessary.</dd>
+	<dd>2. Execute LauncherExecuteQueries, specifying the wanted EnumModelType (aka. KG) in order to execute all wanted surface form, helping surface form etc. queries on the KG - required for mention detection and for deciding which embeddings are required.</dd>
+	<dd>3. Execute LauncherSetup, specifying the wanted EnumModelType (aka. KG) - this will execute the mention detection setup, as well as compute apriori PageRank values for the KG file located as defined in FilePaths.FILE_PAGERANK. <b>Note</b> that a local version of the KG needs to be present (even if using Virtuoso) in order to compute PageRank on it.</dd>
+	<dd>4. Compute Graph Walks (Java) with wanted arguments in LauncherWalkGenerator and then executing it, outputting walks to ./[KG]/resources/data/walks.txt.</dd>
+	<dd>5. Specify location of output graph walks in ./sentencesPaths.txt (can be split among multiple files)</dd>
+	<dd>6. Specify hyperparameters and compute Embeddings (Python) by executing ./scripts/trainModel.py</dd>
+	<dd>7. Place/Move embeddings appropriately into the KG's file tree structure as defined in FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS (or change the value to match the embeddings output location).</dd>
+
+<dt>2) (Optional) Mention Detection Tuning (LSH)</dt> 
+	<dd>0. Execute LauncherMentionDetectionTuning, defining a sample input as well as potentially different bins and bands dimensions in order to tune LSH arguments for execution times (not inclusiveness/exclusiveness/quality of results). Then adapt the arguments LSH_BANDS and LSH_BUCKETS in Numbers.java appropriately.</dd>
+
 <dt>3) Done. Ready to apply entity linking!</dt>
 
-
-
-
+</dl>
 
 <h2>Package Details</h2>
 <dl>
