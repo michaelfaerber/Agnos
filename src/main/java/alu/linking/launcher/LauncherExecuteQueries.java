@@ -9,6 +9,13 @@ import alu.linking.executable.preprocessing.setup.surfaceform.query.NP_HSFQueryE
 import alu.linking.executable.preprocessing.setup.surfaceform.query.NP_URLHSFQueryExecutor;
 import alu.linking.executable.preprocessing.setup.surfaceform.query.SFQueryExecutor;
 
+/**
+ * Executes all queries from defined folders (for SF, HSF, NP HSF, NP URL HSF)
+ * and saves the output to the respective output folders for the specific type
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class LauncherExecuteQueries {
 
 	public static void main(String[] args) {

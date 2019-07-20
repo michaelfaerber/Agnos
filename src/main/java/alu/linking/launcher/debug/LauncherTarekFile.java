@@ -1,4 +1,4 @@
-package alu.linking.launcher;
+package alu.linking.launcher.debug;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -14,6 +14,7 @@ import com.beust.jcommander.internal.Lists;
 import com.google.common.io.Files;
 
 import alu.linking.config.kg.EnumModelType;
+import alu.linking.launcher.LauncherInputLinking;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.utils.MentionUtils;
 

@@ -1,4 +1,4 @@
-package alu.linking.launcher;
+package alu.linking.launcher.debug;
 
 import java.awt.Desktop;
 import java.io.BufferedWriter;
@@ -7,11 +7,9 @@ import java.io.FileWriter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.TreeMap;
 
 import alu.linking.candidategeneration.CandidateGenerator;
@@ -19,8 +17,6 @@ import alu.linking.candidategeneration.CandidateGeneratorMap;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.AssignmentChooser;
-import alu.linking.disambiguation.hops.graph.Graph;
-import alu.linking.disambiguation.hops.graph.NodeBlacklisting;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
 import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.Mention;
@@ -29,17 +25,18 @@ import alu.linking.mentiondetection.StopwordsLoader;
 import alu.linking.mentiondetection.fuzzy.MentionDetectorLSH;
 import alu.linking.utils.Stopwatch;
 
-public class LauncherLinkingMAG {
+public class LauncherEmbeddingLinking {
 	public static boolean openBrowser;
 
 	public static void main(String[] args) {
+		final EnumModelType KG = EnumModelType.CRUNCHBASE;
 		openBrowser = false;
-		new LauncherLinkingMAG(EnumModelType.MAG).run();
+		new LauncherEmbeddingLinking(KG).run();
 	}
 
 	private final EnumModelType KG;
 
-	LauncherLinkingMAG(EnumModelType KG) {
+	LauncherEmbeddingLinking(EnumModelType KG) {
 		this.KG = KG;
 	}
 
@@ -47,13 +44,13 @@ public class LauncherLinkingMAG {
 		try {
 			Stopwatch.start(getClass().getName());
 			final Map<String, Collection<String>> map;
-			final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG);
+			final StopwordsLoader stopwordsLoader = new StopwordsLoader(KG);
+			final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG, stopwordsLoader);
 			map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
+			// FILE_EXTENDED_GRAPH
 			Stopwatch.endOutputStart(getClass().getName());
 			System.out.println("Number of entries: " + map.size());
-			final StopwordsLoader stopwordsLoader = new StopwordsLoader(KG);
-			final Set<String> stopwords = stopwordsLoader.getStopwords();
-			final InputProcessor inputProcessor = new InputProcessor(stopwords);
+			final InputProcessor inputProcessor = new InputProcessor(stopwordsLoader.getStopwords());
 			final MentionDetector md = new MentionDetectorLSH(KG, 0.8, inputProcessor);
 			Stopwatch.endOutputStart(getClass().getName());
 			// ########################################################
@@ -69,17 +66,6 @@ public class LauncherLinkingMAG {
 			Stopwatch.start(chooserWatch);
 			final AssignmentChooser chooser = new AssignmentChooser(this.KG);
 			Stopwatch.endOutput(chooserWatch);
-			// Blacklisting stuff from graph
-			Stopwatch.start("Blacklist");
-			NodeBlacklisting blacklisting = new NodeBlacklisting(Graph.getInstance());
-			for (Map.Entry<String, String> e : blacklistMap().entrySet()) {
-				blacklisting.blacklist(e.getKey());
-			}
-			final int amtBlacklisted = blacklisting.blacklistConnectionsOver(0.05);
-			System.out.println("Blacklisted items: " + amtBlacklisted);
-			System.out.println("Enforcing...");
-			blacklisting.enforce();
-			Stopwatch.endOutput("Blacklist");
 
 			String inputLine = null;
 			try (final Scanner sc = new Scanner(System.in)) {
@@ -93,6 +79,7 @@ public class LauncherLinkingMAG {
 					mentions = md.detect(inputLine);
 					System.out.println("Detection duration: " + Stopwatch.endDiffStart(detectionWatchName) + " ms.");
 					System.out.println("Detected [" + mentions.size() + "] mentions.");
+					System.out.println("Mentions: " + mentions);
 					// Once we know where something was mentioned, we need to generate candidates
 					// for them
 					// ########################################################
@@ -176,12 +163,6 @@ public class LauncherLinkingMAG {
 								System.out.println("Mention:" + m.getMention() + " - " + m.getOffset());
 							}
 							currIndex = foundIndex + search.length();
-
-							// Mention m = e.getValue();
-							// resultLine = resultLine.replace(" " + m.getMention() + " ",
-							// hyperlinkMention);
-							// resultLine = resultLine.replace(" " + m.getOriginalMention() + " ",
-							// hyperlinkMentionOriginal);
 						}
 						bwResults.write("<META HTTP-EQUIV=\"content-type\" CONTENT=\"text/html; charset=utf-8\"><br>"
 								+ resultLine);
@@ -202,19 +183,5 @@ public class LauncherLinkingMAG {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	private static Map<String, String> blacklistMap() {
-		Map<String, String> entityIDMapping = new HashMap<String, String>();
-		entityIDMapping.put("e_1", "car");// confirmed to be 'car', prior set to 'car_part'
-		entityIDMapping.put("e_3", "car_part");// confirmed, prior set to 'action_car_part'
-		entityIDMapping.put("e_5", "action_car_part");// confirmed
-		entityIDMapping.put("e_6", "SENTECE_LABEL");// confirmed
-		entityIDMapping.put("e_19", "termin_wartezeit");// confirmed
-		entityIDMapping.put("e_22", "holbring_mobil");// confirmed
-		entityIDMapping.put("e_25", "location");// confirmed
-		entityIDMapping.put("e_2", "car_property");// confirmed
-		entityIDMapping.put("e_4", "damage");// confirmed
-		return entityIDMapping;
 	}
 }

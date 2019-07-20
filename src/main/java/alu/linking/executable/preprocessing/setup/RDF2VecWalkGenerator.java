@@ -31,6 +31,14 @@ import de.dwslab.petar.walks.WalkResultProcessorAll;
 import de.dwslab.petar.walks.WalkResultprocessorRandomDecreasingDepth;
 import virtuoso.jena.driver.VirtGraph;
 
+/**
+ * Class handling graph walk generation in an RDF2Vec-fashion with some caveats
+ * (extensions), outputting graph walks to the appropriate place for it to be
+ * picked up by the python code for embedding computations
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class RDF2VecWalkGenerator implements Executable {
 	private final EnumModelType kg;
 	private final int threadCount;
@@ -91,6 +99,8 @@ public class RDF2VecWalkGenerator implements Executable {
 	}
 
 	private void ram_friendly_walks() throws Exception {
+		final float[] distribution = new float[] { 1.0f, 0.1f, 0.05f, 0.02f// , 0.01f
+		};
 		// Just output the walks to a different spot than the rest
 		final String walkOutput = FilePaths.FILE_GRAPH_WALK_OUTPUT.getPath(this.kg
 		// EnumModelType.NONE
@@ -129,9 +139,8 @@ public class RDF2VecWalkGenerator implements Executable {
 				if (ALL_VS_RANDOM) {
 					resultProcessor = new WalkResultProcessorAll(null, predicateMapper);
 				} else {
-					resultProcessor = new WalkResultprocessorRandomDecreasingDepth(
-							new float[] { 1.0f, 0.1f, 0.05f, 0.02f// , 0.01f
-							}).entityMapping(null).predicateMapper(predicateMapper).minWalks(50).maxWalks(1_000);
+					resultProcessor = new WalkResultprocessorRandomDecreasingDepth(distribution).entityMapping(null)
+							.predicateMapper(predicateMapper).minWalks(50).maxWalks(1_000);
 				}
 
 				// Whether to use Jena or Virtuoso is defined in the EnumModelType
@@ -165,6 +174,7 @@ public class RDF2VecWalkGenerator implements Executable {
 	}
 
 	private void hdd_friendly_walks() throws Exception {
+		final float[] distribution = new float[] { 1.0f, 0.1f, 0.05f, 0.01f };
 		final boolean ITERABLE_VS_SFLINKS = true;
 		final String walkOutput = FilePaths.FILE_GRAPH_WALK_OUTPUT.getPath(kg);
 		final String sentencesOut = FilePaths.FILE_GRAPH_WALK_OUTPUT_SENTENCES.getPath(kg);
@@ -225,7 +235,7 @@ public class RDF2VecWalkGenerator implements Executable {
 			if (ALL_VS_RANDOM) {
 				resultProcessor = new WalkResultProcessorAll(entityMapping, predicateMapper);
 			} else {
-				resultProcessor = new WalkResultprocessorRandomDecreasingDepth(new float[] { 1.0f, 0.1f, 0.05f, 0.01f })
+				resultProcessor = new WalkResultprocessorRandomDecreasingDepth(distribution)
 						.entityMapping(entityMapping).predicateMapper(predicateMapper).minWalks(20).maxWalks(1_000);
 			}
 

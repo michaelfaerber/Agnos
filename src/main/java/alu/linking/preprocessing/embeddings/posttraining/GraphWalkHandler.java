@@ -22,6 +22,13 @@ import alu.linking.preprocessing.embeddings.sentenceformatter.EmbeddingSentenceF
 import alu.linking.preprocessing.embeddings.sentenceformatter.RDF2VecEmbeddingSentenceFormatter;
 import alu.linking.utils.EmbeddingsUtils;
 
+/**
+ * Class handling embeddings computed through graph walks (combining and
+ * transforming existing embeddings)
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class GraphWalkHandler {
 	final EnumModelType KG;
 

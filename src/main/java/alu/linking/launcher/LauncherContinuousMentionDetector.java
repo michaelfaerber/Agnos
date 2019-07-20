@@ -29,17 +29,19 @@ import alu.linking.utils.DetectionUtils;
 import alu.linking.utils.Stopwatch;
 
 /**
- * Entrypoint for continuous entity linking once precomputation structures have
- * been properly established
+ * Entry point for continuous entity linking from stdin (outputting to stdout)
+ * once precomputation structures have been properly established.
  * 
  * @author Kristian Noullet
  *
  */
 public class LauncherContinuousMentionDetector {
-	public static boolean openBrowser;
+	// Which knowledge graph to make use of
+	private static EnumModelType KG = EnumModelType.DEFAULT;
+	// Whether to open results as a HTML document (in the browser)
+	public static boolean openBrowser = false;
 	// Whether the output should be detailed
 	public static final boolean detailed = false;
-
 	final String chooserWatch = "chooser - init (loads graph)";
 	final String detectionWatch = MentionDetector.class.getName();
 	final String iterationWatch = "iteration";
@@ -54,14 +56,11 @@ public class LauncherContinuousMentionDetector {
 	};
 
 	public static void main(String[] args) {
-		openBrowser = false;
-		new LauncherContinuousMentionDetector(EnumModelType.DBPEDIA_FULL).run();
+		new LauncherContinuousMentionDetector(KG).run();
 	}
 
-	private final EnumModelType KG;
-
-	LauncherContinuousMentionDetector(EnumModelType KG) {
-		this.KG = KG;
+	LauncherContinuousMentionDetector(EnumModelType kG) {
+		KG = kG;
 	}
 
 	public void run() {
@@ -70,7 +69,7 @@ public class LauncherContinuousMentionDetector {
 			System.out.println("Loading mention possibilities...");
 			final StopwordsLoader stopwordsLoader = new StopwordsLoader(KG);
 			final Set<String> stopwords = stopwordsLoader.getStopwords();
-			final Map<String, Collection<String>> map = DetectionUtils.loadSurfaceForms(this.KG, stopwordsLoader);
+			final Map<String, Collection<String>> map = DetectionUtils.loadSurfaceForms(KG, stopwordsLoader);
 			final InputProcessor inputProcessor = new InputProcessor(stopwords);
 			// ########################################################
 			// Mention Detection
@@ -88,7 +87,7 @@ public class LauncherContinuousMentionDetector {
 			// or whether it will 'always' be this approx. speed for this case
 			// Initialise AssignmentChooser
 			Stopwatch.start(chooserWatch);
-			final AssignmentChooser chooser = new AssignmentChooser(this.KG);
+			final AssignmentChooser chooser = new AssignmentChooser(KG);
 			Stopwatch.endOutput(chooserWatch);
 			String inputLine = null;
 			try (final Scanner sc = new Scanner(System.in)) {

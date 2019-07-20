@@ -16,6 +16,12 @@ import alu.linking.config.kg.EnumModelType;
 import alu.linking.structure.Executable;
 import eu.wdaqua.pagerank.PageRankRDF;
 
+/**
+ * Computes apriori PageRank scores for a given KG
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class PageRankComputer implements Executable {
 
 	final EnumModelType KG;

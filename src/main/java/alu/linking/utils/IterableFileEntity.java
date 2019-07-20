@@ -7,12 +7,22 @@ import java.util.Iterator;
 
 import alu.linking.structure.Loggable;
 
+/**
+ * Uses NXParser to iterate through a file, returning the subject (aka. item at
+ * index 0) at each point. </br>
+ * If the skipDuplicates flag is set to TRUE, it will keep track of
+ * already-visited elements and return unique entries only
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class IterableFileEntity extends IterableEntity implements Loggable {
 	private File ntFile = null;
 	private IteratorFileEntity iterator = null;
 	private boolean skipDuplicates;
-	
-	public IterableFileEntity(final File ntFile, final boolean skipDuplicates) throws FileNotFoundException, IOException {
+
+	public IterableFileEntity(final File ntFile, final boolean skipDuplicates)
+			throws FileNotFoundException, IOException {
 		// Pass a .NT file
 		this.ntFile = ntFile;
 		this.skipDuplicates = skipDuplicates;

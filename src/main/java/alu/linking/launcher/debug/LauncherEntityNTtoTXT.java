@@ -1,4 +1,4 @@
-package alu.linking.launcher;
+package alu.linking.launcher.debug;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -9,6 +9,13 @@ import alu.linking.config.kg.EnumModelType;
 import alu.linking.utils.IterableEntity;
 import alu.linking.utils.IterableFileEntity;
 
+/**
+ * Class to simply find and output entities based on a .NT file, assuming each
+ * subject is an entity
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class LauncherEntityNTtoTXT {
 
 	public static void main(String[] args) {

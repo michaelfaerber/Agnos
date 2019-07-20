@@ -1,4 +1,4 @@
-package alu.linking.launcher;
+package alu.linking.launcher.debug;
 
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.executable.Pipeline;

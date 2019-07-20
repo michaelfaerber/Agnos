@@ -1,4 +1,4 @@
-package alu.linking.launcher;
+package alu.linking.launcher.debug;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -16,6 +16,7 @@ import java.util.TreeMap;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.constants.Strings;
 import alu.linking.config.kg.EnumModelType;
+import alu.linking.launcher.LauncherInputLinking;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.postprocessing.ThresholdPruner;
 import alu.linking.utils.CBURLTransformer;

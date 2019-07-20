@@ -14,8 +14,9 @@ import alu.linking.preprocessing.embeddings.posttraining.GraphWalkHandler;
 public class LauncherEmbeddingComputer {
 	public static void main(String[] args) {
 		try {
+			final EnumModelType KG = EnumModelType.CRUNCHBASE;
 			System.out.println("Transforming python entity embeddings into a Java map");
-			new GraphWalkHandler(EnumModelType.CRUNCHBASE).readPythonEntityEmbeddingsOutputHashMap();
+			new GraphWalkHandler(KG).readPythonEntityEmbeddingsOutputHashMap();
 			System.out.println("Done!");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

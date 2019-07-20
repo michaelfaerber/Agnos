@@ -6,6 +6,13 @@ import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.executable.preprocessing.setup.surfaceform.processing.url.webcrawl.NP_HSFURLContentSaver;
 
+/**
+ * Downloads a bunch of websites as defined in the URL-based noun-phrase
+ * (helping) surface forms (NP_URL_HSF)
+ * 
+ * @author Kristian Noullet
+ *
+ */
 public class LauncherDownloadHTML {
 
 	public static void main(String[] args) {

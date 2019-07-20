@@ -1,4 +1,4 @@
-package alu.linking.launcher;
+package alu.linking.launcher.debug;
 
 import java.awt.Desktop;
 import java.io.BufferedWriter;
@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -20,7 +19,6 @@ import alu.linking.candidategeneration.CandidateGeneratorMap;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.AssignmentChooser;
-import alu.linking.disambiguation.hops.graph.EdgeBlacklisting;
 import alu.linking.disambiguation.hops.graph.Graph;
 import alu.linking.disambiguation.hops.graph.NodeBlacklisting;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
@@ -31,18 +29,18 @@ import alu.linking.mentiondetection.StopwordsLoader;
 import alu.linking.mentiondetection.fuzzy.MentionDetectorLSH;
 import alu.linking.utils.Stopwatch;
 
-public class LauncherMAGSubKG {
+public class LauncherLinkingMAG {
 	public static boolean openBrowser;
-
-	private final EnumModelType KG;
-
-	public LauncherMAGSubKG(EnumModelType KG) {
-		this.KG = KG;
-	}
 
 	public static void main(String[] args) {
 		openBrowser = false;
-		new LauncherMAGSubKG(EnumModelType.DEFAULT).run();
+		new LauncherLinkingMAG(EnumModelType.MAG).run();
+	}
+
+	private final EnumModelType KG;
+
+	LauncherLinkingMAG(EnumModelType KG) {
+		this.KG = KG;
 	}
 
 	public void run() {
@@ -51,12 +49,11 @@ public class LauncherMAGSubKG {
 			final Map<String, Collection<String>> map;
 			final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG);
 			map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
-			// FILE_EXTENDED_GRAPH
 			Stopwatch.endOutputStart(getClass().getName());
+			System.out.println("Number of entries: " + map.size());
 			final StopwordsLoader stopwordsLoader = new StopwordsLoader(KG);
 			final Set<String> stopwords = stopwordsLoader.getStopwords();
 			final InputProcessor inputProcessor = new InputProcessor(stopwords);
-			System.out.println("Number of entries: " + map.size());
 			final MentionDetector md = new MentionDetectorLSH(KG, 0.8, inputProcessor);
 			Stopwatch.endOutputStart(getClass().getName());
 			// ########################################################
@@ -70,24 +67,18 @@ public class LauncherMAGSubKG {
 			final String chooserWatch = "chooser - init (loads graph)";
 			// Initialise AssignmentChooser
 			Stopwatch.start(chooserWatch);
-			final AssignmentChooser chooser = new AssignmentChooser(KG);
+			final AssignmentChooser chooser = new AssignmentChooser(this.KG);
 			Stopwatch.endOutput(chooserWatch);
 			// Blacklisting stuff from graph
 			Stopwatch.start("Blacklist");
-			NodeBlacklisting nBlacklisting = new NodeBlacklisting(Graph.getInstance());
-			EdgeBlacklisting eBlacklisting = new EdgeBlacklisting(Graph.getInstance());
-			for (String key : blacklistMapNodes()) {
-				nBlacklisting.blacklist(key);
+			NodeBlacklisting blacklisting = new NodeBlacklisting(Graph.getInstance());
+			for (Map.Entry<String, String> e : blacklistMap().entrySet()) {
+				blacklisting.blacklist(e.getKey());
 			}
-			for (String key : blacklistMapEdges()) {
-				eBlacklisting.blacklist(key);
-			}
-			final int amtBlacklisted = nBlacklisting.blacklistConnectionsOver(0.05);
+			final int amtBlacklisted = blacklisting.blacklistConnectionsOver(0.05);
 			System.out.println("Blacklisted items: " + amtBlacklisted);
-			System.out.println("Nodes Blacklisting - Enforcing...");
-			nBlacklisting.enforce();
-			System.out.println("Edges Blacklisting - Enforcing...");
-			eBlacklisting.enforce();
+			System.out.println("Enforcing...");
+			blacklisting.enforce();
 			Stopwatch.endOutput("Blacklist");
 
 			String inputLine = null;
@@ -213,8 +204,7 @@ public class LauncherMAGSubKG {
 		}
 	}
 
-	private static Set<String> blacklistMapNodes() {
-		final HashSet<String> ret = new HashSet<String>();
+	private static Map<String, String> blacklistMap() {
 		Map<String, String> entityIDMapping = new HashMap<String, String>();
 		entityIDMapping.put("e_1", "car");// confirmed to be 'car', prior set to 'car_part'
 		entityIDMapping.put("e_3", "car_part");// confirmed, prior set to 'action_car_part'
@@ -225,17 +215,6 @@ public class LauncherMAGSubKG {
 		entityIDMapping.put("e_25", "location");// confirmed
 		entityIDMapping.put("e_2", "car_property");// confirmed
 		entityIDMapping.put("e_4", "damage");// confirmed
-
-		// ret.addAll(entityIDMapping.keySet());
-		// ret.addAll(entityIDMapping.values());
-		return ret;
-	}
-
-	private static Set<String> blacklistMapEdges() {
-		final HashSet<String> ret = new HashSet<String>();
-		ret.add("http://ma-graph.org/property/rank");
-		ret.add("http://purl.org/dc/terms/created");
-		ret.add("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
-		return ret;
+		return entityIDMapping;
 	}
 }
