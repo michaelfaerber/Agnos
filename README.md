@@ -36,29 +36,8 @@
 
 
 <h2>Guide(s)</h2>
-<h3>Setting up for a new KG</h3>
-Introduce it as an additional enumeration within EnumModelType and define a SPARQL query (done in EntityQuery.java) for it to fetch its entities.
-</br>
-<h3>Set up precomputation structures</h3>
-<dl>
 
-<dt>1) Importing KG, setting up mention detection & pagerank, then computing embeddings</dt>
-	<dd>1. Import KG into Jena (local) or Virtuoso (possible remote connection through JDBC driver) by executing LauncherSetupTDB, specifying the wanted EnumModelType (aka. KG) and input location in order to set up the TDB for Jena usage. If the KG is accessed via the Virtuoso endpoint/JDBC driver (and is already loaded within it), this step is not necessary.</dd>
-	<dd>2. Execute LauncherExecuteQueries, specifying the wanted EnumModelType (aka. KG) in order to execute all wanted surface form, helping surface form etc. queries on the KG - required for mention detection and for deciding which embeddings are required.</dd>
-	<dd>3. Execute LauncherSetup, specifying the wanted EnumModelType (aka. KG) - this will execute the mention detection setup, as well as compute apriori PageRank values for the KG file located as defined in FilePaths.FILE_PAGERANK. <b>Note</b> that a local version of the KG needs to be present (even if using Virtuoso) in order to compute PageRank on it.</dd>
-	<dd>4. Compute Graph Walks (Java) with wanted arguments in LauncherWalkGenerator and then executing it, outputting walks to ./[KG]/resources/data/walks.txt.</dd>
-	<dd>5. Specify location of output graph walks in ./sentencesPaths.txt (can be split among multiple files)</dd>
-	<dd>6. Specify hyperparameters and compute Embeddings (Python) by executing ./scripts/trainModel.py</dd>
-	<dd>7. Place/Move embeddings appropriately into the KG's file tree structure as defined in FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS (or change the value to match the embeddings output location).</dd>
-
-<dt>2) (Optional) Mention Detection Tuning (LSH)</dt> 
-	<dd>0. Execute LauncherMentionDetectionTuning, defining a sample input as well as potentially different bins and bands dimensions in order to tune LSH arguments for execution times (not inclusiveness/exclusiveness/quality of results). Then adapt the arguments LSH_BANDS and LSH_BUCKETS in Numbers.java appropriately.</dd>
-
-<dt>3) Done. Ready to apply entity linking!</dt>
-
-</dl>
-
-<h3>Setup of virt-jena drivers (dependency required for Virtuoso execution) on a local repository (due to unavailability on public repositories)</h3>
+<h3>(Maven) Setup of virt-jena/jdbc drivers (dependency required for Virtuoso execution) on a local repository (due to unavailability on public repositories)</h3>
 <dl>
 
 <dt>Install Jena's Virtuoso Driver</dt>
@@ -78,6 +57,29 @@ Introduce it as an additional enumeration within EnumModelType and define a SPAR
 	<dd>mvn install:install-file -q "-Dfile=./virtjdbc4.jar" "-DgroupId=com.openlink.virtuoso" "-DartifactId=virtjdbc4" "-Dversion=4.0" "-Dpackaging=jar" "-DgeneratePom=true"</dd>
 
 </dl>
+
+<h3>Setting up for a new KG</h3>
+Introduce it as an additional enumeration within EnumModelType and define a SPARQL query (done in EntityQuery.java) for it to fetch its entities.
+</br>
+<h3>Set up precomputation structures</h3>
+<dl>
+
+<dt>1) Importing KG, setting up mention detection & pagerank, then computing embeddings</dt>
+	<dd>1. Import KG into Jena (local) or Virtuoso (possible remote connection through JDBC driver) by executing LauncherSetupTDB, specifying the wanted EnumModelType (aka. KG) and input location in order to set up the TDB for Jena usage. If the KG is accessed via the Virtuoso endpoint/JDBC driver (and is already loaded within it), this step is not necessary.</dd>
+	<dd>2. Execute LauncherExecuteQueries, specifying the wanted EnumModelType (aka. KG) in order to execute all wanted surface form, helping surface form etc. queries on the KG - required for mention detection and for deciding which embeddings are required.</dd>
+	<dd>3. Execute LauncherSetup, specifying the wanted EnumModelType (aka. KG) - this will execute the mention detection setup, as well as compute apriori PageRank values for the KG file located as defined in FilePaths.FILE_PAGERANK. <b>Note</b> that a local version of the KG needs to be present (even if using Virtuoso) in order to compute PageRank on it.</dd>
+	<dd>4. Compute Graph Walks (Java) with wanted arguments in LauncherWalkGenerator and then executing it, outputting walks to ./[KG]/resources/data/walks.txt.</dd>
+	<dd>5. Specify location of output graph walks in ./sentencesPaths.txt (can be split among multiple files)</dd>
+	<dd>6. Specify hyperparameters and compute Embeddings (Python) by executing ./scripts/trainModel.py</dd>
+	<dd>7. Place/Move embeddings appropriately into the KG's file tree structure as defined in FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS (or change the value to match the embeddings output location).</dd>
+
+<dt>2) (Optional) Mention Detection Tuning (LSH)</dt> 
+	<dd>0. Execute LauncherMentionDetectionTuning, defining a sample input as well as potentially different bins and bands dimensions in order to tune LSH arguments for execution times (not inclusiveness/exclusiveness/quality of results). Then adapt the arguments LSH_BANDS and LSH_BUCKETS in Numbers.java appropriately.</dd>
+
+<dt>3) Done. Ready to apply entity linking! (E.g. by executing LauncherContinuousMentionDetector or using it as a NIF API type of annotator with calls to GERBILAnnotator)</dt>
+
+</dl>
+
 
 <h2>Package Details</h2>
 <dl>

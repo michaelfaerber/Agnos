@@ -86,7 +86,8 @@ public class LauncherSetupTDB implements Loggable {
 	}
 
 	/**
-	 * Loads all KGs into their respective datasets
+	 * Loads all KGs from FilePaths.FILE_EXTENDED_GRAPH into their respective
+	 * datasets
 	 * 
 	 */
 	private void exec() {
