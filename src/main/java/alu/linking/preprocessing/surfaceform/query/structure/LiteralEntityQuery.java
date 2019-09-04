@@ -23,9 +23,9 @@ import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.utils.FileUtils;
 import de.dwslab.petar.walks.QuerySolutionIterator;
-import virtuoso.jena.driver.VirtGraph;
-import virtuoso.jena.driver.VirtuosoQueryExecution;
-import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
+//import virtuoso.jena.driver.VirtGraph;
+//import virtuoso.jena.driver.VirtuosoQueryExecution;
+//import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
 
 public abstract class LiteralEntityQuery {
 	protected final EnumModelType KG;
@@ -69,10 +69,13 @@ public abstract class LiteralEntityQuery {
 					if (this.KG.useVirtuoso()) {
 						// Virtuoso VirtGraph execution
 						final EnumConnection conn = this.KG.virtuosoConn;
-						final VirtGraph virtGraph = new VirtGraph(this.KG.virtuosoGraphname, conn.baseURL,
-								new String(conn.userAcc.getBytesUsername()),
-								new String(conn.userAcc.getBytesPassword()));
-						execSelectQuery(queryStr, virtGraph, writers);
+						throw new IllegalArgumentException("Virtuoso VirtGraph currently not supported.");
+
+						// final VirtGraph virtGraph = new VirtGraph(this.KG.virtuosoGraphname,
+						// conn.baseURL,
+						// new String(conn.userAcc.getBytesUsername()),
+						// new String(conn.userAcc.getBytesPassword()));
+						// execSelectQuery(queryStr, virtGraph, writers);
 
 					} else {
 						// Execution on the appropriate Apache Jena Model
@@ -151,11 +154,12 @@ public abstract class LiteralEntityQuery {
 	 * @param writers   Writers outputting query results to appropriate files
 	 * @throws IOException
 	 */
-	public void execSelectQuery(final String queryStr, VirtGraph virtGraph, final List<BufferedWriter> writers)
-			throws IOException {
-		final VirtuosoQueryExecution qe = VirtuosoQueryExecutionFactory.create(queryStr, virtGraph);
-		selectProcessResults(qe, writers);
-	}
+	/*
+	 * public void execSelectQuery(final String queryStr, VirtGraph virtGraph, final
+	 * List<BufferedWriter> writers) throws IOException { final
+	 * VirtuosoQueryExecution qe = VirtuosoQueryExecutionFactory.create(queryStr,
+	 * virtGraph); selectProcessResults(qe, writers); }
+	 */
 
 	/**
 	 * Added as a central processing node-point for both Jena Model and Virtuoso's

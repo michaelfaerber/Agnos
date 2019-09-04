@@ -73,19 +73,13 @@ public class NP_HSFManager implements Executable, RDFFormatter<java.lang.String>
 	 * Also needs to be told whether the first line is a header (to know whether to
 	 * ignore it or not)
 	 * 
-	 * @param inFile
-	 *            input file
-	 * @param outFile
-	 *            output file to write results to
-	 * @param enumFileTypeIn
-	 *            type of input file
-	 * @param enumFileTypeOut
-	 *            type of output file
-	 * @param append
-	 *            whether to append to or to overwrite file
-	 * @param headLine
-	 *            whether the first line is just a header (generally the case for
-	 *            CSV files)
+	 * @param inFile          input file
+	 * @param outFile         output file to write results to
+	 * @param enumFileTypeIn  type of input file
+	 * @param enumFileTypeOut type of output file
+	 * @param append          whether to append to or to overwrite file
+	 * @param headLine        whether the first line is just a header (generally the
+	 *                        case for CSV files)
 	 * @throws IOException
 	 */
 	public void loopThroughAndProcess(final File inFile, final File outFile, final EnumFileType enumFileTypeIn,

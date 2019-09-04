@@ -15,9 +15,9 @@ import alu.linking.config.constants.FilePaths;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.utils.RDFUtils;
 import alu.linking.utils.Stopwatch;
-import virtuoso.jena.driver.VirtGraph;
-import virtuoso.jena.driver.VirtuosoQueryExecution;
-import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
+//import virtuoso.jena.driver.VirtGraph;
+//import virtuoso.jena.driver.VirtuosoQueryExecution;
+//import virtuoso.jena.driver.VirtuosoQueryExecutionFactory;
 
 public class LauncherTestQuery {
 
@@ -251,10 +251,11 @@ public class LauncherTestQuery {
 					// <http://www.w3.org/2002/07/owl#Thing> . ?s <http://xmlns.com/foaf/0.1/name>
 					// ?o }"
 					"SELECT DISTINCT ?p STR(?obj) AS ?o WHERE { <http://dbpedia.org/resource/Tiger_Woods> ?p ?obj . FILTER( isLiteral(?obj) ) . FILTER( STRLEN(STR(?obj)) > 1 ) }";
-			final VirtGraph virtGraph = new VirtGraph(graphName, url,
-					new String(connShetland.userAcc.getBytesUsername()),
-					new String(connShetland.userAcc.getBytesPassword()));
-			execQuery(virtGraph, queryStr);
+			throw new IllegalArgumentException("VirtGraph not supported at this moment.");
+//			final VirtGraph virtGraph = new VirtGraph(graphName, url,
+//					new String(connShetland.userAcc.getBytesUsername()),
+//					new String(connShetland.userAcc.getBytesPassword()));
+//			execQuery(virtGraph, queryStr);
 		} else {
 //			final String queryStr = "select distinct ?bPred where { \n" + "?aSubj ?bPred ?cObj . \n" + "} LIMIT 100";
 //
@@ -276,12 +277,12 @@ public class LauncherTestQuery {
 		}
 	}
 
-	private static void execQuery(VirtGraph virtGraph, String queryStr) {
-		System.out.println("Executing: " + queryStr);
-		final VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create(queryStr, virtGraph);
-		final ResultSet results = vqe.execSelect();
-		displayQuery(results);
-	}
+//	private static void execQuery(VirtGraph virtGraph, String queryStr) {
+//		System.out.println("Executing: " + queryStr);
+//		final VirtuosoQueryExecution vqe = VirtuosoQueryExecutionFactory.create(queryStr, virtGraph);
+//		final ResultSet results = vqe.execSelect();
+//		displayQuery(results);
+//	}
 
 	private static void getRandom(Model model) {
 		System.out.println("############################################");

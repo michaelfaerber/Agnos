@@ -241,15 +241,13 @@
 			<version>2.3</version>
 		</dependency>
 
-		<!-- NPComplete's jar -->
-		<dependency>
-			<groupId>RBBNPE</groupId>
-			<artifactId>RBBNPE-RuleBasedBaseNounPhraseExtraction</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-			<scope>system</scope>
-			<!-- <systemPath>${project.basedir}/../rbbnpe_libs/npcomplete.jar</systemPath> -->
-			<systemPath>${project.basedir}/lib/npcomplete.jar</systemPath>
-		</dependency>
+		<!-- NPComplete's jar downloaded from http://people.aifb.kit.edu/mfa/RBBNPE-RuleBasedBaseNounPhraseExtractionv2.zip -->
+		<!-- Tagger @ http://people.aifb.kit.edu/mfa/datasets/english-left3words-distsim.tagger -->
+		<!-- Tagger to be placed in whichever directory is called upon POSBasedBaseNounPhraseExtractor 
+			instantiation -->
+		<!-- <dependency> <groupId>RBBNPE</groupId> <artifactId>RBBNPE-RuleBasedBaseNounPhraseExtraction</artifactId> 
+			<version>0.0.1-SNAPSHOT</version> <scope>system</scope> <#!#-#-#- <systemPath>${project.basedir}/../rbbnpe_libs/npcomplete.jar</systemPath> 
+			#-#-#># <systemPath>${project.basedir}/lib/npcomplete.jar</systemPath> </dependency> -->
 		<!-- Stanford dependency required for use of NPComplete -->
 		<!-- https://mvnrepository.com/artifact/edu.stanford.nlp/stanford-corenlp -->
 		<dependency>
@@ -270,18 +268,10 @@
 		</dependency>
 
 		<!-- These do not have a Maven repository -->
-		<dependency>
-			<groupId>com.openlink.virtuoso</groupId>
-			<artifactId>virtjdbc4</artifactId>
-			<version>4.0</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.openlink.virtuoso</groupId>
-			<artifactId>virt_jena3</artifactId>
-			<version>3.0</version>
-		</dependency>
-
+		<!-- <dependency> <groupId>com.openlink.virtuoso</groupId> <artifactId>virtjdbc4</artifactId> 
+			<version>4.0</version> </dependency> -->
+		<!-- <dependency> <groupId>com.openlink.virtuoso</groupId> <artifactId>virt_jena3</artifactId> 
+			<version>3.0</version> </dependency> -->
 		<!-- JENA ARQ for HTTP queries -->
 		<!-- https://mvnrepository.com/artifact/org.apache.jena/jena-arq -->
 		<dependency>

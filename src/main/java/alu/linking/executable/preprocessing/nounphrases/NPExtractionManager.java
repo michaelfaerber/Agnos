@@ -12,8 +12,8 @@ import alu.linking.config.constants.FilePaths;
 import alu.linking.config.constants.Strings;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.structure.Executable;
-import bin.POSBasedBaseNounPhraseExtractor;
 import edu.stanford.nlp.ling.TaggedWord;
+import npcomplete.POSBasedBaseNounPhraseExtractor;
 
 public enum NPExtractionManager implements Executable {
 	INSTANCE(EnumModelType.DEFAULT);// enum-ensured singleton
@@ -42,6 +42,7 @@ public enum NPExtractionManager implements Executable {
 
 	@Override
 	public void init() {
+		wantedTags.clear();
 		wantedTags.add(Strings.NPCOMPLETE_TAG_NN.val);
 		wantedTags.add(Strings.NPCOMPLETE_TAG_NNS.val);
 	}

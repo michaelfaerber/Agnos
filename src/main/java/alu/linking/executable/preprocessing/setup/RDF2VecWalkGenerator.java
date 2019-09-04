@@ -25,11 +25,10 @@ import alu.linking.utils.IterableFileEntity;
 import alu.linking.utils.WalkUtils;
 import de.dwslab.petar.walks.WalkGenerator;
 import de.dwslab.petar.walks.WalkGeneratorJena;
-import de.dwslab.petar.walks.WalkGeneratorVirtuoso;
 import de.dwslab.petar.walks.WalkResultProcessor;
 import de.dwslab.petar.walks.WalkResultProcessorAll;
 import de.dwslab.petar.walks.WalkResultprocessorRandomDecreasingDepth;
-import virtuoso.jena.driver.VirtGraph;
+//import virtuoso.jena.driver.VirtGraph;
 
 /**
  * Class handling graph walk generation in an RDF2Vec-fashion with some caveats
@@ -148,6 +147,8 @@ public class RDF2VecWalkGenerator implements Executable {
 					getLogger().info("Executing graph walks through [VIRTUOSO]");
 					// Use virtuoso for graph walks
 					final EnumConnection connVirtuoso = kg.virtuosoConn;
+					throw new Exception("VirtGraph not supported at this point in time.");
+					/*
 					final VirtGraph virtGraph = new VirtGraph(kg.virtuosoGraphname, connVirtuoso.baseURL,
 							new String(connVirtuoso.userAcc.getBytesUsername()),
 							new String(connVirtuoso.userAcc.getBytesPassword()));
@@ -155,6 +156,7 @@ public class RDF2VecWalkGenerator implements Executable {
 					wg = new WalkGeneratorVirtuoso(virtGraph, uniqueBlacklist, kg.query.query,
 							FilePaths.FILE_GRAPH_WALK_LOG_ENTITY.getPath(kg), resultProcessor,
 							FilePaths.FILE_TXT_ENTITIES.getPath(kg));
+					*/
 				} else {
 					// Use Jena for graph walks
 					getLogger().info("Executing graph walks through [JENA]");
@@ -244,6 +246,8 @@ public class RDF2VecWalkGenerator implements Executable {
 				getLogger().info("Executing graph walks through [VIRTUOSO]");
 				// Use virtuoso for graph walks
 				final EnumConnection connVirtuoso = kg.virtuosoConn;
+				throw new Exception("VirtGraph not supported at this point in time.");
+				/*
 				final VirtGraph virtGraph = new VirtGraph(kg.virtuosoGraphname, connVirtuoso.baseURL,
 						new String(connVirtuoso.userAcc.getBytesUsername()),
 						new String(connVirtuoso.userAcc.getBytesPassword()));
@@ -251,6 +255,7 @@ public class RDF2VecWalkGenerator implements Executable {
 				wg = new WalkGeneratorVirtuoso(virtGraph, uniqueBlacklist, kg.query.query,
 						FilePaths.FILE_GRAPH_WALK_LOG_ENTITY.getPath(kg), resultProcessor,
 						FilePaths.FILE_TXT_ENTITIES.getPath(kg));
+				*/
 			} else {
 				// Use Jena for graph walks
 				getLogger().info("Executing graph walks through [JENA]");

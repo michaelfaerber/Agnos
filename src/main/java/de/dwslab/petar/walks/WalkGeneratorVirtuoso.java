@@ -1,5 +1,6 @@
 package de.dwslab.petar.walks;
 
+/*
 import java.util.Collection;
 
 import org.apache.jena.query.QueryExecution;
@@ -54,3 +55,4 @@ public class WalkGeneratorVirtuoso extends WalkGenerator {
 	}
 
 }
+*/
