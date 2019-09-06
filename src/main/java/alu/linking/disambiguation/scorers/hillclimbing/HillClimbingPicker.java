@@ -198,6 +198,7 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 		for (int hillClimbExec = 0; hillClimbExec < REPEAT; ++hillClimbExec) {
 			hillClimb(disambiguationResultsMap, clusters, Lists.newArrayList(clusterNames), topPRChoices);
 		}
+
 		// -------------------------------------------
 		// HillClimbing Disambigation - END
 		// -------------------------------------------
@@ -476,7 +477,7 @@ public class HillClimbingPicker extends AbstractClusterItemPicker {
 		println("Stabilized Maximum - Start");
 		displayClusterChoices(chosenClusterEntityMap, "stabilised results");
 		println("Stabilized Maximum - End");
-		println("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM");
+		println("########################################");
 
 		return disambiguationResultsMap;
 	}

@@ -20,7 +20,7 @@ public enum EnumModelType {
 	MAG(Strings.ROOTPATH.val + "mag/", EntityQuery.MAG), //
 	DBLP(Strings.ROOTPATH.val + "dblp/", EntityQuery.DBLP), //
 	WIKIDATA(Strings.ROOTPATH.val + "wikidata/", EntityQuery.WIKIDATA),//
-	DEFAULT(Strings.ROOTPATH.val, EntityQuery.DEFAULT) //
+	DEFAULT(Strings.ROOTPATH.val + "/", EntityQuery.DEFAULT) //
 	;
 	public final String root;
 	public final EntityQuery query;

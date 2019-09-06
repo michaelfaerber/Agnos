@@ -37,7 +37,7 @@ import alu.linking.utils.Stopwatch;
  */
 public class LauncherContinuousMentionDetector {
 	// Which knowledge graph to make use of
-	private static EnumModelType KG = EnumModelType.DEFAULT;
+	private static EnumModelType KG = EnumModelType.DBPEDIA_FULL;
 	// Whether to open results as a HTML document (in the browser)
 	public static boolean openBrowser = false;
 	// Whether the output should be detailed
@@ -95,7 +95,8 @@ public class LauncherContinuousMentionDetector {
 					// ########################################################
 					// Awaiting input
 					// ########################################################
-					System.out.println("\\\\033[1mAwaiting user input\\\\033[0m...");
+					System.out.println("\t\t[Awaiting user input]\t\t");
+					System.out.print(">");
 					inputLine = sc.nextLine();
 					Stopwatch.start(iterationWatch);
 					Stopwatch.start(detectionWatch);

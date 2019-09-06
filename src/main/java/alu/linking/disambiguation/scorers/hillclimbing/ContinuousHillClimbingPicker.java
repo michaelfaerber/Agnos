@@ -33,7 +33,8 @@ public class ContinuousHillClimbingPicker extends HillClimbingPicker {
 		super(operation, similarityService, pagerankLoader);
 	}
 
-	public ContinuousHillClimbingPicker(final EntitySimilarityService similarityService, final PageRankLoader pagerankLoader) {
+	public ContinuousHillClimbingPicker(final EntitySimilarityService similarityService,
+			final PageRankLoader pagerankLoader) {
 		super(similarityService, pagerankLoader);
 	}
 
@@ -91,7 +92,7 @@ public class ContinuousHillClimbingPicker extends HillClimbingPicker {
 			for (Map.Entry<String, Pair<String, Double>> e : iterationChoices.entrySet()) {
 				final Pair<String, Double> currentPair = e.getValue();
 				final Double currentValue = currentPair.getRight();
-				if (currentValue < minValue) {
+				if (currentValue <= minValue) {
 					minKey = e.getKey();
 					minPair = currentPair;
 					minValue = currentValue;

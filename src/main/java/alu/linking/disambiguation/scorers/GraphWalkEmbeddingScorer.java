@@ -11,12 +11,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import alu.linking.disambiguation.PostScorer;
 import alu.linking.disambiguation.scorers.embedhelp.ClusterItemPicker;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
+import alu.linking.structure.LoggerWrapper;
 import alu.linking.structure.PossibleAssignment;
 import alu.linking.utils.EmbeddingsUtils;
 import alu.linking.utils.IDMappingLoader;
@@ -61,8 +61,8 @@ public class GraphWalkEmbeddingScorer implements PostScorer<PossibleAssignment, 
 		return entityEmbeddingsMap;
 	}
 
-	private static Logger log() {
-		return Logger.getLogger(GraphWalkEmbeddingScorer.class.getName());
+	private static LoggerWrapper log() {
+		return Loggable.getLogger(GraphWalkEmbeddingScorer.class.getName());
 	}
 
 	/**

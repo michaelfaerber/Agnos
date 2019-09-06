@@ -2,12 +2,14 @@ package alu.linking.utils;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import org.apache.commons.lang3.tuple.MutablePair;
 
+import alu.linking.structure.Loggable;
+import alu.linking.structure.LoggerWrapper;
+
 /**
- * Utility class allowing for execution time checking
+ * Static Utility class allowing for execution time checking
  * 
  * @author Kris Noullet (kn65)
  *
@@ -16,6 +18,70 @@ public class Stopwatch {
 	private static final String def = "default";
 	private static final Map<String, MutablePair<Long, Long>> stopwatchMap = new HashMap<>();
 
+	// DIRECT MAP ACCESS - START
+
+	/**
+	 * Starts timer for given watch
+	 * 
+	 * @author Kris Noullet (kn65)
+	 * @param watch String parameter used to store/retrieve this particular watch
+	 */
+	public static void start(final String watch) {
+		MutablePair<Long, Long> p = null;
+		synchronized (stopwatchMap) {
+			p = stopwatchMap.get(watch);
+		}
+		if (p == null) {
+			p = new MutablePair<Long, Long>();
+			synchronized (stopwatchMap) {
+				stopwatchMap.put(watch, p);
+			}
+		}
+		p.setLeft(System.currentTimeMillis());
+	}
+
+	/**
+	 * Ends timer for given watch
+	 * 
+	 * @author Kris Noullet (kn65)
+	 * @param watch String parameter used to store/retrieve this particular watch
+	 */
+	public static void end(final String watch) {
+		MutablePair<Long, Long> p = null;
+		synchronized (stopwatchMap) {
+			p = stopwatchMap.get(watch);
+		}
+		if (p == null) {
+			p = new MutablePair<Long, Long>();
+			synchronized (stopwatchMap) {
+				stopwatchMap.put(watch, p);
+			}
+		}
+		if (p.getLeft() == null) {
+			start(watch);
+		}
+		p.setRight(System.currentTimeMillis());
+	}
+
+	private static void remove(String watch) {
+		synchronized (stopwatchMap) {
+			stopwatchMap.remove(watch);
+		}
+	}
+
+	/**
+	 * Gets time difference for given watch
+	 * 
+	 * @author Kris Noullet (kn65)
+	 * @param watch String parameter used to store/retrieve this particular watch
+	 * @return difference between this watch's start and end
+	 */
+	public static long diff(final String watch) {
+		final MutablePair<Long, Long> p = stopwatchMap.get(watch);
+		return p.getRight() - p.getLeft();
+	}
+
+	// DIRECT MAP ACCESS - END
 	/**
 	 * Default 'start' action - updates starting from when the timer should be
 	 * counted
@@ -89,51 +155,6 @@ public class Stopwatch {
 	}
 
 	/**
-	 * Starts timer for given watch
-	 * 
-	 * @author Kris Noullet (kn65)
-	 * @param watch String parameter used to store/retrieve this particular watch
-	 */
-	public static void start(final String watch) {
-		MutablePair<Long, Long> p = null;
-		if ((p = stopwatchMap.get(watch)) == null) {
-			p = new MutablePair<Long, Long>();
-			stopwatchMap.put(watch, p);
-		}
-		p.setLeft(System.currentTimeMillis());
-	}
-
-	/**
-	 * Ends timer for given watch
-	 * 
-	 * @author Kris Noullet (kn65)
-	 * @param watch String parameter used to store/retrieve this particular watch
-	 */
-	public static void end(final String watch) {
-		MutablePair<Long, Long> p = null;
-		if ((p = stopwatchMap.get(watch)) == null) {
-			p = new MutablePair<Long, Long>();
-			stopwatchMap.put(watch, p);
-		}
-		if (p.getLeft() == null) {
-			start(watch);
-		}
-		p.setRight(System.currentTimeMillis());
-	}
-
-	/**
-	 * Gets time difference for given watch
-	 * 
-	 * @author Kris Noullet (kn65)
-	 * @param watch String parameter used to store/retrieve this particular watch
-	 * @return difference between this watch's start and end
-	 */
-	public static long diff(final String watch) {
-		final MutablePair<Long, Long> p = stopwatchMap.get(watch);
-		return p.getRight() - p.getLeft();
-	}
-
-	/**
 	 * Updates end time for given watch and returns time difference
 	 * 
 	 * @author Kris Noullet (kn65)
@@ -143,6 +164,32 @@ public class Stopwatch {
 	public static long endDiff(final String watch) {
 		end(watch);
 		return diff(watch);
+	}
+
+	// REMOVE-RELATED METHODS
+
+	/**
+	 * Calls {@link #endOutput} and removes the watch from taking up space
+	 * 
+	 * @author Kris Noullet (kn65)
+	 * @return default endOutput() ret value
+	 */
+	public static long endOutputRem(final String watch) {
+		final long ret = endOutput(watch);
+		remove(watch);
+		return ret;
+	}
+
+	/**
+	 * Calls {@link #endDiff}, followed by watch removal to save space
+	 * 
+	 * @param watch
+	 * @return
+	 */
+	public static long endDiffRem(final String watch) {
+		final long diff = endDiff(watch);
+		remove(watch);
+		return diff;
 	}
 
 	/**
@@ -189,7 +236,7 @@ public class Stopwatch {
 		return diff;
 	}
 
-	public static Logger getLogger() {
-		return Logger.getLogger(Stopwatch.class.getName());
+	public static LoggerWrapper getLogger() {
+		return Loggable.getLogger(Stopwatch.class.getName());
 	}
 }

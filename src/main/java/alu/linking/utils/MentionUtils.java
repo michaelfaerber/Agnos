@@ -15,17 +15,29 @@ public class MentionUtils {
 	 * Removes mentions from passed list which were detected based on the passed
 	 * string as a Mention
 	 * 
-	 * @param key
-	 * @param mentions
+	 * @param key      non null key value corresponding to the text mention
+	 * @param mentions collection of mentions from which to remove the mention with
+	 *                 the appropriate key
 	 */
 	public static void removeStringMention(String key, Collection<Mention> mentions) {
+		if (key == null) {
+			throw new IllegalArgumentException("Invalid key for removal...");
+		}
 		Iterator<Mention> it = mentions.iterator();
+		final int initSize = mentions.size();
 		while (it.hasNext()) {
 			// Logic works for multiple
 			if (it.next().getMention().equals(key)) {
 				it.remove();
 			}
 		}
+//		if (initSize == mentions.size()) {
+//			System.out.println("COULD NOT FIND ELEMENT: " + key);
+//		} else {
+//			System.out.println("FOUND ELEMENT: [" + (initSize - mentions.size()) + "] x " + key);
+//		}
+//		System.out.println("Mentions: " + mentions.toString());
+//		System.out.println("-------------------------------");
 	}
 
 	/**

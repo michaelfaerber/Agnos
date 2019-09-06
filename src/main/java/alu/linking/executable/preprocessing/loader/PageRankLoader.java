@@ -27,6 +27,7 @@ import alu.linking.disambiguation.pagerank.AssignmentScore;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Executable;
 import alu.linking.utils.DecoderUtils;
+import alu.linking.utils.Stopwatch;
 
 /**
  * Class handling loading of PageRank scores for specific KGs
@@ -60,7 +61,11 @@ public class PageRankLoader implements Executable {
 	@Override
 	public Map<String, Number> exec(Object... o) throws IOException {
 		// Load PR from file
+		getLogger().debug("Loading PageRank");
+		final String watchName = this.getClass().getName();
+		Stopwatch.start(watchName);
 		this.pagerankScores = readIn(new File(FilePaths.FILE_PAGERANK.getPath(this.KG)));
+		getLogger().debug("Finished loading! ("+Stopwatch.endDiff(watchName)+")");
 		return this.pagerankScores;
 	}
 

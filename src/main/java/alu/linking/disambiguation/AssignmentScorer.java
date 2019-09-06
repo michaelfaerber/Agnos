@@ -28,6 +28,7 @@ import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.Loggable;
 import alu.linking.structure.PossibleAssignment;
 import alu.linking.structure.Scorable;
+import alu.linking.utils.Stopwatch;
 
 /**
  * Scores assignments for ranking and topK extraction
@@ -40,22 +41,27 @@ public class AssignmentScorer<N> implements Loggable {
 	private static Logger logger = Logger.getLogger(AssignmentScorer.class);
 	private final HashSet<Mention> context = new HashSet<>();
 	private final EntitySimilarityService similarityService;
+	private final long sleeptime = 100l;
 
 	/**
 	 * Constructor sets up scoring behaviour, including which scorers are utilised
+	 * 
 	 * @param KG which KG we are doing it for
-	 * @throws FileNotFoundException if file not found
+	 * @throws FileNotFoundException  if file not found
 	 * @throws ClassNotFoundException if class not found
-	 * @throws IOException if 
+	 * @throws IOException            if
 	 */
 	public AssignmentScorer(final EnumModelType KG) throws FileNotFoundException, ClassNotFoundException, IOException {
 		// Determines how everything is scored!
 		PossibleAssignment.setScoreCombiner(new ScoreCombiner<PossibleAssignment>());
 
 		// How to load pagerank
+		final String pagerankWatch = "pagerank";
+		Stopwatch.start(pagerankWatch);
 		final PageRankLoader pagerankLoader = new PageRankLoader(KG);
 		// Loads the pagerank from file
 		pagerankLoader.exec();
+		Stopwatch.endOutput(pagerankWatch);
 
 		// Pre-scoring
 		PossibleAssignment.addScorer(new PageRankScorer(KG, pagerankLoader));
@@ -115,7 +121,7 @@ public class AssignmentScorer<N> implements Loggable {
 		final int assSize = possAssignments.size();
 		final ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors
 				.newFixedThreadPool(Numbers.SCORER_THREAD_AMT.val.intValue());
-		AtomicInteger doneCounter = new AtomicInteger(0);
+		final AtomicInteger doneCounter = new AtomicInteger(0);
 		for (Scorable assgnmt : possAssignments) {
 			// Multi thread here
 			final Future<Integer> future = executor.submit(new Callable<Integer>() {
@@ -130,9 +136,9 @@ public class AssignmentScorer<N> implements Loggable {
 		long sleepCounter = 0l;
 		do {
 			// No need for await termination as this is pretty much it already...
-			Thread.sleep(100);
-			sleepCounter += 100l;
-			if ((sleepCounter > 5_000) && ((sleepCounter % 5000) <= 100)) {
+			Thread.sleep(sleeptime);
+			sleepCounter += sleeptime;
+			if ((sleepCounter > 5_000) && ((sleepCounter % 5000) <= sleeptime)) {
 				getLogger().debug(
 						"Score Computation - In progress [" + doneCounter.get() + " / " + assSize + "] documents.");
 			}

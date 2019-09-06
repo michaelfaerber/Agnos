@@ -163,8 +163,10 @@ public enum FilePaths {
 	// EnumModelType.NONE), //
 	FILE_GRAPH_WALK_OUTPUT_SENTENCES(DIR_WALK_GENERATOR.path + "walk_sentences.txt"), //
 	FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS(DIR_WALK_GENERATOR.path
-			// + "DBpediaVecotrs200_20Shuffle.txt",
-			+ "graphwalk_entity_embeddings.txt_new", "Proper output for computed entity embeddings"), //
+			// + "DBpediaVecotrs200_20Shuffle.txt"//
+			// + "graphwalk_entity_embeddings.txt_new"//
+			+ "graphwalk_entity_embeddings.txt"//
+			, "Proper output for computed entity embeddings"), //
 	FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS_RAWMAP(DIR_WALK_GENERATOR.path + "graphwalk_entity_embeddings_map.raw",
 			"RAW dump of the used hashmap (should be faster for loading rather than using line-by-line logic)"), //
 

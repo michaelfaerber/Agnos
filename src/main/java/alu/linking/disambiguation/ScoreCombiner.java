@@ -16,8 +16,8 @@ import alu.linking.structure.Loggable;
 public class ScoreCombiner<T> implements Loggable {
 	public Number combine(final Number currScore, final Scorer<T> scorer, final T scorerParam) {
 		// Add all types of scorers here with the appropriate weights
-		final Number weight = scorer.getWeight();
 		final Number score = scorer.computeScore(scorerParam);
+		final Number weight = scorer.getWeight();
 		// Generally not needed, but PR unfortunately can have some extremely high
 		// values by comparison and as such requires some smoothing (e.g. through
 		// sqrt())
@@ -32,7 +32,6 @@ public class ScoreCombiner<T> implements Loggable {
 			final Double vicScore = Numbers.VICINITY_WEIGHT.val.doubleValue()
 					* scorer.computeScore(scorerParam).doubleValue();
 			return add(currScore, vicScore);
-
 		} else {
 			return add(currScore, weight.doubleValue() * score.doubleValue());
 		}
