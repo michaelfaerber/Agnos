@@ -1,7 +1,5 @@
 package alu.linking.executable.preprocessing.setup.surfaceform.query;
 
-import org.apache.log4j.Logger;
-
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.preprocessing.surfaceform.query.SFQuery;
 import alu.linking.structure.Executable;

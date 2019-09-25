@@ -21,7 +21,7 @@ public class MentionUtils {
 	 */
 	public static void removeStringMention(String key, Collection<Mention> mentions) {
 		if (key == null) {
-			throw new IllegalArgumentException("Invalid key for removal...");
+			throw new NullPointerException("Invalid key(null) for removal...");
 		}
 		Iterator<Mention> it = mentions.iterator();
 		final int initSize = mentions.size();

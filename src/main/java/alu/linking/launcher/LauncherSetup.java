@@ -13,8 +13,8 @@ public class LauncherSetup {
 		final boolean f = false;
 		// Which KG to execute it for
 		final EnumModelType KG = EnumModelType.//
-				CRUNCHBASE2//
-		// DBPEDIA_FULL//
+				//CRUNCHBASE2//
+		DBPEDIA_FULL//
 		;
 		// Where the .NT file/s is/are located for PR computation
 		final String pagerankIn = "./dbpedia_ttl";
@@ -29,11 +29,13 @@ public class LauncherSetup {
 			// Combine transformed RDF files into a single graph
 			// pipeline.queue(new BMWGraphCombiner(), null);
 			// Compute Pagerank for the given RDF graph
-			pipeline.queue(new PageRankComputer(KG), //
-					pagerankIn
+			//pipeline.queue(new PageRankComputer(KG), //
+			//		pagerankIn
+			
 			// "./dbpedia_ttl"//
 			// "/vol2/cb/crunchbase-201806/dumps/crunchbase-dump-2018-06.nt"//
-			);//
+			//);//
+			
 			// Have to replace tab characters by space character for N3 compliance
 
 			// pipeline.queue(new EntitySFLinkingFromFile(), null);

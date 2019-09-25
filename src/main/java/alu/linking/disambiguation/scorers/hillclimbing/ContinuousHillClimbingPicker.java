@@ -101,7 +101,11 @@ public class ContinuousHillClimbingPicker extends HillClimbingPicker {
 
 			// Remove surface form with worst result (as it likely is noise)
 			clusters.remove(minKey);
-			MentionUtils.removeStringMention(minKey, copyContext);
+			try {
+				MentionUtils.removeStringMention(minKey, copyContext);
+			} catch (IllegalArgumentException iae) {
+
+			}
 		}
 
 		// Now just get the best one for each surface form
