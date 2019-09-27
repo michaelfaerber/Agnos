@@ -2,6 +2,7 @@ package alu.linking.disambiguation.scorers.hillclimbing;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -38,10 +39,15 @@ public class ContinuousHillClimbingPicker extends HillClimbingPicker {
 		super(similarityService, pagerankLoader);
 	}
 
+	/**
+	 * ContinuousChoices = overall choices <br>
+	 * IterationChoices = choices for that specific iteration
+	 * 
+	 */
 	@Override
 	public List<String> combine() {
 		super.prune = false;
-
+		int iterationCounter = 0;
 		final List<Mention> copyContext = Lists.newArrayList(this.context);
 		// Sorts them for the sake of initialisation picking based on word order
 		Collections.sort(copyContext, Comparators.mentionOffsetComparator);
@@ -52,60 +58,32 @@ public class ContinuousHillClimbingPicker extends HillClimbingPicker {
 		removeInvalidEmbeddings(clusters);
 
 		final Map<String, List<MutablePair<String, Double>>> continuousChoices = new HashMap<>();
-		while (copyContext.size() > 1) {
+		while (copyContext.size() > 1 && clusters.size() > 1) {
 			// Do the picking logic
 			final Map<String, Pair<String, Double>> iterationChoices = super.pickItems(clusters);
 
-			for (Map.Entry<String, Pair<String, Double>> iterationChoice : iterationChoices.entrySet()) {
-				final String key = iterationChoice.getKey();
-				List<MutablePair<String, Double>> continuousPairs = continuousChoices.get(key);
-				if (continuousPairs == null) {
-					continuousPairs = Lists.newArrayList();
-					continuousChoices.put(key, continuousPairs);
-				}
-
-				boolean found = false;
-				final Pair<String, Double> iterationChoicePair = iterationChoice.getValue();
-				for (MutablePair<String, Double> continuousPair : continuousPairs) {
-					if (continuousPair.getKey().equals(iterationChoicePair.getKey())) {
-						// Same entity = 'Collision' - so modify/update score accordingly
-						found = true;
-						// It's the same pair, so let's combine them!
-						final Double currentValue = continuousPair.getValue();
-						final Double newValue = computeNewValue(this.context.size() - clusters.size(), currentValue,
-								iterationChoicePair.getValue());
-						continuousPair.setValue(newValue);
-					}
-				}
-
-				if (!found) {
-					// Not a collision, so just add it
-					continuousPairs.add(new MutablePair<String, Double>(iterationChoicePair.getLeft(),
-							initVal(iterationChoicePair.getRight())));
-				}
+			// If no item has been picked, there is no need to continue... -> jump out
+			if (iterationChoices == null || iterationChoices.size() < 1) {
+				break;
 			}
-
-			Double minValue = Double.MAX_VALUE;
-			Pair<String, Double> minPair = null;
-			String minKey = null;
-			// Find the entity-score pair for the worst surface form
-			for (Map.Entry<String, Pair<String, Double>> e : iterationChoices.entrySet()) {
-				final Pair<String, Double> currentPair = e.getValue();
-				final Double currentValue = currentPair.getRight();
-				if (currentValue <= minValue) {
-					minKey = e.getKey();
-					minPair = currentPair;
-					minValue = currentValue;
-				}
-			}
-
-			// Remove surface form with worst result (as it likely is noise)
-			clusters.remove(minKey);
 			try {
-				MentionUtils.removeStringMention(minKey, copyContext);
-			} catch (IllegalArgumentException iae) {
-
+				// Processes the choices and removes the worst 'cluster of candidates'
+				processIterationResults(continuousChoices, iterationChoices, clusters, copyContext);
+			} catch (IllegalArgumentException | NullPointerException exc) {
+				System.err.println("###########################################");
+				System.out.println("Clusters:" + displayMap(clusters));
+				System.err.println("###########################################");
+				System.out.println("Iteration Choices:" + displayMap(iterationChoices));
+				System.err.println("###########################################");
+				System.err.println("Copy context:" + copyContext);
+				System.err.println("###########################################");
+				System.err.println("Context: " + context);
+				System.err.println("###########################################");
+				throw exc;
 			}
+
+			System.out.println("Iteration(#" + iterationCounter++ + ") Choices:");
+			System.out.println(displayMap(iterationChoices));
 		}
 
 		// Now just get the best one for each surface form
@@ -129,6 +107,107 @@ public class ContinuousHillClimbingPicker extends HillClimbingPicker {
 
 		getLogger().info("FINAL CHOICES[" + retList.size() + "]: " + retList);
 		return retList;
+	}
+
+	private void processIterationResults(Map<String, List<MutablePair<String, Double>>> continuousChoices,
+			Map<String, Pair<String, Double>> iterationChoices, Map<String, List<String>> clusters,
+			List<Mention> copyContext) {
+		// Go through our choices and see which ones to cut away for the next iteration
+		for (Map.Entry<String, Pair<String, Double>> iterationChoice : iterationChoices.entrySet()) {
+			final String key = iterationChoice.getKey();
+			List<MutablePair<String, Double>> continuousPairs = continuousChoices.get(key);
+			if (continuousPairs == null) {
+				continuousPairs = Lists.newArrayList();
+				continuousChoices.put(key, continuousPairs);
+			}
+
+			boolean found = false;
+			final Pair<String, Double> iterationChoicePair = iterationChoice.getValue();
+			for (MutablePair<String, Double> continuousPair : continuousPairs) {
+				if (continuousPair.getKey().equals(iterationChoicePair.getKey())) {
+					// Same entity = 'Collision' - so modify/update score accordingly
+					found = true;
+					// It's the same pair, so let's combine them!
+					final Double currentValue = continuousPair.getValue();
+					final Double newValue = computeNewValue(this.context.size() - clusters.size(), currentValue,
+							iterationChoicePair.getValue());
+					continuousPair.setValue(newValue);
+				}
+			}
+
+			if (!found) {
+				// TODO: Check if logic really holds as rn I'm not sure whether there really is
+				// exactly one pair here if it doesn't exist yet
+				//
+				// Not a collision, so just add it
+				continuousPairs.add(new MutablePair<String, Double>(iterationChoicePair.getLeft(),
+						initVal(iterationChoicePair.getRight())));
+			}
+		}
+
+		Double minValue = Double.MAX_VALUE;
+		Pair<String, Double> minPair = null;
+		String minKey = null;
+		// Find the entity-score pair for the worst surface form
+		for (Map.Entry<String, Pair<String, Double>> e : iterationChoices.entrySet()) {
+			final Pair<String, Double> currentPair = e.getValue();
+			final Double currentValue = currentPair.getRight();
+			if (currentValue <= minValue) {
+				minKey = e.getKey();
+				minPair = currentPair;
+				minValue = currentValue;
+			}
+		}
+
+		// Remove surface form with worst result (as it likely is noise)
+		clusters.remove(minKey);
+		MentionUtils.removeStringMention(minKey, copyContext);
+
+	}
+
+	private <T> String displayMap(Map<String, T> map) {
+		final int MAX_ITEMS = 10;
+		return displayMap(map, MAX_ITEMS);
+	}
+
+	private <T> String displayMap(Map<String, T> map, final int MAX_ITEMS) {
+		final StringBuilder retSB = new StringBuilder();
+		final StringBuilder sbSub = new StringBuilder();
+		final String NEWLINE = System.getProperty("line.separator");
+		for (Map.Entry<String, T> e : map.entrySet()) {
+			final T val = e.getValue();
+			// Reset the SB for the value item(s)
+			sbSub.setLength(0);
+			if (val instanceof Iterable) {
+				final StringBuilder sbSubSub = new StringBuilder();
+				final Iterator valIt = ((Iterable) val).iterator();
+				int iterCounter = 0;
+				if (!valIt.hasNext()) {
+					// Do nothing if there's nothing following...
+				} else {
+					Object o = valIt.next();
+					sbSubSub.append(o.toString());
+					iterCounter++;
+
+					while (valIt.hasNext()) {
+						o = valIt.next();
+						iterCounter++;
+						sbSubSub.append("\t;\t");
+						sbSubSub.append(o.toString());
+						if (iterCounter > MAX_ITEMS) {
+							break;
+						}
+					}
+					sbSub.append(sbSubSub.toString());
+				}
+				// val == null ? "<NULL>": val.subList(0, Math.min(val.size(), MAX_ITEMS + 1));
+			} else {
+				sbSub.append(val.toString());
+			}
+			retSB.append("Key[" + e.getKey() + "] " + sbSub.toString());
+			retSB.append(NEWLINE);
+		}
+		return retSB.toString();
 	}
 
 	private Double initVal(Double right) {
