@@ -60,7 +60,10 @@ public enum Strings {
 	ID_MAPPING_SEPARATOR("\t"), //
 
 	// Crunchbase-specific Parameters
-	NEWS_URL_SEP("\t;\t"),//
+	NEWS_URL_SEP("\t;\t"), //
+
+	// LSH-Relevant code
+	LSH_HASH_DELIMITER("\t;\t"),//
 	;
 	public final String val;
 	public final String desc;

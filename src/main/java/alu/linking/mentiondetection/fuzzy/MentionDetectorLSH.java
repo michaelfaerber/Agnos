@@ -27,6 +27,7 @@ import com.google.common.collect.Lists;
 
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.constants.Numbers;
+import alu.linking.config.constants.Strings;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.mentiondetection.EnumDetectionType;
 import alu.linking.mentiondetection.InputProcessor;
@@ -68,7 +69,7 @@ public class MentionDetectorLSH implements MentionDetector, Loggable {
 	// Precomputed data variables
 	private final String outDocVectorsEntries;
 	private final String outHashes;
-	private final String docArraySplitStr = "\t;\t";
+	private final String docArraySplitStr = Strings.LSH_HASH_DELIMITER.val;
 	private final EnumModelType KG;
 	// JS similarity min. threshold
 	private final double threshold;
