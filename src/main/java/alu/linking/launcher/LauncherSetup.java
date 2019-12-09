@@ -14,7 +14,8 @@ public class LauncherSetup {
 		// Which KG to execute it for
 		final EnumModelType KG = EnumModelType.//
 				//CRUNCHBASE2//
-		DBPEDIA_FULL//
+		//DBPEDIA_FULL//
+				WIKIDATA
 		;
 		// Where the .NT file/s is/are located for PR computation
 		final String pagerankIn = "./dbpedia_ttl";

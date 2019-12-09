@@ -21,8 +21,10 @@ public class LauncherExecuteQueries {
 	public static void main(String[] args) {
 		Pipeline pipeline = new Pipeline();
 		final EnumModelType KG = EnumModelType.DBPEDIA_FULL;
+		final String execMsg = "Executing queries for KG(" + KG.name() + ") - (SF, HSF, NP_HSF, NP_URLHSF)";
 		Logger.getLogger(LauncherExecuteQueries.class)
-				.info("Executing queries for KG(" + KG.name() + ") - (SF, HSF, NP_HSF, NP_URLHSF)");
+				.info(execMsg);
+		System.out.println(execMsg);
 		pipeline.queue(new SFQueryExecutor(), KG);
 		pipeline.queue(new HSFQueryExecutor(), KG);
 		pipeline.queue(new NP_HSFQueryExecutor(), KG);

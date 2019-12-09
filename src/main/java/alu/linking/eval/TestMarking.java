@@ -1,10 +1,10 @@
-package alu.linking.api.debug;
+package alu.linking.eval;
 
 public class TestMarking {
 	final String uri;
 	final String mention;
 
-	TestMarking(final String mention, final String uri) {
+	public TestMarking(final String mention, final String uri) {
 		this.uri = uri;
 		this.mention = mention;
 	}

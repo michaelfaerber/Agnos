@@ -1,70 +1,122 @@
-package alu.linking.api.debug;
+package alu.linking.eval;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.rmi.UnexpectedException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.aksw.gerbil.io.nif.DocumentListParser;
 import org.aksw.gerbil.io.nif.impl.TurtleNIFParser;
 import org.aksw.gerbil.transfer.nif.Document;
 import org.aksw.gerbil.transfer.nif.Marking;
 import org.aksw.gerbil.transfer.nif.Meaning;
+import org.aksw.gerbil.transfer.nif.NIFTransferPrefixMapping;
 import org.aksw.gerbil.transfer.nif.Span;
-import org.aksw.gerbil.transfer.nif.TurtleNIFDocumentParser;
 import org.apache.jena.ext.com.google.common.collect.Lists;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.riot.adapters.RDFReaderRIOT;
 
 import alu.linking.api.GERBILAPIAnnotator;
+import alu.linking.config.constants.Strings;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.executable.preprocessing.loader.PageRankLoader;
 import alu.linking.structure.Loggable;
+import alu.linking.utils.TextUtils;
 
-public class LauncherEvaluateKORE implements Loggable {
+public class LauncherEvaluateKOREAPI implements Loggable {
+
+	static FileWriter outputWrt;
+	static boolean saveToFile = true;
 
 	public static void main(String[] args) {
-		new LauncherEvaluateKORE().run();
+		try {
+			final String outPath = "./evaluation_out.txt";
+			outputWrt = new FileWriter(new File(outPath));
+			new LauncherEvaluateKOREAPI().run();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
-	public void run() {
+	public void run() throws FileNotFoundException {
+		final EnumModelType KG = EnumModelType.//
+		WIKIDATA
+		//CRUNCHBASE
+		// DBPEDIA_FULL
+		;
+
 		final String inPath = //
 				"./evaluation/" + //
-						//"kore50-nif_steve_jobs.ttl"
-		 "kore50-nif.ttl"
+				// "kore50-nif_steve_jobs.ttl"
+				// "kore50-nif.ttl"
+				// "kore50_yago.ttl"
+				"kore50_crunchbase.ttl"
+						//"kore50_wikidata.ttl"
+
 		// "dbpedia-spotlight-nif.ttl"
 		//
 		;
 		final File fileKORE50 = new File(inPath);
-		// final String inputDir = "./evaluation/min_example.ttl";
-		// final String outputDir = "./evaluation/annotated/";
-		final GERBILAPIAnnotator annotator = new GERBILAPIAnnotator(EnumModelType.DBPEDIA_FULL);
-		annotator.init();
+		if (!fileKORE50.exists()) {
+			throw new FileNotFoundException(
+					"Could not find the evaluation input file at: " + fileKORE50.getAbsolutePath());
+		}
+
+		// ################# Init read evaluation documents - START
+		// ######################
+		// (To make sure they work, since otherwise we lose a lot of time with
+		// initialization)
 		final TurtleNIFParser parser = new TurtleNIFParser();
 		List<Document> documents = null;
 		List<Document> copyDocuments = null;
 		try {
-			documents = parser.parseNIF(new FileInputStream(fileKORE50));
-			copyDocuments = parser.parseNIF(new FileInputStream(fileKORE50));
+			documents = parseDocuments(fileKORE50);
+			copyDocuments = parseDocuments(fileKORE50);
+			// documents = parser.parseNIF(new BufferedReader(new
+			// FileReader(fileKORE50)));// new FileInputStream(fileKORE50));
+			// copyDocuments = parser.parseNIF(new FileInputStream(fileKORE50));
 		} catch (FileNotFoundException e) {
 			documents = null;
 			e.printStackTrace();
+			throw e;
 		}
+		// ################# Init read evaluation documents - END ######################
+
+		// ################# Init linking - START ######################
+		// final String inputDir = "./evaluation/min_example.ttl";
+		// final String outputDir = "./evaluation/annotated/";
+		final GERBILAPIAnnotator annotator = new GERBILAPIAnnotator(KG);
+		annotator.init();
+		// ################# Init linking - END ######################
+
+		// Now iterate through the documents
 
 		final List<EvaluationResult> evaluationResults = Lists.newArrayList();
 
 		// Process one document after the other
 		for (int i = 0; i < documents.size(); ++i) {
 			final Document inputDoc = documents.get(i);
-			getLogger().info("Evaluating:" + GERBILAPIAnnotator.smallText(inputDoc.getText()));
+			output("Evaluating:" + TextUtils.smallText(inputDoc.getText()));
 			try {
 				final String results = annotator.annotateDocument(inputDoc);
 				// Read the output results and compare to the one I was handed
-//				getLogger().info("########################## Results: ##########################");
-//				getLogger().info(results);
-//				getLogger().info("##############################################################");
-				final Document resultDoc = new TurtleNIFDocumentParser().getDocumentFromNIFString(results);
+//				output("########################## Results: ##########################");
+//				output(results);
+//				output("##############################################################");
+				System.out.println("Results = " + results);
+				final Document resultDoc = parseDocument(new StringReader(results));// new
+																					// TurtleNIFDocumentParser().getDocumentFromNIFString(results);
 //			Document resultDoc = null;
 //			switch (resultDocs.size()) {
 //			case 0:
@@ -72,7 +124,7 @@ public class LauncherEvaluateKORE implements Loggable {
 //				throw new RuntimeException("No document returned...");
 //			case 1:
 //				// Correct
-//				getLogger().info("Document retrieved!");
+//				output("Document retrieved!");
 //				resultDoc = resultDocs.get(0);
 //				break;
 //			default:
@@ -85,7 +137,7 @@ public class LauncherEvaluateKORE implements Loggable {
 						resultDoc.getMarkings(), inputDoc.getText());
 				evaluationResults.add(evaluationResult);
 			} catch (IOException ioe) {
-				getLogger().error("IOE Exception happened... ", ioe);
+				getLogger().error("IO Exception happened... ", ioe);
 				break;
 			} catch (Exception e) {
 				getLogger().error("(Parser?) Exception happened... ", e);
@@ -94,17 +146,17 @@ public class LauncherEvaluateKORE implements Loggable {
 		}
 
 		// Display the overall metrics now
-		getLogger().info("########################################");
-		getLogger().info("########### LOCAL (Macro) ##############");
-		getLogger().info("########################################");
+		output("########################################");
+		output("########### LOCAL (Macro) ##############");
+		output("########################################");
 		displayEvaluation(evaluationResults);
 
 		// Display the overall metrics now
-		getLogger().info("##############################################################");
-		getLogger().info("########### LOCAL (Filtered 100% INCORRECT finds) ############");
-		getLogger().info("########### This answers to the question:         ############");
-		getLogger().info("##### If we get one correctly, how good is it overall? #######");
-		getLogger().info("##############################################################");
+		output("##############################################################");
+		output("########### LOCAL (Filtered 100% INCORRECT finds) ############");
+		output("########### This answers to the question:         ############");
+		output("##### If we get one correctly, how good is it overall? #######");
+		output("##############################################################");
 		final List<EvaluationResult> filteredEvaluationResults = Lists.newArrayList();
 		for (EvaluationResult evaluation : evaluationResults) {
 			// Filter out the cases in which...
@@ -116,12 +168,12 @@ public class LauncherEvaluateKORE implements Loggable {
 		}
 		displayEvaluation(filteredEvaluationResults);
 
-		getLogger().info("#######################################");
-		getLogger().info("########### GLOBAL (Micro) ############");
-		getLogger().info("#######################################");
+		output("#######################################");
+		output("########### GLOBAL (Micro) ############");
+		output("#######################################");
 		displayTruthValues(EvaluationResult.globalTP, EvaluationResult.globalTN, EvaluationResult.globalFP,
 				EvaluationResult.globalFN);
-		getLogger().info("Finished successfully!");
+		output("Finished successfully!");
 		final StringBuilder sbMissingPR = new StringBuilder();
 		int missingPRCounter = 0;
 		final int displayPR = 10;
@@ -133,11 +185,13 @@ public class LauncherEvaluateKORE implements Loggable {
 				break;
 			}
 		}
-		getLogger().info(
-				"Missing PR values(" + PageRankLoader.setPRNotFound.size() + "): [" + sbMissingPR.toString() + "]");
+		output("Missing PR values(" + PageRankLoader.setPRNotFound.size() + "): [" + sbMissingPR.toString() + "]");
 	}
 
 	private void displayEvaluation(final List<EvaluationResult> evaluationResults) {
+		if (evaluationResults == null || evaluationResults.size() == 0) {
+			System.err.println("No evaluation results passed to evaluate...");
+		}
 		final EvaluationResult firstEval = evaluationResults.get(0);
 		final StringBuilder sbPrecisionSum = new StringBuilder(String.valueOf(firstEval.precision));
 		final StringBuilder sbRecallSum = new StringBuilder(String.valueOf(firstEval.recall));
@@ -164,12 +218,12 @@ public class LauncherEvaluateKORE implements Loggable {
 		final double avgPrecision = (precisionSum / evalAmt);
 		final double avgRecall = (recallSum / evalAmt);
 		final double avgF1 = (f1Sum / evalAmt);
-		getLogger().info("Precision Sum: " + precisionSum + " = " + sbPrecisionSum.toString());
-		getLogger().info("Recall Sum: " + recallSum + " = " + sbRecallSum.toString());
-		getLogger().info("F1 Sum: " + f1Sum + " = " + sbF1Sum.toString());
-		getLogger().info("Precision Avg.: " + avgPrecision);
-		getLogger().info("Recall Avg.: " + avgRecall);
-		getLogger().info("F1 Avg.: " + avgF1);
+		output("Precision Sum: " + precisionSum + " = " + sbPrecisionSum.toString());
+		output("Recall Sum: " + recallSum + " = " + sbRecallSum.toString());
+		output("F1 Sum: " + f1Sum + " = " + sbF1Sum.toString());
+		output("Precision Avg.: " + avgPrecision);
+		output("Recall Avg.: " + avgRecall);
+		output("F1 Avg.: " + avgF1);
 	}
 
 	/**
@@ -185,10 +239,10 @@ public class LauncherEvaluateKORE implements Loggable {
 		final double globalPrecision = precision(TP, TN, FP, FN);
 		final double globalRecall = recall(TP, TN, FP, FN);
 		final double globalF1 = f1(TP, TN, FP, FN);
-		getLogger().info("TP(" + TP + "), TN(" + TN + "), FP(" + FP + "), FN(" + FN + ")");
-		getLogger().info("Precision:" + globalPrecision);
-		getLogger().info("Recall:" + globalRecall);
-		getLogger().info("F1:" + globalF1);
+		output("TP(" + TP + "), TN(" + TN + "), FP(" + FP + "), FN(" + FN + ")");
+		output("Precision:" + globalPrecision);
+		output("Recall:" + globalRecall);
+		output("F1:" + globalF1);
 	}
 
 	private EvaluationResult evaluateMarkings(final List<Marking> inputMarkings, final List<Marking> resultMarkings,
@@ -196,10 +250,10 @@ public class LauncherEvaluateKORE implements Loggable {
 		final EvaluationResult evaluationResult = new EvaluationResult();
 		final Set<TestMarking> setInputMarkings = transformToTestMarkings(inputMarkings, inputText);
 		final Set<TestMarking> setResultMarkings = transformToTestMarkings(resultMarkings, inputText);
-		getLogger().info("Input: List(" + inputMarkings.size() + "), Set(" + setInputMarkings.size() + ")");
-		getLogger().info("Result: List(" + resultMarkings.size() + "), Set(" + setResultMarkings.size() + ")");
-		getLogger().info("Input Set:" + setInputMarkings);
-		getLogger().info("Result Set:" + setResultMarkings);
+		output("Input: List(" + inputMarkings.size() + "), Set(" + setInputMarkings.size() + ")");
+		output("Result: List(" + resultMarkings.size() + "), Set(" + setResultMarkings.size() + ")");
+		output("Input Set:" + setInputMarkings);
+		output("Result Set:" + setResultMarkings);
 		double tp = 0, fp = 0, tn = 0, fn = 0;
 		for (TestMarking m : setInputMarkings) {
 			// Iterate through set, check if each is also in the result one
@@ -226,14 +280,14 @@ public class LauncherEvaluateKORE implements Loggable {
 		final double precision = precision(tp, tn, fp, fn);// tp / (tp + fp);
 		final double recall = recall(tp, tn, fp, fn);// tp / (tp + fn);
 		final double f1 = f1(tp, tn, fp, fn);// 2 * precision * recall / (precision + recall);
-		getLogger().info(GERBILAPIAnnotator.smallText(inputText));
-		getLogger().info(outStr);
-		getLogger().info("Precision: " + precision);
-		getLogger().info("Recall: " + recall);
-		getLogger().info("F1: " + f1);
-		getLogger().info("################################################################");
-		getLogger().info("###################### END OF DOCUMENT #########################");
-		getLogger().info("################################################################");
+		output(TextUtils.smallText(inputText));
+		output(outStr);
+		output("Precision: " + precision);
+		output("Recall: " + recall);
+		output("F1: " + f1);
+		output("################################################################");
+		output("###################### END OF DOCUMENT #########################");
+		output("################################################################");
 
 		evaluationResult.tp = (int) (Double.isNaN(tp) ? 0 : tp);
 		evaluationResult.tn = (int) (Double.isNaN(tn) ? 0 : tn);
@@ -293,4 +347,55 @@ public class LauncherEvaluateKORE implements Loggable {
 		}
 		return ret;
 	}
+
+	protected Model getDefaultModel() {
+		Model nifModel = ModelFactory.createDefaultModel();
+		nifModel.setNsPrefixes(NIFTransferPrefixMapping.getInstance());
+		return nifModel;
+	}
+
+	protected Model parseNIFModel(Reader reader, Model nifModel) {
+		// RDFReaderRIOT rdfReader = new RDFReaderRIOT_TTL();
+		RDFReaderRIOT rdfReader = new RDFReaderRIOT("TTL");
+		rdfReader.read(nifModel, reader, "");
+		return nifModel;
+	}
+
+	private Document parseDocument(File fileKORE50) throws FileNotFoundException, UnexpectedException {
+		return parseDocument(new BufferedReader(new FileReader(fileKORE50)));
+	}
+
+	private List<Document> parseDocuments(File fileKORE50) throws FileNotFoundException {
+		return parseDocuments(new BufferedReader(new FileReader(fileKORE50)));
+	}
+
+	private Document parseDocument(Reader reader) throws FileNotFoundException, UnexpectedException {
+		final List<Document> documents = parseDocuments(reader);
+		if (documents.size() == 1) {
+			return documents.get(0);
+		} else {
+			throw new UnexpectedException("Expected to receive 1 document, instead received "
+					+ (documents == null ? "null" : documents.size()));
+		}
+	}
+
+	private List<Document> parseDocuments(Reader reader) throws FileNotFoundException {
+		final Model nifModel = parseNIFModel(reader, getDefaultModel());
+		final DocumentListParser docListParser = new DocumentListParser();
+		return docListParser.parseDocuments(nifModel);
+	}
+
+	private void output(final String msg) {
+		if (saveToFile) {
+			try {
+				outputWrt.write(msg + Strings.NEWLINE.val);
+				outputWrt.flush();
+			} catch (IOException e) {
+				System.out.println("[IOError] " + msg);
+			}
+		} else {
+			getLogger().info(msg);
+		}
+	}
+
 }

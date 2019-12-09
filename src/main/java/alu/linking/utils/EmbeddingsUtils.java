@@ -39,7 +39,7 @@ public class EmbeddingsUtils {
 			throws FileNotFoundException, IOException {
 		final String delim = Strings.EMBEDDINGS_TRAINED_DELIM.val;
 //		final boolean stripArrows = false;
-		//final String delim = " ";
+		// final String delim = " ";
 		final boolean stripArrows = true;
 		return readEmbeddings(intputFile, mappingLoader, normalize, delim, stripArrows);
 	}
@@ -65,14 +65,20 @@ public class EmbeddingsUtils {
 			final boolean stripArrows) throws FileNotFoundException, IOException {
 		// Embeddings format: vocabularyWord <delim> List<Double>
 		final Map<String, List<Number>> embeddings = new HashMap<>();
+		int lineCounter = 0;
 		String line = null;
 		try (final BufferedReader brIn = new BufferedReader(new FileReader(intputFile))) {
 			while ((line = brIn.readLine()) != null) {
+				if (lineCounter % 100_000 == 0) {
+					System.out.println("# of embeddings: " + lineCounter);
+					System.out.println("Current: " + line.substring(0, 100));
+				}
+				lineCounter++;
 				double sum = 0d;
 				// Word \t 1.23123 \t 2.1421421 ...
 				final String[] tokens = line.split(delim);
 				String vocab = tokens[0];
-				if (mappingLoader != null) {
+				if (mappingLoader != null && !mappingLoader.isEmpty()) {
 					final String associatedWord = mappingLoader.getMapping(vocab);
 					if (associatedWord != null) {
 						vocab = associatedWord;
@@ -80,17 +86,18 @@ public class EmbeddingsUtils {
 				}
 
 				if (stripArrows) {
-					if (vocab.startsWith("<") && vocab.length() > 2) {
-						vocab = vocab.substring(1);
-					}
-					if (vocab.endsWith(">") && vocab.length() > 1) {
-						vocab = vocab.substring(0, vocab.length() - 1);
+					final int endOffset = vocab.length() - 1;
+					if ((vocab.charAt(0) == '<') && (vocab.charAt(endOffset) == '>') && endOffset > 1) {
+						vocab = vocab.substring(1, endOffset);
 					}
 				}
 
 				List<Number> embedding = Lists.newArrayList();
 				for (int i = 1; i < tokens.length; ++i) {
-					final double embedVal = Double.valueOf(tokens[i]);
+					final float embedVal = // Double
+							Float//
+									.valueOf(tokens[i]);
+					tokens[i] = null;
 					embedding.add(embedVal);
 					// Sum it up here for normalization
 					// sum += embedVal;
@@ -100,6 +107,7 @@ public class EmbeddingsUtils {
 					embedding = normalize(embedding);
 				}
 				embeddings.put(vocab, embedding);
+				embedding = null;
 			}
 		}
 

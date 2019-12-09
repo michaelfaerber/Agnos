@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 
+import alu.linking.config.constants.EnumEmbeddingMode;
 import alu.linking.config.constants.FilePaths;
 import alu.linking.config.constants.Numbers;
 import alu.linking.config.kg.EnumModelType;
@@ -52,6 +53,12 @@ public class AssignmentScorer<N> implements Loggable {
 	 * @throws IOException            if
 	 */
 	public AssignmentScorer(final EnumModelType KG) throws FileNotFoundException, ClassNotFoundException, IOException {
+		this(KG, EnumEmbeddingMode.DEFAULT.val);
+	}
+
+	public AssignmentScorer(final EnumModelType KG, final EnumEmbeddingMode embeddingMode)
+			throws FileNotFoundException, ClassNotFoundException, IOException {
+
 		// Determines how everything is scored!
 		PossibleAssignment.setScoreCombiner(new ScoreCombiner<PossibleAssignment>());
 
@@ -68,10 +75,15 @@ public class AssignmentScorer<N> implements Loggable {
 
 		// Post-scoring
 		// PossibleAssignment.addPostScorer(new VicinityScorer());
-		final Map<String, List<Number>> entityEmbeddingsMap = GraphWalkEmbeddingScorer.humanload(
-				FilePaths.FILE_GRAPH_WALK_ID_MAPPING_ENTITY_HUMAN.getPath(KG),
-				FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG));
-		this.similarityService = new EntitySimilarityService(entityEmbeddingsMap);
+		final Map<String, List<Number>> entityEmbeddingsMap;
+		if (embeddingMode == EnumEmbeddingMode.LOCAL) {
+			entityEmbeddingsMap = GraphWalkEmbeddingScorer.humanload(
+					FilePaths.FILE_GRAPH_WALK_ID_MAPPING_ENTITY_HUMAN.getPath(KG),
+					FilePaths.FILE_EMBEDDINGS_GRAPH_WALK_ENTITY_EMBEDDINGS.getPath(KG));
+			this.similarityService = new EntitySimilarityService(entityEmbeddingsMap);
+		} else {
+			this.similarityService = new EntitySimilarityService();
+		}
 //		int displayCounter = 0;
 //		for (Entry<String, List<Number>> e : entityEmbeddingsMap.entrySet()) {
 //			System.out.println(e.getKey());

@@ -30,7 +30,7 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 	}
 
 	public static final int DEFAULT_PR_TOP_K = 30;// 50;// 30;// 0;// 100;
-	public static final double DEFAULT_PR_MIN_THRESHOLD = 1d;// 0.16d;// 0.16d;// 1d;// 0.1d;
+	public static final double DEFAULT_PR_MIN_THRESHOLD = 0d;//1d;// 0.16d;// 0.16d;// 1d;// 0.1d;
 	public static final int DEFAULT_REPEAT = 50;// was 200 before, but due to long texts...
 	public static final double DEFAULT_PRUNE_MIN_SCORE_RATIO = 0.40;
 	public static final boolean allowSelfConnection = false;

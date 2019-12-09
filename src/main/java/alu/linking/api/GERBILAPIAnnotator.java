@@ -29,6 +29,7 @@ import com.beust.jcommander.internal.Lists;
 import alu.linking.candidategeneration.CandidateGenerator;
 import alu.linking.candidategeneration.CandidateGeneratorMap;
 import alu.linking.config.constants.Comparators;
+import alu.linking.config.constants.EnumEmbeddingMode;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.disambiguation.AssignmentChooser;
 import alu.linking.mentiondetection.InputProcessor;
@@ -41,9 +42,11 @@ import alu.linking.structure.Executable;
 import alu.linking.structure.PossibleAssignment;
 import alu.linking.utils.DetectionUtils;
 import alu.linking.utils.Stopwatch;
+import alu.linking.utils.TextUtils;
 
 /**
  * Class handling annotation tasks for GERBIL
+ * 
  * @author Kristian Noullet
  *
  */
@@ -69,9 +72,15 @@ public class GERBILAPIAnnotator implements Executable {
 	private CandidateGenerator candidateGenerator = null;
 	private AssignmentChooser chooser = null;
 	private MentionPruner pruner = null;
+	private final EnumEmbeddingMode embeddingMode;
 
 	public GERBILAPIAnnotator(final EnumModelType KG) {
+		this(KG, EnumEmbeddingMode.DEFAULT.val);
+	}
+
+	public GERBILAPIAnnotator(final EnumModelType KG, final EnumEmbeddingMode embeddingMode) {
 		this.KG = KG;
+		this.embeddingMode = embeddingMode;
 	}
 
 	@Override
@@ -102,7 +111,7 @@ public class GERBILAPIAnnotator implements Executable {
 			Stopwatch.endOutputStart(getClass().getName());
 			// Initialise AssignmentChooser
 			Stopwatch.start(chooserWatch);
-			this.chooser = new AssignmentChooser(this.KG);
+			this.chooser = new AssignmentChooser(this.KG, this.embeddingMode);
 			Stopwatch.endOutput(chooserWatch);
 			this.pruner = new ThresholdPruner(1.0d);
 			init = true;
@@ -171,7 +180,7 @@ public class GERBILAPIAnnotator implements Executable {
 		// offsets
 		final List<Marking> orderedMarkings = getSortedMarkings(nifDocument);
 
-		getLogger().info("Input [plain text]:" + smallText(text));
+		getLogger().info("Input [plain text]:" + TextUtils.smallText(text));
 
 		// 3. use the text and maybe some Markings sent by GERBIL to generate your
 		// Markings
@@ -579,15 +588,6 @@ public class GERBILAPIAnnotator implements Executable {
 	public boolean destroy() {
 		// Tear down all the loaded data structures
 		return false;
-	}
-
-	public static String smallText(String text) {
-		final int length = 50;
-		final StringBuilder sb = new StringBuilder(text.substring(0, Math.min(text.length(), length)));
-		if (text.length() > length) {
-			sb.append("[...] (" + text.length() + ")");
-		}
-		return sb.toString();
 	}
 
 }

@@ -49,6 +49,11 @@ public class IDMappingLoader<V> {
 		}
 	}
 
+	public boolean isEmpty() {
+		return (this.mappingHuman == null) || (this.mappingRaw == null) || (this.mappingHuman.size() == 0)
+				|| (this.mappingRaw.size() == 0);
+	}
+
 	public IDMappingLoader() {
 		this(Strings.ID_MAPPING_SEPARATOR.val);
 	}

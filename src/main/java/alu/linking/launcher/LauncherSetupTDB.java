@@ -38,13 +38,13 @@ public class LauncherSetupTDB implements Loggable {
 		// DBPEDIA
 		// CRUNCHBASE2
 		// MAG
-		// CRUNCHBASE
+		CRUNCHBASE;
 		// DBPEDIA_FULL
-				WIKIDATA;
+		// WIKIDATA;
 		System.out.println("Setting up TDB for: " + KG.name());
 		final String KGpath =
-				// "/vol2/cb/crunchbase-201510/dumps/crunchbase-dump-201510.nt";//CB1
-				// "/vol2/cb/crunchbase-201806/dumps/crunchbase-dump-2018-06.nt";// CB2
+				// "/vol2/cb/crunchbase-201510/dumps/crunchbase-dump-201510.nt";//CB2015
+				"/vol2/cb/crunchbase-201806/dumps/crunchbase-dump-2018-06_sanitized.nt";// CB2018
 				// "./cb2018-06/crunchbase-dump-2018-06.nt";//NORMALIZED_CB2
 				// "/home/faerberm/inRDF-URI-as-obj/";// MAG
 				// "/vol2/kris/PaperReferences_o.nt";// MAG PaperReferences_o.nt
@@ -59,7 +59,7 @@ public class LauncherSetupTDB implements Loggable {
 				// "/home/noulletk/prog/bmw/input_dbpedia/";// DBpedia
 				// Handle appropriately both for input file (just load it)
 				// and input directory (get all files within it, aka. ignore subdirectories)
-				"/vol2/wikidata/dumps/20190213/wikidata-20190213-truthy-BETA_all_URI-obj.nt";
+				//"/vol2/wikidata/dumps/20190213/wikidata-20190213-truthy-BETA_all_URI-obj.nt";
 		final File inFile = new File(KGpath);
 		final List<String> inFiles = Lists.newArrayList();
 		if (inFile.isDirectory()) {

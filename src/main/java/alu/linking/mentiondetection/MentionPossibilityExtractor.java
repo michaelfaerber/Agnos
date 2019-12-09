@@ -31,6 +31,7 @@ import alu.linking.config.kg.EnumModelType;
 import alu.linking.structure.Loggable;
 import alu.linking.structure.MentionPossibilityProcessor;
 import alu.linking.structure.RDFLineProcessor;
+import alu.linking.utils.TextUtils;
 
 /**
  * This class extracts literals and maps them as Map<Literal, Set<Source>> The
@@ -411,20 +412,14 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 		// source = source;// .toLowerCase();
 		if (!passesRequirements(entity, word))
 			return;
-		Collection<String> s;
-		if ((s = map.get(word)) == null) {
-			s = new HashSet<String>();
-			map.put(word, s);
-		}
-		s.add(entity);
-	}
+		String cleanedWord = TextUtils.stripQuotesAndLang(word);
 
-	private String stripArrowSigns(final String line) {
-		if (line.startsWith("<") && line.endsWith(">")) {
-			return line.substring(1, line.length() - 1);
-		} else {
-			return line;
+		Collection<String> s;
+		if ((s = map.get(cleanedWord)) == null) {
+			s = new HashSet<String>();
+			map.put(cleanedWord, s);
 		}
+		s.add(TextUtils.stripArrowSigns(entity));
 	}
 
 	/**

@@ -14,8 +14,8 @@ public enum EnumModelType {
 	DBPEDIA_FULL(Strings.ROOTPATH.val + "dbpedia_full/", EntityQuery.DEFAULT, EnumConnection.SHETLAND_VIRTUOSO, false,
 			"http://dbpedia.org"), //
 	FREEBASE(Strings.ROOTPATH.val + "freebase/", EntityQuery.DEFAULT), //
-	CRUNCHBASE(Strings.ROOTPATH.val + "crunchbase/", EntityQuery.CRUNCHBASE2), //
-	CRUNCHBASE2(Strings.ROOTPATH.val + "crunchbase2/", EntityQuery.CRUNCHBASE2), //
+	CRUNCHBASE(Strings.ROOTPATH.val + "crunchbase2018/", EntityQuery.CRUNCHBASE2), //
+	CRUNCHBASE2(Strings.ROOTPATH.val + "crunchbase2015/", EntityQuery.CRUNCHBASE2), //
 	MINI_MAG(Strings.ROOTPATH.val + "mini_mag/", EntityQuery.MAG), //
 	MAG(Strings.ROOTPATH.val + "mag/", EntityQuery.MAG), //
 	DBLP(Strings.ROOTPATH.val + "dblp/", EntityQuery.DBLP), //

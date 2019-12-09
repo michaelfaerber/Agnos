@@ -1,5 +1,12 @@
 package alu.linking.disambiguation.scorers.embedhelp;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -8,6 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.collections4.map.LRUMap;
@@ -17,9 +25,11 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.github.jsonldjava.shaded.com.google.common.collect.Lists;
 
 import alu.linking.config.constants.Comparators;
+import alu.linking.config.constants.EnumEmbeddingMode;
 import alu.linking.config.constants.Numbers;
 import alu.linking.utils.DecoderUtils;
 import alu.linking.utils.EmbeddingsUtils;
+import alu.linking.utils.TextUtils;
 
 /**
  * An LRU-based caching service for entity similarity with a size of
@@ -34,9 +44,20 @@ public class EntitySimilarityService {
 	private final LRUMap<String, Number> distCache = new LRUMap<>(Numbers.SIMILARITY_CACHE_SIZE.val.intValue());
 	public final Set<String> notFoundIRIs = new HashSet<>();
 	public final AtomicInteger recovered = new AtomicInteger();
+	public final boolean DEFAULT_LOCAL_OR_API = false;
+	private final ProcessBuilder processBuilder;
+	private final String baseURL = "http://localhost:3030/model?";
+	private final String arg1 = "url1=";
+	private final String arg2 = "url2=";
 
 	public EntitySimilarityService(final Map<String, List<Number>> embeddings) {
 		this.embeddings = embeddings;
+		this.processBuilder = null;
+	}
+
+	public EntitySimilarityService() {
+		this.processBuilder = new ProcessBuilder();
+		this.embeddings = null;
 	}
 
 	/**
@@ -50,51 +71,154 @@ public class EntitySimilarityService {
 	 * @return similarity between the two
 	 */
 	public Number similarity(final String entity1, final String entity2) {
+		return similarity(entity1, entity2, EnumEmbeddingMode.DEFAULT.val == EnumEmbeddingMode.LOCAL);
+	}
+
+	public Number similarity(final String entity1_raw, final String entity2_raw, final boolean LOCAL_OR_API) {
+		final String entity1 = TextUtils.stripArrowSigns(entity1_raw.trim());
+		final String entity2 = TextUtils.stripArrowSigns(entity2_raw.trim());
 		final String keyStr = key(entity1, entity2);
 		Number retVal;
 		synchronized (this.distCache) {
 			retVal = this.distCache.get(keyStr);
 		}
+
 		if (retVal == null) {
-			List<Number> left = this.embeddings.get(entity1);
-			List<Number> right = this.embeddings.get(entity2);
-			if (left == null || right == null) {
-				// Try with percentage decoding!
-				// Attempt left recovery - if required
-				if (left == null) {
-					final String decodedEntity1 = DecoderUtils.escapePercentage(entity1);
-					if (decodedEntity1 != null && decodedEntity1.length() > 0) {
-						left = this.embeddings.get(decodedEntity1);
-					}
-				}
-
-				// Attempt right recovery - if required
-				if (right == null) {
-					final String decodedEntity2 = DecoderUtils.escapePercentage(entity2);
-					if (decodedEntity2 != null && decodedEntity2.length() > 0) {
-						right = this.embeddings.get(decodedEntity2);
-					}
-				}
-
+			if (LOCAL_OR_API) {
+				List<Number> left = this.embeddings.get(entity1);
+				List<Number> right = this.embeddings.get(entity2);
 				if (left == null || right == null) {
-					// -> couldn't be (completely) recovered
+					// Try with percentage decoding!
+					// Attempt left recovery - if required
 					if (left == null) {
-						notFoundIRIs.add(entity1);
+						final String decodedEntity1 = DecoderUtils.escapePercentage(entity1);
+						if (decodedEntity1 != null && decodedEntity1.length() > 0) {
+							left = this.embeddings.get(decodedEntity1);
+						}
 					}
+
+					// Attempt right recovery - if required
 					if (right == null) {
-						notFoundIRIs.add(entity2);
+						final String decodedEntity2 = DecoderUtils.escapePercentage(entity2);
+						if (decodedEntity2 != null && decodedEntity2.length() > 0) {
+							right = this.embeddings.get(decodedEntity2);
+						}
 					}
-					return 0F;
-				} else {
-					recovered.incrementAndGet();
+
+					if (left == null || right == null) {
+						// -> couldn't be (completely) recovered
+						if (left == null) {
+							notFoundIRIs.add(entity1);
+						}
+						if (right == null) {
+							notFoundIRIs.add(entity2);
+						}
+						return 0F;
+					} else {
+						recovered.incrementAndGet();
+					}
+				}
+				retVal = EmbeddingsUtils.cosineSimilarity(left, right, true);
+			} else {
+				// API Calls!
+				final StringBuilder sbURL = new StringBuilder(baseURL);
+				sbURL.append(arg1);
+				sbURL.append(entity1);
+				sbURL.append("&");
+				sbURL.append(arg2);
+				sbURL.append(entity2);
+				try {
+					retVal = curlHTTP(sbURL);
+				} catch (IOException e1) {
+					System.err.println("Attempting to recover by cmd line (curl): " + e1.getMessage());
+					e1.printStackTrace();
+					try {
+						retVal = curl(sbURL);
+					} catch (IOException e) {
+						System.err.println("Not recoverable... sim(" + entity1 + "/" + entity2 + ")");
+					}
 				}
 			}
-			retVal = EmbeddingsUtils.cosineSimilarity(left, right, true);
-			synchronized (this.distCache) {
-				if (this.distCache.get(keyStr) != null) {
-					this.distCache.put(keyStr, retVal);
-				}
+		}
+
+		synchronized (this.distCache) {
+			if (this.distCache.get(keyStr) != null) {
+				this.distCache.put(keyStr, retVal);
 			}
+		}
+		return retVal;
+
+	}
+
+	/**
+	 * Makes use of URL and URL.openstream to get the response
+	 * 
+	 * @param sbURL
+	 * @return
+	 * @throws UnsupportedEncodingException
+	 * @throws IOException
+	 */
+	private Number curlHTTP(final StringBuilder sbURL) throws UnsupportedEncodingException, IOException {
+		final URL url = new URL(sbURL.toString());
+		Number retVal = 0d;
+		final StringBuilder sbRet = new StringBuilder();
+
+		try (final InputStream is = url.openStream();
+				BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"))) {
+			for (String line; (line = reader.readLine()) != null;) {
+				sbRet.append(line);
+				// System.out.println(line);
+			}
+		}
+		try {
+			retVal = Double.valueOf(sbRet.toString().trim());
+		} catch (NumberFormatException nfe) {
+			retVal = 0d;
+		}
+		return retVal;
+	}
+
+	/**
+	 * Works with processbuilder to send commands over the command line...
+	 * 
+	 * @param sbURL
+	 * @return
+	 * @throws IOException
+	 */
+	private Number curl(final StringBuilder sbURL) throws IOException {
+		final String command = "curl -X GET " + sbURL.toString();
+		Number retVal = 0d;
+		processBuilder.command(command.split(" "));
+		processBuilder.directory(new File("./"));
+		Process process = null;
+		try {
+			process = processBuilder.start();
+			try {
+				final boolean finished = process.waitFor(5, TimeUnit.MINUTES);
+				if (!finished) {
+					// If it doesn't manage to finish, return 0
+					return 0d;
+				}
+				Thread.sleep(10l);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			if (process.exitValue() != 0) {
+				throw new IOException("Process Error code: " + process.exitValue());
+			}
+			try (final BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+				String line = null;
+				final StringBuilder content = new StringBuilder();
+				while ((line = br.readLine()) != null) {
+					content.append(line);
+					content.append(" ");
+				}
+				System.out.println("Received content:" + content.toString());
+				final String contentString = content.toString();
+				retVal = Double.valueOf(contentString.trim());
+			}
+		} finally {
+			process.destroy();
 		}
 		return retVal;
 	}
@@ -192,6 +316,10 @@ public class EntitySimilarityService {
 	 * @param collection
 	 */
 	public void ascertainSimilarityExistence(final Iterable<String> collection) {
+		if ((this.embeddings == null && this.processBuilder != null) || this.embeddings.size() < 1) {
+			return;
+		}
+
 		final Iterator<String> iter = collection.iterator();
 		while (iter.hasNext()) {
 			final String key = iter.next();

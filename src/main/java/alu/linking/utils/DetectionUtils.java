@@ -43,6 +43,7 @@ public class DetectionUtils {
 	public static MentionDetector setupMentionDetection(final EnumModelType KG, final Map<String, Collection<String>> map,
 			final InputProcessor inputProcessor) throws Exception {
 		return setupMentionDetection(KG, map, inputProcessor, false);
+		//return setupMentionDetection(KG, map, inputProcessor, true);
 	}
 
 	public static MentionDetector setupMentionDetection(final EnumModelType KG, final Map<String, Collection<String>> map,

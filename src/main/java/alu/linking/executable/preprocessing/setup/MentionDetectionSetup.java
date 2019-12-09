@@ -10,6 +10,7 @@ import alu.linking.config.kg.EnumModelType;
 import alu.linking.executable.preprocessing.loader.MentionPossibilityLoader;
 import alu.linking.mentiondetection.InputProcessor;
 import alu.linking.mentiondetection.StopwordsLoader;
+import alu.linking.mentiondetection.exact.MentionDetectorMap;
 import alu.linking.mentiondetection.fuzzy.MentionDetectorLSH;
 import alu.linking.structure.Executable;
 
@@ -38,8 +39,7 @@ public class MentionDetectionSetup implements Executable {
 		final StopwordsLoader stopwordsLoader = new StopwordsLoader(KG);
 		final Set<String> stopwords = stopwordsLoader.getStopwords();
 		final MentionPossibilityLoader mpl = new MentionPossibilityLoader(KG, stopwordsLoader);
-		// Map<String, Set<String>> map = mpe.exec(new
-		// File(FilePaths.FILE_EXTENDED_GRAPH.path));
+		// Map<String, Set<String>> map = mpe.exec(new File(FilePaths.FILE_EXTENDED_GRAPH.path));
 		Map<String, Collection<String>> map = mpl.exec(new File(FilePaths.FILE_ENTITY_SURFACEFORM_LINKING.getPath(KG)));
 		System.out.println("Map size:" + map.size());
 		final InputProcessor inputProcessor = new InputProcessor(stopwords);

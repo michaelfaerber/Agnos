@@ -62,7 +62,7 @@ public class PageRankScorer implements Scorer<PossibleAssignment> {
 			final Number retNumber = this.pagerankLoader.getScore(assignment.toString());
 			if (retNumber == null) {
 				warnCounter++;
-				if (warnCounter % 10_000 == 0) {
+				if (warnCounter % 100_000 == 0) {
 					logger.warn(
 							warnCounter + " - No page rank value found for: Assignment(" + assignment.toString() + ")");
 				}

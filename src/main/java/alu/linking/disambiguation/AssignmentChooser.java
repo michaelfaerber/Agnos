@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 
 import com.google.common.collect.Lists;
 
+import alu.linking.config.constants.EnumEmbeddingMode;
 import alu.linking.config.kg.EnumModelType;
 import alu.linking.mentiondetection.Mention;
 import alu.linking.structure.PossibleAssignment;
@@ -27,7 +28,12 @@ public class AssignmentChooser {
 	private AssignmentScorer scorer = null;
 
 	public AssignmentChooser(final EnumModelType KG) throws ClassNotFoundException, IOException {
-		this.scorer = new AssignmentScorer(KG);
+		this(KG, EnumEmbeddingMode.DEFAULT.val);
+	}
+
+	public AssignmentChooser(final EnumModelType KG, final EnumEmbeddingMode enumEmbeddingMode)
+			throws ClassNotFoundException, IOException {
+		this.scorer = new AssignmentScorer(KG, enumEmbeddingMode);
 		// Graph.getInstance().readIn(FilePaths.FILE_HOPS_GRAPH_DUMP.getPath(KG),
 		// FilePaths.FILE_HOPS_GRAPH_DUMP_PATH_IDS.getPath(KG),
 		// FilePaths.FILE_HOPS_GRAPH_DUMP_EDGE_IDS.getPath(KG));
