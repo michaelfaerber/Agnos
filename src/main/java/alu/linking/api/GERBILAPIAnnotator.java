@@ -61,8 +61,9 @@ public class GERBILAPIAnnotator implements Executable {
 
 	private static final boolean detailed = false;
 	private static int docCounter = 0;
-	private final boolean preRestrictToMarkings = true;
+	private final boolean preRestrictToMarkings = false;
 	private final boolean postRestrictToMarkings = true;
+	private final boolean preRestrictToCapitalFirstLetter = true;
 	// No touchy
 	private Boolean init = false;
 	private final Comparator<Mention> offsetComparator = Comparators.mentionOffsetComp;
@@ -295,6 +296,29 @@ public class GERBILAPIAnnotator implements Executable {
 		return retMentions;
 	}
 
+	private List<Mention> restrictMentionsToCapitalFirstLetter(List<Mention> mentions, List<Marking> markings,
+			String origText) {
+		final List<Mention> retMentions = Lists.newArrayList();
+		final List<Mention> copyMentions = Lists.newArrayList(mentions);
+		for (Marking marking : markings) {
+			final Span spanMarking = ((Span) marking);
+			final int startPos = spanMarking.getStartPosition();
+			if (startPos < 0) {
+				continue;
+			}
+			final int length = spanMarking.getLength();
+			// If a mention has the same startoffset and the same length, keep it
+			final Iterator<Mention> it = copyMentions.iterator();
+			while (it.hasNext()) {
+				final Mention mention = it.next();
+				if (Character.isUpperCase(mention.getOriginalMention().charAt(0))) {
+					retMentions.add(mention);
+				}
+			}
+		}
+		return retMentions;
+	}
+
 	private void fixMentionMarkingOffsets(final List<Mention> mentions, final List<Marking> markings,
 			final String origText) {
 		final Map<String, List<Mention>> mentionsMap = new HashMap<>();
@@ -351,6 +375,10 @@ public class GERBILAPIAnnotator implements Executable {
 			mentions = restrictMentionsToMarkings(mentions, markings, text);
 		}
 
+		if (preRestrictToCapitalFirstLetter && markings != null && markings.size() != 0) {
+			mentions = restrictMentionsToCapitalFirstLetter(mentions, markings, text);
+		}
+
 		getLogger().info("Detected " + mentions.size() + " mentions!");
 		// ------------------------------------------------------------------------------
 		// Change the offsets due to stopword-removal applied through InputProcessor
@@ -368,7 +396,6 @@ public class GERBILAPIAnnotator implements Executable {
 		Collections.sort(mentions, offsetComparator);
 
 		List<String> blacklistedCandidates = Lists.newArrayList();
-		blacklistedCandidates.add("Thee_Silver_Mt._Zion_Memorial_Orchestra");
 
 		for (Mention m : mentions) {
 			// Update possible assignments w/ possible candidates

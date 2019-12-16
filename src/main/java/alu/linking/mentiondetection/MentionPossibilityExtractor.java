@@ -144,7 +144,7 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 
 	private void plainStringParsing(BufferedReader brIn) throws IOException {
 		String line = null;
-		boolean ONLY_STRING = true;
+		final boolean ONLY_STRING = true;
 		if (ONLY_STRING) {
 			// Assumes that it's just plain strings and no RDF fanciness
 			final boolean ignoreLowerCaseSpacedWords = true;
@@ -412,14 +412,14 @@ public class MentionPossibilityExtractor implements MentionPossibilityProcessor,
 		// source = source;// .toLowerCase();
 		if (!passesRequirements(entity, word))
 			return;
-		String cleanedWord = TextUtils.stripQuotesAndLang(word);
+		final String cleanedWord = TextUtils.stripQuotesAndLang(word.trim()).trim();
 
 		Collection<String> s;
 		if ((s = map.get(cleanedWord)) == null) {
 			s = new HashSet<String>();
 			map.put(cleanedWord, s);
 		}
-		s.add(TextUtils.stripArrowSigns(entity));
+		s.add(TextUtils.stripArrowSigns(entity.trim()).trim());
 	}
 
 	/**

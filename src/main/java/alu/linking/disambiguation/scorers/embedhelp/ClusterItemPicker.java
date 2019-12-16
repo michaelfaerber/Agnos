@@ -29,20 +29,20 @@ public interface ClusterItemPicker extends ContextBase<Mention>, Loggable {
 		TOP_PAGERANK, RANDOM, OPTIMAL_CALC
 	}
 
-	public static final int DEFAULT_PR_TOP_K = 30;// 50;// 30;// 0;// 100;
-	public static final double DEFAULT_PR_MIN_THRESHOLD = 0d;//1d;// 0.16d;// 0.16d;// 1d;// 0.1d;
+	public static final int DEFAULT_PR_TOP_K = 5_000_000;// 30;// 50;// 30;// 0;// 100;
+	public static final double DEFAULT_PR_MIN_THRESHOLD = 0d;// 1d;// 0.16d;// 0.16d;// 1d;// 0.1d;
 	public static final int DEFAULT_REPEAT = 50;// was 200 before, but due to long texts...
 	public static final double DEFAULT_PRUNE_MIN_SCORE_RATIO = 0.40;
-	public static final boolean allowSelfConnection = false;
+	public static final boolean allowSelfConnection = true;
 	// Whether to remove assignments when there is only one possibility (due to high
 	// likelihood of distortion)
 	public static final boolean REMOVE_SINGLE_ASSIGNMENTS = false;
 	// 0.16d due to MANY rarely-referenced 0.15d endpoints existing
-	public static final int MIN_REPEAT = 1;
+	public static final int MIN_REPEAT = 500;
 
 	public static final PICK_SELECTION DEFAULT_FIRST_CHOICE = PICK_SELECTION//
-			.TOP_PAGERANK
-	// .RANDOM//
+			// .TOP_PAGERANK
+			.RANDOM//
 	;
 	public final static BiFunction<Double, Double, Double> DEFAULT_OPERATION = CombineOperation.OCCURRENCE.combineOperation;
 

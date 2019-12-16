@@ -51,8 +51,8 @@ public class LauncherEvaluateKOREAPI implements Loggable {
 
 	public void run() throws FileNotFoundException {
 		final EnumModelType KG = EnumModelType.//
-		WIKIDATA
-		//CRUNCHBASE
+				//WIKIDATA
+		CRUNCHBASE
 		// DBPEDIA_FULL
 		;
 
@@ -61,13 +61,15 @@ public class LauncherEvaluateKOREAPI implements Loggable {
 				// "kore50-nif_steve_jobs.ttl"
 				// "kore50-nif.ttl"
 				// "kore50_yago.ttl"
-				"kore50_crunchbase.ttl"
+				//"kore50_crunchbase.ttl"
+				"kore50_crunchbase_tiger_woods.ttl"
 						//"kore50_wikidata.ttl"
 
 		// "dbpedia-spotlight-nif.ttl"
 		//
 		;
 		final File fileKORE50 = new File(inPath);
+		System.out.println("Input Data: " + fileKORE50.getAbsolutePath());
 		if (!fileKORE50.exists()) {
 			throw new FileNotFoundException(
 					"Could not find the evaluation input file at: " + fileKORE50.getAbsolutePath());

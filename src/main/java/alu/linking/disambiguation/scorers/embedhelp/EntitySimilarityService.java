@@ -21,6 +21,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 
 import com.github.jsonldjava.shaded.com.google.common.collect.Lists;
 
@@ -49,6 +54,10 @@ public class EntitySimilarityService {
 	private final String baseURL = "http://localhost:3030/model?";
 	private final String arg1 = "url1=";
 	private final String arg2 = "url2=";
+	private final CloseableHttpClient client = HttpClients.createDefault();
+	private final boolean APACHE_VS_URL = false;
+
+	// private static int counter = 0;
 
 	public EntitySimilarityService(final Map<String, List<Number>> embeddings) {
 		this.embeddings = embeddings;
@@ -123,12 +132,17 @@ public class EntitySimilarityService {
 				// API Calls!
 				final StringBuilder sbURL = new StringBuilder(baseURL);
 				sbURL.append(arg1);
-				sbURL.append(entity1);
+				sbURL.append(entity1.replace("#", "%23"));
 				sbURL.append("&");
 				sbURL.append(arg2);
-				sbURL.append(entity2);
+				sbURL.append(entity2.replace("#", "%23"));
 				try {
+					// if (counter > 5) {
+					// System.out.println(sbURL.toString());
+					// throw new RuntimeException("forced death");
+					// }
 					retVal = curlHTTP(sbURL);
+					// counter++;
 				} catch (IOException e1) {
 					System.err.println("Attempting to recover by cmd line (curl): " + e1.getMessage());
 					e1.printStackTrace();
@@ -159,15 +173,29 @@ public class EntitySimilarityService {
 	 * @throws IOException
 	 */
 	private Number curlHTTP(final StringBuilder sbURL) throws UnsupportedEncodingException, IOException {
-		final URL url = new URL(sbURL.toString());
-		Number retVal = 0d;
 		final StringBuilder sbRet = new StringBuilder();
-
-		try (final InputStream is = url.openStream();
-				BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"))) {
-			for (String line; (line = reader.readLine()) != null;) {
-				sbRet.append(line);
-				// System.out.println(line);
+		Number retVal = 0d;
+		if (APACHE_VS_URL) {
+			// Has issues with special characters
+			final HttpGet httpGet = new HttpGet(sbURL.toString());
+			try (final CloseableHttpResponse response = client.execute(httpGet)) {
+				final HttpEntity httpEntity = response.getEntity();
+				try (final InputStream is = httpEntity.getContent();
+						final BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"))) {
+					for (String line; (line = reader.readLine()) != null;) {
+						sbRet.append(line);
+						// System.out.println(line);
+					}
+				}
+			}
+		} else {
+			final URL url = new URL(sbURL.toString());
+			try (final InputStream is = url.openStream();
+					BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"))) {
+				for (String line; (line = reader.readLine()) != null;) {
+					sbRet.append(line);
+					// System.out.println(line);
+				}
 			}
 		}
 		try {

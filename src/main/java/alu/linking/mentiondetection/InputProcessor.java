@@ -1,10 +1,13 @@
 package alu.linking.mentiondetection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -143,7 +146,7 @@ public class InputProcessor {
 	public static List<TextOffset> process(final String input, final EnumDetectionType detectionMode) {
 		// final String retStr = input.replaceAll("\\p{Punct}", "").toLowerCase();
 
-		final List<TextOffset> retList = Lists.newArrayList();
+		final Set<TextOffset> retSet = new HashSet<>();// Lists.newArrayList();
 		// Splits on a space or punctuation
 		final Matcher matcher = spacePunctPattern.matcher(input);
 
@@ -181,12 +184,12 @@ public class InputProcessor {
 				for (int j = 1; j <= windowSize && ((i + j) < spacedIndices.size()); ++j) {
 					final int subStartIndex = prevIndex, endIndex = spacedIndices.get(i + j) - 1;
 //					System.out.println("i(" + i + ")/j(" + j + "): START(" + startIndex + ")/END(" + endIndex + ")");
-					final String subStr = input.substring(subStartIndex, endIndex);
+					final String subStr = input.substring(subStartIndex, endIndex).replaceAll("\\s+$", "");
 					sbConcat.append(subStr);
 					if (subStr.length() >= MIN_LENGTH_CONNECTING_WORD) {
 						final String mentionText = sbConcat.toString();
 						if (mentionText.length() >= MIN_MENTION_LENGTH) {
-							retList.add(new TextOffset().text(mentionText).offset(startIndex));
+							retSet.add(new TextOffset().text(mentionText).offset(startIndex));
 						}
 					}
 					prevIndex = endIndex;
@@ -207,7 +210,7 @@ public class InputProcessor {
 				final int startIndex = spacedIndices.get(i), endIndex = spacedIndices.get(i + 1) - 1;
 				final String mentionText = input.substring(startIndex, endIndex);
 				if (mentionText.length() > MIN_MENTION_LENGTH && mentionText.length() > MIN_LENGTH_CONNECTING_WORD) {
-					retList.add(new TextOffset().text(mentionText).offset(startIndex));
+					retSet.add(new TextOffset().text(mentionText).offset(startIndex));
 				}
 			}
 			break;
@@ -223,7 +226,7 @@ public class InputProcessor {
 					final String mentionText = input.substring(startIndex, endIndex);
 					if (mentionText.length() > MIN_MENTION_LENGTH
 							&& (mentionText.length() - prevLength) > MIN_LENGTH_CONNECTING_WORD) {
-						retList.add(new TextOffset().text(mentionText).offset(startIndex));
+						retSet.add(new TextOffset().text(mentionText).offset(startIndex));
 					}
 					prevLength = mentionText.length();
 				}
@@ -252,7 +255,8 @@ public class InputProcessor {
 		}
 
 		// return retList.toArray(new String[retList.size()]);
-		return retList;
+		// System.out.println("RetSet: " + Arrays.toString(new ArrayList<>(retSet).toArray()));
+		return new ArrayList<>(retSet);
 		// return retStr.split("\\p{Space}+");// POSIX class
 	}
 
@@ -276,7 +280,7 @@ public class InputProcessor {
 	 * @return split tokens excluding any defined stopwords
 	 */
 	public static String[] processAndRemoveStopwords(final String input, final Collection<String> blacklist) {
-		final String[] inputArr = processToSingleWords(input);//space splitting etc.
+		final String[] inputArr = processToSingleWords(input);// space splitting etc.
 		final List<String> ret = Lists.newArrayList();
 		if (blacklist == null) {
 			// No blacklist, so jump out with the normal-processed words
