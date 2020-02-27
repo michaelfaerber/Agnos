@@ -92,6 +92,20 @@ public class VicinityScorerDirectedSparseGraph implements PostScorer<PossibleAss
 		}
 	}
 
+	private <E> Map<Integer, Collection<E>> mergeMaps(Map<Integer, Collection<E>> map1, Map<Integer, Collection<E>> map2)
+	{
+		final Set<Integer> depths = map1.keySet();
+		for (Map.Entry<Integer, Collection<E>> e : map1.entrySet())
+		{
+			final Set<E> coll = new HashSet<>(e.getValue());
+			for (Integer depth : depths)
+			{
+				final Collection<E> coll2 = map2.get(depth);
+			}
+		}
+		return map2;
+	}
+	
 	private <E> double pathworth(Collection<Collection<E>> paths) {
 		// Initially a path is worth 100% of the usual worth
 		double retScore = 0d;

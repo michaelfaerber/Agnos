@@ -2,7 +2,7 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>unifreiburg</groupId>
+	<groupId>kit</groupId>
 	<artifactId>kg_agnostic_el</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>kg_agnostic_el</name>
@@ -89,6 +89,8 @@
 			<name>University Leipzig, AKSW Maven2 Repository</name>
 			<url>http://maven.aksw.org/repository/snapshots</url>
 		</repository>
+		<!-- <repository> <id>mvnrepository.com</id> <name>MVN Repository</name> 
+			<url>mvnrepository.com</url> </repository> -->
 	</repositories>
 	<!-- GERBIL repositories - END -->
 
@@ -328,5 +330,20 @@
 			<artifactId>commons-validator</artifactId>
 			<version>1.6</version>
 		</dependency>
+
+		<!-- AKWS compile issues -->
+		<!-- https://mvnrepository.com/artifact/org.openrdf/openrdf-model -->
+		<dependency>
+			<groupId>org.openrdf</groupId>
+			<artifactId>openrdf-model</artifactId>
+			<version>1.2.7</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.clerezza.ext/org.json.simple -->
+		<dependency>
+			<groupId>org.apache.clerezza.ext</groupId>
+			<artifactId>org.json.simple</artifactId>
+			<version>0.4</version>
+		</dependency>
+
 	</dependencies>
 </project>
