@@ -35,6 +35,7 @@ public class VicinityScorer implements PostScorer<PossibleAssignment, Mention> {
 	public VicinityScorer() {
 		// Initialize graph for path building
 		this.graph = Graph.getInstance();
+		//this.graph = new DirectedHoppableSparseGraph<String, String>();
 	}
 
 	@Override

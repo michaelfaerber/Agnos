@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -23,6 +24,8 @@ import org.apache.log4j.Logger;
 
 import alu.linking.config.constants.Strings;
 import alu.linking.config.kg.EnumModelType;
+import edu.uci.ics.jung.graph.util.EdgeType;
+import edu.uci.ics.jung.graph.util.Pair;
 
 /**
  * Graph implementation. Used to generate graph from Triple data
@@ -30,7 +33,7 @@ import alu.linking.config.kg.EnumModelType;
  * @author Kris Noullet (kn65)
  *
  */
-public class Graph<T> {
+public class Graph<T> implements HoppableGraph<String, String> {
 	private static Logger logger = Logger.getLogger(Graph.class);
 
 	private final Incrementable<T> idCounterInit;
@@ -491,19 +494,19 @@ public class Graph<T> {
 						prevEdges = new ArrayList<Integer>(Arrays.asList(fromStringToArray(token)));
 						break;
 					case 6:
-						category = new Boolean(token).booleanValue();
+						category = Boolean.valueOf(token).booleanValue();
 						break;
 					case 7:
-						blankNode = new Boolean(token).booleanValue();
+						blankNode = Boolean.valueOf(token).booleanValue();
 						break;
 					case 8:
-						surfaceform = new Boolean(token).booleanValue();
+						surfaceform = Boolean.valueOf(token).booleanValue();
 						break;
 					case 9:
-						helpingSurfaceform = new Boolean(token).booleanValue();
+						helpingSurfaceform = Boolean.valueOf(token).booleanValue();
 						break;
 					case 10:
-						entity = new Boolean(token).booleanValue();
+						entity = Boolean.valueOf(token).booleanValue();
 						break;
 					default:
 						logger.debug("ID(" + id + ") ERROR (" + lineCounter
@@ -849,6 +852,143 @@ public class Graph<T> {
 	 */
 	public void readIn(final String graphDumpPath) throws FileNotFoundException {
 		readIn(new BufferedReader(new FileReader(graphDumpPath)));
+	}
+
+	@Override
+	public boolean addEdge(String e1, Pair<? extends String> pair, EdgeType et) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public String findEdge(String v1, String v2) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Collection<String> findEdgeSet(String v1, String v2) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Collection<String> getInEdges(String v) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Collection<String> getOutEdges(String v) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Collection<String> getPredecessors(String v) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Collection<String> getSuccessors(String v) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Pair<String> getEndpoints(String e) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getSource(String e) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getDest(String e) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isSource(String v, String e) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean isDest(String v, String e) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public Collection<String> getEdges() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Collection<String> getVertices() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean containsVertex(String v) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean containsEdge(String e) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public int getEdgeCount() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public int getVertexCount() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public Collection<String> getNeighbors(String v) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Collection<String> getIncidentEdges(String v) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean addVertex(String v) {
+		return false;
+	}
+
+	@Override
+	public boolean removeVertex(String v) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean removeEdge(String e) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }

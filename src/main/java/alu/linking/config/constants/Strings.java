@@ -15,7 +15,7 @@ public enum Strings {
 	// "/vol2/kris/"//
 	), //
 	LOCAL_DIR("./"), //
-	ROOTPATH(LOCAL_DIR.val), //
+	ROOTPATH(SHETLAND_DIR.val), //
 	NEWLINE(System.getProperty("line.separator")), //
 	CSV_DELIM(";"), //
 	CRM_PRED_NEWS("http://km.aifb.kit.edu/services/crunchbase/api-vocab#news",
