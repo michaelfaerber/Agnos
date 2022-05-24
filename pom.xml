@@ -10,7 +10,7 @@
 	<properties>
 		<!-- GERBIL properties - START -->
 		<!-- prev version 3.7.0 -->
-		<jena.version>3.10.0</jena.version>
+		<jena.version>4.2.0</jena.version>
 		<!-- GERBIL properties - END -->
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
